@@ -8,9 +8,9 @@
 | P2 | App shell, routing, mock data | Data & Platform Engineer | integration | `ad4b0315c2507dcd4df67c395a4f4b70e06e6536` | APPROVE | PASS |
 | P3 | Run detail: failed run | Run Detail Engineer | fe/run-detail/failed-run-ui | `1fa6f2f3690cad5cb44242b73f8824c68adfbe7e` | APPROVE | PASS |
 | P4a | Live-run events data layer | Data & Platform Engineer | fe/data/live-run-events | `bce7acca849279d88e63cb63d128be174e241b95` | APPROVE | PASS |
-| P4b | Run detail: live run UI | Run Detail Engineer | fe/run-detail/live-run-ui | `baf35154d1cfd1b4eec0d72723851e7c1db7abb2` | APPROVE | Pending |
+| P4b | Run detail: live run UI | Run Detail Engineer | fe/run-detail/live-run-ui | `baf35154d1cfd1b4eec0d72723851e7c1db7abb2` | APPROVE | PASS |
 | P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
 | P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
 | P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/heal-run-detail-cache | `9cf03f6fa87924b5d725a8cb2ebc34e68333ea66` | APPROVE | PASS |
 | P8a | Light-theme contrast + focus rings | Design System Engineer | fe/design-system/light-theme-pass | `f6ce6787365a6625c291f5e68852303901c55522` | APPROVE | PASS |
-| P8b | Keyboard pass, trust tests, Playwright demo path | Design QA | fe/design-qa/demo-path | `a8f1bfde511946a73571a78e1cfcf42a940a9f25` | APPROVE | Pending |
+| P8b | Keyboard pass, trust tests, Playwright demo path | Design QA | fe/design-qa/demo-path | `a8f1bfde511946a73571a78e1cfcf42a940a9f25` | APPROVE | PASS |
