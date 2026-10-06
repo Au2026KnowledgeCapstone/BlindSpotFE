@@ -25,6 +25,9 @@
   --bs-accent-solid: #3d5afe;
   --bs-accent-solid-hover: #5470ff;
   --bs-accent-tint: #3d5afe1f;
+  /* P8: added so StatusBadge "running" has a real accent border token
+     instead of falling back to an inline literal. */
+  --bs-accent-border: #7c93ff52;
 
   /* 3.3 Status */
   --bs-pass: #4cc38a;
@@ -88,44 +91,57 @@
   --bs-text-primary: #1b1c20;
   --bs-text-secondary: #3c4149;
   --bs-text-tertiary: #6b6f78;
-  --bs-text-quaternary: #8e9199;
+  /* P8: #8e9199 was 3.15:1 on canvas and 2.77:1 on inset. Darkened so decorative
+     text still clears the 3:1 non-text floor on every light surface. */
+  --bs-text-quaternary: #86888f;
 
-  --bs-border-subtle: #0000000d;
-  --bs-border-default: #00000014;
-  --bs-border-strong: #00000024;
-  --bs-focus-ring: #3d5afe;
+  /* P8: light borders were 1.12-1.38:1, i.e. invisible against the canvas.
+     subtle/default stay hairlines; strong now clears 3:1 so panel edges and
+     table dividers actually read. */
+  --bs-border-subtle: #00000014;
+  --bs-border-default: #00000029;
+  --bs-border-strong: #00000073;
+  /* P8: ring darkened with the accent so it reads on inset surfaces too. */
+  --bs-focus-ring: #2f4ae6;
 
-  /* 3.2 Accent */
-  --bs-accent: #3d5afe;
-  --bs-accent-solid: #3d5afe;
-  --bs-accent-solid-hover: #2f4ae6;
-  --bs-accent-tint: #3d5afe14;
+  /* 3.2 Accent
+     P8: every light status/accent hue is darkened one step. The §3.3 values
+     were checked against the white canvas only; on their own 8% tint over
+     panel/raised/inset they fell to 4.1-4.4:1. These clear 4.5:1 on all four
+     light surfaces and keep >=4.5:1 for white text on the solid fill. */
+  --bs-accent: #2f4ae6;
+  --bs-accent-solid: #2f4ae6;
+  --bs-accent-solid-hover: #2a44d8;
+  --bs-accent-tint: #2f4ae614;
+  --bs-accent-border: #2f4ae633;
 
   /* 3.3 Status */
-  --bs-pass: #1a7f4b;
-  --bs-pass-tint: #1a7f4b14;
-  --bs-pass-border: #1a7f4b33;
+  --bs-pass: #17703f;
+  --bs-pass-tint: #17703f14;
+  --bs-pass-border: #17703f33;
 
-  --bs-healed: #9a6200;
-  --bs-healed-tint: #9a620014;
-  --bs-healed-border: #9a620033;
+  --bs-healed: #8a5800;
+  --bs-healed-tint: #8a580014;
+  --bs-healed-border: #8a580033;
 
-  --bs-fail: #c9302c;
-  --bs-fail-tint: #c9302c14;
-  --bs-fail-border: #c9302c33;
+  --bs-fail: #b62a26;
+  --bs-fail-tint: #b62a2614;
+  --bs-fail-border: #b62a2633;
 
-  --bs-warn: #9a6200;
-  --bs-warn-tint: #9a620014;
-  --bs-warn-border: #9a620033;
+  --bs-warn: #8a5800;
+  --bs-warn-tint: #8a580014;
+  --bs-warn-border: #8a580033;
 
-  --bs-neutral: #5f646d;
-  --bs-neutral-tint: #5f646d14;
-  --bs-neutral-border: #5f646d33;
+  --bs-neutral: #565b63;
+  --bs-neutral-tint: #565b6314;
+  --bs-neutral-border: #565b6333;
 
-  /* 3.4 Inference */
-  --bs-infer: #6d4ad8;
-  --bs-infer-tint: #6d4ad80f;
-  --bs-infer-border: #6d4ad833;
+  /* 3.4 Inference
+     P8: tint raised 0f -> 1a so an Inference block is visibly distinct from
+     the canvas it sits on; border raised to 4d so the 2px violet rule reads. */
+  --bs-infer: #6241c4;
+  --bs-infer-tint: #6241c41a;
+  --bs-infer-border: #6241c44d;
 
   /* Tailwind & shadcn CSS variable mappings */
   --background: var(--bs-bg-canvas);

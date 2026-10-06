@@ -26,7 +26,7 @@ const EvidenceFooter: React.FC<{ links: EvidenceLink[] }> = ({ links }) => (
           <button
             type="button"
             onClick={link.onClick}
-            className="text-[var(--bs-infer)] hover:underline focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)] rounded px-0.5"
+            className="text-[var(--bs-infer)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] rounded px-0.5"
           >
             {link.label}
           </button>

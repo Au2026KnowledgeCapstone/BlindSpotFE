@@ -45,7 +45,7 @@ export const StabilityStrip: React.FC<StabilityStripProps> = ({
             onClick={() => onSelectRun?.(run.id)}
             title={run.label || `Run ${index + 1}: ${run.status}`}
             style={{ backgroundColor: color }}
-            className="w-[6px] h-4 rounded-[1px] transition-transform hover:scale-y-125 focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)]"
+            className="w-[6px] h-4 rounded-[1px] transition-transform hover:scale-y-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
           />
         );
       })}

@@ -23,7 +23,7 @@ const CopyButton: React.FC<{ rawText: string }> = ({ rawText }) => {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 hover:text-[var(--bs-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)] rounded px-1 py-0.5"
+      className="inline-flex items-center gap-1 hover:text-[var(--bs-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] rounded px-1 py-0.5"
       aria-label="Copy evidence"
     >
       {copied ? (
