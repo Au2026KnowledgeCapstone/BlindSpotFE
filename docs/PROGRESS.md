@@ -9,7 +9,7 @@
 | P3 | Run detail: failed run | Run Detail Engineer | fe/run-detail/failed-run-ui | `1fa6f2f3690cad5cb44242b73f8824c68adfbe7e` | APPROVE | PASS |
 | P4a | Live-run events data layer | Data & Platform Engineer | fe/data/live-run-events | `d7240508185d0d2a8bd70bfe6ed1cb626ea191bf` | Pending | Pending |
 | P4b | Run detail: live run UI | Run Detail Engineer | fe/run-detail/live-run-ui | - | Pending | Pending |
-| P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | - | Pending | Pending |
-| P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/flow-editor | - | Pending | Pending |
-| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/heals-envs | - | Pending | Pending |
+| P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
+| P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
+| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
 | P8 | Hardening | Design QA + All | fe/qa/hardening | - | Pending | Pending |
