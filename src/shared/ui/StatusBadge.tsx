@@ -30,7 +30,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         aria-label={config.label}
         title={config.label}
         style={style}
-        className={`inline-flex items-center justify-center w-5 h-5 rounded-full border text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)] ${className}`}
+        className={`inline-flex items-center justify-center w-5 h-5 rounded-full border text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${className}`}
       >
         <Icon className={`w-3.5 h-3.5 ${config.spins ? "animate-spin" : ""}`} />
         {SecondaryIcon && <SecondaryIcon className="w-2.5 h-2.5 -ml-1" />}
@@ -42,7 +42,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     <span
       role="status"
       style={style}
-      className={`inline-flex items-center gap-1.5 h-5 px-2 rounded-full border text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)] ${className}`}
+      className={`inline-flex items-center gap-1.5 h-5 px-2 rounded-full border text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${className}`}
     >
       <Icon className={`w-3.5 h-3.5 ${config.spins ? "animate-spin" : ""}`} />
       {SecondaryIcon && <SecondaryIcon className="w-3 h-3 -ml-0.5" />}

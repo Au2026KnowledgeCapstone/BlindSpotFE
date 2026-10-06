@@ -79,7 +79,7 @@ export const STATUS_CONFIG: Record<RunStatus, StatusConfigItem> = {
   running: {
     token: "var(--bs-accent)",
     tintToken: "var(--bs-accent-tint)",
-    borderToken: "var(--bs-accent-border, #7c93ff52)",
+    borderToken: "var(--bs-accent-border)",
     icon: LoaderCircle,
     label: "Running",
     spins: true,

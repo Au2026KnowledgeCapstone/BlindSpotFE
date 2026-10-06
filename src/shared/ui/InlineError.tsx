@@ -37,7 +37,7 @@ export const InlineError: React.FC<InlineErrorProps> = ({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[var(--bs-bg-panel)] border border-[var(--bs-border-default)] hover:bg-[var(--bs-bg-raised)] text-[var(--bs-text-primary)] font-medium text-[11px] shrink-0 focus:outline-none focus:ring-1 focus:ring-[var(--bs-focus-ring)]"
+          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[var(--bs-bg-panel)] border border-[var(--bs-border-default)] hover:bg-[var(--bs-bg-raised)] text-[var(--bs-text-primary)] font-medium text-[11px] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
         >
           <RefreshCw className="w-3 h-3" />
           <span>Retry</span>

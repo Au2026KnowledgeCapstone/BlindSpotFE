@@ -29,7 +29,7 @@ function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
       <button
         type="button"
         onClick={onToggle}
-        className="p-1 text-tertiary hover:text-primary rounded"
+        className="p-1 text-tertiary hover:text-primary rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -51,7 +51,7 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${
               isActive
                 ? "bg-selected text-primary font-semibold"
                 : "text-secondary hover:text-primary hover:bg-hover"
@@ -72,14 +72,14 @@ function TopHeader({ projectId }: { projectId: string }) {
       <div className="flex items-center gap-3">
         <select
           defaultValue={projectId}
-          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-primary font-medium focus:outline-none focus:ring-1 focus:ring-accent"
+          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-primary font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
         >
           <option value="acme-corp">Acme Corp</option>
         </select>
         <span className="text-quaternary">/</span>
         <select
           defaultValue="staging"
-          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-secondary focus:outline-none focus:ring-1 focus:ring-accent"
+          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
         >
           <option value="production">Production</option>
           <option value="staging">Staging</option>
@@ -108,7 +108,7 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="px-2.5 py-1 text-xs border border-border rounded bg-raised text-secondary hover:text-primary transition-colors"
+      className="px-2.5 py-1 text-xs border border-border rounded bg-raised text-secondary hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
     >
       Theme
     </button>
