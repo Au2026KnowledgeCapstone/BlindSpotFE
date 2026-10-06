@@ -13,9 +13,29 @@
   --color-fg-tertiary: var(--bs-text-tertiary);
   --color-fg-quaternary: var(--bs-text-quaternary);
 
+  /* P8: the screens write text-primary/secondary/tertiary/quaternary, not the
+     fg-* spellings above. Those names were undefined, so every one of those
+     classes compiled to nothing and the text kept an inherited colour in both
+     themes — which is why light theme looked unthemed. Aliased here rather
+     than rewriting ~30 feature/route files. */
+  --color-primary: var(--bs-text-primary);
+  --color-secondary: var(--bs-text-secondary);
+  --color-tertiary: var(--bs-text-tertiary);
+  --color-quaternary: var(--bs-text-quaternary);
+
+  --color-hover: var(--bs-bg-hover);
+  --color-selected: var(--bs-bg-selected);
+
   --color-border-subtle: var(--bs-border-subtle);
   --color-border-default: var(--bs-border-default);
   --color-border-strong: var(--bs-border-strong);
+
+  /* border-border / divide-border are used across the screens; subtle/default/
+     strong are used bare (border-subtle, not border-border-subtle). */
+  --color-border: var(--bs-border-default);
+  --color-subtle: var(--bs-border-subtle);
+  --color-default: var(--bs-border-default);
+  --color-strong: var(--bs-border-strong);
 
   --color-accent: var(--bs-accent);
   --color-accent-solid: var(--bs-accent-solid);
