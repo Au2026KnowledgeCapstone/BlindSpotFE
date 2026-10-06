@@ -9,6 +9,7 @@ export interface ActionRowProps {
   action: Action;
   isSelected: boolean;
   onSelect: (action: Action, e: React.MouseEvent) => void;
+  isPresentationMode?: boolean | undefined;
 }
 
 function rowClass(action: Action, isSelected: boolean): string {
@@ -26,13 +27,18 @@ function rowClass(action: Action, isSelected: boolean): string {
   return "border-transparent bg-[var(--bs-bg-panel)] text-[var(--bs-text-secondary)] hover:bg-[var(--bs-bg-hover)]";
 }
 
-export function ActionRow({ action, isSelected, onSelect }: ActionRowProps) {
+export function ActionRow({ action, isSelected, onSelect, isPresentationMode }: ActionRowProps) {
+  const descSizeClass = isPresentationMode ? "text-lg font-medium" : "text-[11px]";
+
   return (
     <button
       type="button"
       aria-current={isSelected}
       onClick={(e) => onSelect(action, e)}
-      className={`w-full text-left p-2 rounded border text-xs transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--bs-focus-ring)] ${rowClass(action, isSelected)}`}
+      className={`w-full text-left p-2 rounded border transition-all duration-180 ease-out focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--bs-focus-ring)] ${rowClass(
+        action,
+        isSelected
+      )}`}
     >
       <span className="flex items-center justify-between gap-2 mb-1">
         <span className="flex items-center gap-1.5">
@@ -48,7 +54,7 @@ export function ActionRow({ action, isSelected, onSelect }: ActionRowProps) {
         )}
       </span>
 
-      <span className="block text-[11px] text-[var(--bs-text-primary)]">
+      <span className={`block text-[var(--bs-text-primary)] ${descSizeClass}`}>
         {action.description}
       </span>
 
