@@ -11,5 +11,6 @@ export * from "./api/use-runs";
 export * from "./api/use-run-detail";
 export * from "./api/live-event.schema";
 export * from "./api/map-live-event";
+export * from "./api/derive-live-run-state";
 export * from "./api/use-live-run-events";
 export * from "./use-run-selection";

@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { startLiveRunEmitter } from "./live-run-emitter";
+import { deriveLiveRunState, type LiveRunState } from "./derive-live-run-state";
 import type { LiveEvent } from "./map-live-event";
 
 export type StreamState = "connecting" | "live" | "reconnecting" | "ended";
 
-export interface LiveRunEventsResult {
+export interface LiveRunEventsResult extends LiveRunState {
   events: LiveEvent[];
   streamState: StreamState;
 }
@@ -54,5 +55,5 @@ export function useLiveRunEvents(
     return stop;
   }, [runId, intervalMs, queryClient]);
 
-  return { events, streamState };
+  return { events, streamState, ...deriveLiveRunState(events) };
 }
