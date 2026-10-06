@@ -62,7 +62,7 @@ const STATUS_HUES = [
   "--bs-infer",
 ] as const;
 
-describe("P8 light theme contrast", () => {
+describe("P8 light theme status & border contrast", () => {
   it.each(STATUS_HUES)("%s reads at 4.5:1 on its tint over every surface", (hue) => {
     const fg = token(hue);
     const tint = token(`${hue}-tint`);
@@ -84,7 +84,9 @@ describe("P8 light theme contrast", () => {
       expect(contrast(flatten(border, base), base)).toBeGreaterThanOrEqual(3);
     }
   });
+});
 
+describe("P8 light theme UI element contrast", () => {
   it("focus ring clears 3:1 on every surface", () => {
     const ring = token("--bs-focus-ring");
     for (const surface of SURFACES) {
@@ -104,6 +106,22 @@ describe("P8 light theme contrast", () => {
     for (const surface of SURFACES) {
       const base = token(surface);
       expect(contrast(flatten(tint, base), base)).toBeGreaterThanOrEqual(1.1);
+    }
+  });
+
+  it("environments risk dots clear 3:1 non-text floor on every surface", () => {
+    const riskDotTokens = [
+      "--bs-fail",
+      "--bs-warn",
+      "--bs-accent",
+      "--bs-neutral",
+      "--bs-text-tertiary",
+    ] as const;
+    for (const dot of riskDotTokens) {
+      const color = token(dot);
+      for (const surface of SURFACES) {
+        expect(contrast(color, token(surface))).toBeGreaterThanOrEqual(3);
+      }
     }
   });
 });
