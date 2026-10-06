@@ -6,7 +6,7 @@
 | P1 | Design-system primitives | Design System Engineer | integration | `2f13c3562b48e3108796f3f381a44da6cf9f8555` | APPROVE | PASS |
 | P1+ | §3.6 motion tokens + reduced-motion | Design System Engineer | integration | `da24776843c57e7a0536d8cb67a23c25d9a01e32` | APPROVE | PASS |
 | P2 | App shell, routing, mock data | Data & Platform Engineer | integration | `ad4b0315c2507dcd4df67c395a4f4b70e06e6536` | APPROVE | PASS |
-| P3 | Run detail: failed run | Run Detail Engineer | fe/run-detail/failed-run-ui | - | Pending | Pending |
+| P3 | Run detail: failed run | Run Detail Engineer | fe/run-detail/failed-run-ui | `1fa6f2f3690cad5cb44242b73f8824c68adfbe7e` | APPROVE | PASS |
 | P4 | Run detail: live run | Data & Platform + Run Detail | fe/run-detail/live-event-stream | - | Pending | Pending |
 | P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | - | Pending | Pending |
 | P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/flow-editor | - | Pending | Pending |
