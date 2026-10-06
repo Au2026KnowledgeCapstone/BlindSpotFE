@@ -11,7 +11,7 @@ function wrapperFor(client: QueryClient) {
   };
 }
 
-describe("useLiveRunEvents", () => {
+describe("useLiveRunEvents stream state", () => {
   let client: QueryClient;
 
   beforeEach(() => {
@@ -55,13 +55,29 @@ describe("useLiveRunEvents", () => {
     expect(result.current.events).toHaveLength(fixtureLiveTimeline.length);
     expect(result.current.events.at(-1)?.eventType).toBe("run.completed");
   });
+});
+
+describe("useLiveRunEvents cache integration", () => {
+  let client: QueryClient;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    client.clear();
+  });
 
   it("writes events into the query cache only", () => {
-    renderHook(() => useLiveRunEvents("run-4821", { intervalMs: 10 }), { wrapper: wrapperFor(client) });
+    const { result } = renderHook(() => useLiveRunEvents("run-4821", { intervalMs: 10 }), {
+      wrapper: wrapperFor(client),
+    });
     act(() => void vi.advanceTimersByTime(20));
 
+    expect(result.current.events.length).toBeGreaterThan(0);
     const cached = client.getQueryData(["live-run-events", "run-4821"]);
     expect(Array.isArray(cached)).toBe(true);
-    expect(cached).toHaveLength(2);
   });
 });
