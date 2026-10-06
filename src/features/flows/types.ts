@@ -1,8 +1,8 @@
-import type { RunStatus } from "@/features/runs";
+import type { RunStatus } from "@/shared/ui/status-config";
 
 type FlowStatus = "draft" | "active" | "archived";
 
-type Flow = {
+export type Flow = {
   id: string;
   projectId: string;
   name: string;
@@ -11,9 +11,10 @@ type Flow = {
   status: FlowStatus;
   steps: FlowStep[];
   settings: FlowSettings;
+  featureArea: string;
 };
 
-type FlowStep = {
+export type FlowStep = {
   id: string;
   title: string;
   expectedOutcome: string;
@@ -21,8 +22,8 @@ type FlowStep = {
   type: "action" | "inference" | "check";
 };
 
-type FlowSettings = {
+export type FlowSettings = {
   environment: "development" | "staging" | "production" | "pr_preview";
   schedule: "now" | "weekly" | "on_pr" | "manual";
-  credentialsId?: string;
+  credentialsReference?: string;
 };

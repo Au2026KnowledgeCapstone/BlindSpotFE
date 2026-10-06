@@ -1,6 +1,8 @@
+"use client";
+
 import React from "react";
-import OverviewDashboard from "@/features/overview/OverviewDashboard";
+import { FlowEditorContent } from "@/features/flows";
 
 export function FlowsContent({ projectId }: { projectId: string }) {
-  return <OverviewDashboard runs={[]} />;
+  return <FlowEditorContent projectId={projectId} />;
 }

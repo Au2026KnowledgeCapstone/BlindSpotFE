@@ -1,2 +1,2 @@
 export { FlowEditorContent } from "./components/FlowEditorContent";
-export * from "./types";
+export type { Flow, FlowStep, FlowSettings } from "./types";
