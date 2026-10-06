@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-canvas: var(--bs-bg-canvas);
+  --color-panel: var(--bs-bg-panel);
+  --color-raised: var(--bs-bg-raised);
+  --color-overlay: var(--bs-bg-overlay);
+  --color-inset: var(--bs-bg-inset);
+
+  --color-fg: var(--bs-text-primary);
+  --color-fg-secondary: var(--bs-text-secondary);
+  --color-fg-tertiary: var(--bs-text-tertiary);
+  --color-fg-quaternary: var(--bs-text-quaternary);
+
+  --color-border-subtle: var(--bs-border-subtle);
+  --color-border-default: var(--bs-border-default);
+  --color-border-strong: var(--bs-border-strong);
+
+  --color-accent: var(--bs-accent);
+  --color-accent-solid: var(--bs-accent-solid);
+  --color-accent-tint: var(--bs-accent-tint);
+
+  --color-pass: var(--bs-pass);
+  --color-pass-tint: var(--bs-pass-tint);
+  --color-healed: var(--bs-healed);
+  --color-healed-tint: var(--bs-healed-tint);
+  --color-fail: var(--bs-fail);
+  --color-fail-tint: var(--bs-fail-tint);
+  --color-warn: var(--bs-warn);
+  --color-warn-tint: var(--bs-warn-tint);
+  --color-neutral: var(--bs-neutral);
+  --color-neutral-tint: var(--bs-neutral-tint);
+
+  --color-infer: var(--bs-infer);
+  --color-infer-tint: var(--bs-infer-tint);
+  --color-infer-border: var(--bs-infer-border);
+
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}

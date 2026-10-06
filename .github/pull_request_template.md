@@ -1,0 +1,9 @@
+- [ ] Components have one responsibility and are ≤ 150 lines
+- [ ] No server data copied into useState; shareable selection lives in the URL
+- [ ] Every async path renders loading / error / empty / success
+- [ ] API (and mock) data is parsed + mapped in features/*/api
+- [ ] New lib/ logic is pure and tested
+- [ ] Names use product vocabulary
+- [ ] No raw colours; statuses use StatusBadge; AI output uses <Inference>
+- [ ] /impeccable audit run; findings fixed or explained
+- [ ] Any duplication marked // DUP with a pointer

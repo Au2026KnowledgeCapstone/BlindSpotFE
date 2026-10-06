@@ -1,0 +1,150 @@
+/* src/styles/tokens.css */
+:root,
+:root[data-theme="dark"] {
+  /* 3.1 Surfaces, text, borders */
+  --bs-bg-canvas: #08090a;
+  --bs-bg-panel: #0f1011;
+  --bs-bg-raised: #141516;
+  --bs-bg-overlay: #191a1b;
+  --bs-bg-inset: #050506;
+  --bs-bg-hover: #ffffff0a;
+  --bs-bg-selected: #ffffff12;
+
+  --bs-text-primary: #f7f8f8;
+  --bs-text-secondary: #c9ced6;
+  --bs-text-tertiary: #8a8f98;
+  --bs-text-quaternary: #62666d;
+
+  --bs-border-subtle: #ffffff0d;
+  --bs-border-default: #ffffff17;
+  --bs-border-strong: #ffffff26;
+  --bs-focus-ring: #7c93ff;
+
+  /* 3.2 Accent: Signal Blue */
+  --bs-accent: #7c93ff;
+  --bs-accent-solid: #3d5afe;
+  --bs-accent-solid-hover: #5470ff;
+  --bs-accent-tint: #3d5afe1f;
+
+  /* 3.3 Status */
+  --bs-pass: #4cc38a;
+  --bs-pass-tint: #4cc38a1f;
+  --bs-pass-border: #4cc38a52;
+
+  --bs-healed: #f2b84b;
+  --bs-healed-tint: #f2b84b1f;
+  --bs-healed-border: #f2b84b52;
+
+  --bs-fail: #ff6b6b;
+  --bs-fail-tint: #ff6b6b1f;
+  --bs-fail-border: #ff6b6b52;
+
+  --bs-warn: #f2b84b;
+  --bs-warn-tint: #f2b84b1f;
+  --bs-warn-border: #f2b84b52;
+
+  --bs-neutral: #9aa0aa;
+  --bs-neutral-tint: #9aa0aa1f;
+  --bs-neutral-border: #9aa0aa52;
+
+  /* 3.4 Inference (AI output only) */
+  --bs-infer: #b49cff;
+  --bs-infer-tint: #b49cff14;
+  --bs-infer-border: #b49cff33;
+
+  /* Tailwind & shadcn CSS variable mappings */
+  --background: var(--bs-bg-canvas);
+  --foreground: var(--bs-text-primary);
+  --card: var(--bs-bg-raised);
+  --card-foreground: var(--bs-text-primary);
+  --popover: var(--bs-bg-overlay);
+  --popover-foreground: var(--bs-text-primary);
+  --primary: var(--bs-accent-solid);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bs-bg-raised);
+  --secondary-foreground: var(--bs-text-primary);
+  --muted: var(--bs-bg-panel);
+  --muted-foreground: var(--bs-text-tertiary);
+  --accent: var(--bs-bg-hover);
+  --accent-foreground: var(--bs-text-primary);
+  --destructive: var(--bs-fail);
+  --destructive-foreground: #ffffff;
+  --border: var(--bs-border-default);
+  --input: var(--bs-border-default);
+  --ring: var(--bs-focus-ring);
+  --radius: 6px;
+}
+
+:root[data-theme="light"] {
+  /* 3.1 Surfaces, text, borders */
+  --bs-bg-canvas: #ffffff;
+  --bs-bg-panel: #f7f7f8;
+  --bs-bg-raised: #f2f2f3;
+  --bs-bg-overlay: #ffffff;
+  --bs-bg-inset: #f0f0f2;
+  --bs-bg-hover: #0000000a;
+  --bs-bg-selected: #00000010;
+
+  --bs-text-primary: #1b1c20;
+  --bs-text-secondary: #3c4149;
+  --bs-text-tertiary: #6b6f78;
+  --bs-text-quaternary: #8e9199;
+
+  --bs-border-subtle: #0000000d;
+  --bs-border-default: #00000014;
+  --bs-border-strong: #00000024;
+  --bs-focus-ring: #3d5afe;
+
+  /* 3.2 Accent */
+  --bs-accent: #3d5afe;
+  --bs-accent-solid: #3d5afe;
+  --bs-accent-solid-hover: #2f4ae6;
+  --bs-accent-tint: #3d5afe14;
+
+  /* 3.3 Status */
+  --bs-pass: #1a7f4b;
+  --bs-pass-tint: #1a7f4b14;
+  --bs-pass-border: #1a7f4b33;
+
+  --bs-healed: #9a6200;
+  --bs-healed-tint: #9a620014;
+  --bs-healed-border: #9a620033;
+
+  --bs-fail: #c9302c;
+  --bs-fail-tint: #c9302c14;
+  --bs-fail-border: #c9302c33;
+
+  --bs-warn: #9a6200;
+  --bs-warn-tint: #9a620014;
+  --bs-warn-border: #9a620033;
+
+  --bs-neutral: #5f646d;
+  --bs-neutral-tint: #5f646d14;
+  --bs-neutral-border: #5f646d33;
+
+  /* 3.4 Inference */
+  --bs-infer: #6d4ad8;
+  --bs-infer-tint: #6d4ad80f;
+  --bs-infer-border: #6d4ad833;
+
+  /* Tailwind & shadcn CSS variable mappings */
+  --background: var(--bs-bg-canvas);
+  --foreground: var(--bs-text-primary);
+  --card: var(--bs-bg-raised);
+  --card-foreground: var(--bs-text-primary);
+  --popover: var(--bs-bg-overlay);
+  --popover-foreground: var(--bs-text-primary);
+  --primary: var(--bs-accent-solid);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bs-bg-raised);
+  --secondary-foreground: var(--bs-text-primary);
+  --muted: var(--bs-bg-panel);
+  --muted-foreground: var(--bs-text-tertiary);
+  --accent: var(--bs-bg-hover);
+  --accent-foreground: var(--bs-text-primary);
+  --destructive: var(--bs-fail);
+  --destructive-foreground: #ffffff;
+  --border: var(--bs-border-default);
+  --input: var(--bs-border-default);
+  --ring: var(--bs-focus-ring);
+}
