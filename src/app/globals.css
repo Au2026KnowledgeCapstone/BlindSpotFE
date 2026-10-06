@@ -38,4 +38,47 @@
 
   --font-sans: "Inter Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* 3.6 Motion */
+  --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+}
+
+/* 3.6 Reduced motion: keep state changes, spinner becomes an opacity pulse, no sliding */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+
+  /* Spinners stop rotating and pulse opacity instead */
+  .animate-spin {
+    animation: bs-opacity-pulse 1.4s ease-in-out infinite !important;
+  }
+
+  /* Ping/bounce markers hold still at full opacity rather than sliding or scaling */
+  .animate-ping,
+  .animate-bounce {
+    animation: none !important;
+  }
+
+  /* Skeletons keep a slower pulse so loading stays legible */
+  .animate-pulse {
+    animation: bs-opacity-pulse 2s ease-in-out infinite !important;
+  }
+}
+
+@keyframes bs-opacity-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
