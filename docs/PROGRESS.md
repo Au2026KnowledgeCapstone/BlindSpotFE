@@ -9,7 +9,9 @@
 | P3 | Run detail: failed run | Run Detail Engineer | fe/run-detail/failed-run-ui | `1fa6f2f3690cad5cb44242b73f8824c68adfbe7e` | APPROVE | PASS |
 | P4a | Live-run events data layer | Data & Platform Engineer | fe/data/live-run-events | `d7240508185d0d2a8bd70bfe6ed1cb626ea191bf` | Pending | Pending |
 | P4b | Run detail: live run UI | Run Detail Engineer | fe/run-detail/live-run-ui | - | Pending | Pending |
-| P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
-| P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
-| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | Pending | Pending |
-| P8 | Hardening | Design QA + All | fe/qa/hardening | - | Pending | Pending |
+| P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
+| P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
+| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE (1 medium) | **FAIL** — run-detail cache not patched |
+| P7-fix | Patch `["run", runId]` on heal decision | Product Screens Engineer | fe/product-screens/heal-run-detail-cache | - | Pending | Pending |
+| P8a | Light-theme contrast + focus rings | Design System Engineer | fe/design-system/light-theme-pass | `bd8c83c59f1053896a935d3daa53c1897d47165b` | APPROVE | Pending |
+| P8b | Keyboard pass, impeccable audit, Playwright demo path | Design QA + All | - | - | Pending | Pending |
