@@ -3,11 +3,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { useDecideHeal, useHeals, type HealDecision } from "./use-heals";
-import { mapRun } from "@/features/runs";
+import { mapRun, type RunDetailData } from "@/features/runs";
 import type { Run } from "@/features/runs";
 import { fixtureSeedRuns } from "@/test/fixtures";
 
-/** Decides one heal, then reports the shared runs-cache status for its source run. */
+/** Decides one heal, then reports both runs cache and run-detail cache status for run-4819. */
 function Harness({ decision }: { decision: HealDecision }) {
   const { data: heals } = useHeals("acme-corp");
   const decide = useDecideHeal("acme-corp");
@@ -23,10 +23,16 @@ function Harness({ decision }: { decision: HealDecision }) {
   );
 }
 
-function renderWithSeededRuns(decision: HealDecision) {
+function renderWithSeededCaches(decision: HealDecision) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  // The overview and runs list both read this key, so it stands in for "everywhere".
-  queryClient.setQueryData<Run[]>(["runs", "acme-corp"], fixtureSeedRuns.map(mapRun));
+  const rawRun = fixtureSeedRuns.find((r) => r.id === "run-4819") ?? fixtureSeedRuns[0]!;
+  const mappedRun = mapRun(rawRun);
+
+  queryClient.setQueryData<Run[]>(["runs", "acme-corp"], [mappedRun]);
+  queryClient.setQueryData<RunDetailData>(["run", "run-4819"], {
+    run: mappedRun,
+    steps: [],
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -36,27 +42,32 @@ function renderWithSeededRuns(decision: HealDecision) {
   return queryClient;
 }
 
-const statusOfRun4819 = (queryClient: QueryClient) =>
+const statusOfRunsList = (queryClient: QueryClient) =>
   queryClient.getQueryData<Run[]>(["runs", "acme-corp"])?.find((r) => r.id === "run-4819")?.status;
 
+const statusOfRunDetail = (queryClient: QueryClient) =>
+  queryClient.getQueryData<RunDetailData>(["run", "run-4819"])?.run.status;
+
 describe("useDecideHeal", () => {
-  it("rejecting a heal turns the source run into a failure in the shared runs cache", async () => {
-    const queryClient = renderWithSeededRuns("rejected");
+  it("rejecting a heal turns the source run into a failure in both runs list and run detail caches", async () => {
+    const queryClient = renderWithSeededCaches("rejected");
     await waitFor(() => expect(screen.getByRole("button", { name: "decide" })).toBeEnabled());
 
     screen.getByRole("button", { name: "decide" }).click();
 
     await screen.findByTestId("done");
-    expect(statusOfRun4819(queryClient)).toBe("failed");
+    expect(statusOfRunsList(queryClient)).toBe("failed");
+    expect(statusOfRunDetail(queryClient)).toBe("failed");
   });
 
-  it("accepting a heal records passed_healed, never a plain pass", async () => {
-    const queryClient = renderWithSeededRuns("accepted");
+  it("accepting a heal records passed_healed across both runs list and run detail caches", async () => {
+    const queryClient = renderWithSeededCaches("accepted");
     await waitFor(() => expect(screen.getByRole("button", { name: "decide" })).toBeEnabled());
 
     screen.getByRole("button", { name: "decide" }).click();
 
     await screen.findByTestId("done");
-    expect(statusOfRun4819(queryClient)).toBe("passed_healed");
+    expect(statusOfRunsList(queryClient)).toBe("passed_healed");
+    expect(statusOfRunDetail(queryClient)).toBe("passed_healed");
   });
 });

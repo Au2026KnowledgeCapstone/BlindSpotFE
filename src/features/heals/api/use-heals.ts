@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fixtureSeedHeals } from "@/test/fixtures";
-import type { Run } from "@/features/runs";
+import type { Run, RunDetailData } from "@/features/runs";
 import { healSchema } from "./heal.schema";
 import { mapHeal, type Heal } from "./map-heal";
 import { deriveRunStatusFromHeal } from "../lib/derive-run-status-from-heal";
@@ -17,8 +17,9 @@ export function useHeals(projectId: string) {
 }
 
 /**
- * Accept/Reject writes to the heals cache AND the shared runs cache, so the
- * source run's status changes on the overview and the runs list too (§P7).
+ * Accept/Reject writes to the heals cache AND every cache that renders the
+ * source run's status — the runs list and the run detail — so the status
+ * changes everywhere (§P7).
  */
 export function useDecideHeal(projectId: string) {
   const queryClient = useQueryClient();
@@ -34,10 +35,14 @@ export function useDecideHeal(projectId: string) {
       );
 
       if (!decided) return;
+      const status = deriveRunStatusFromHeal(decision);
+
       queryClient.setQueryData<Run[]>(["runs", projectId], (prev) =>
-        (prev ?? []).map((run) =>
-          run.id === decided.runId ? { ...run, status: deriveRunStatusFromHeal(decision) } : run,
-        ),
+        (prev ?? []).map((run) => (run.id === decided.runId ? { ...run, status } : run)),
+      );
+
+      queryClient.setQueryData<RunDetailData>(["run", decided.runId], (prev) =>
+        prev ? { ...prev, run: { ...prev.run, status } } : prev,
       );
     },
   });
