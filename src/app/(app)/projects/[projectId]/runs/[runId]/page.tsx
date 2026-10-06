@@ -4,8 +4,8 @@ import { RunDetailContent } from "./run-detail-content";
 export default async function RunDetailPage({
   params,
 }: {
-  params: Promise<{ projectId: string; runId: string }>;
+  params: Promise<{ runId: string }>;
 }) {
-  const { projectId, runId } = await params;
-  return <RunDetailContent projectId={projectId} runId={runId} />;
+  const { runId } = await params;
+  return <RunDetailContent runId={runId} />;
 }

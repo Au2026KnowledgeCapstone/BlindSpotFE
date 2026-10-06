@@ -9,6 +9,22 @@ export interface Artifact {
   metadata?: Record<string, unknown> | undefined;
 }
 
+export interface ConsoleLogEntry {
+  id: string;
+  timestamp: string;
+  level: "info" | "warn" | "error";
+  message: string;
+}
+
+export interface NetworkLogEntry {
+  id: string;
+  timestamp: string;
+  method: string;
+  url: string;
+  status: number;
+  durationMs: number;
+}
+
 export interface Action {
   id: string;
   stepRunId: string;
@@ -29,6 +45,8 @@ export interface Action {
   reasoning?: string | undefined;
   resultText?: string | undefined;
   resultStatus?: "ok" | "bad" | undefined;
+  screenshotUrl?: string | undefined;
+  clickPoint?: { x: number; y: number } | undefined;
 }
 
 export interface TestStepRun {
@@ -39,6 +57,11 @@ export interface TestStepRun {
   status: "passed" | "failed" | "healed" | "running";
   durationMs: number;
   actions: Action[];
+  screenshotUrl?: string | undefined;
+  beforeScreenshotUrl?: string | undefined;
+  afterScreenshotUrl?: string | undefined;
+  consoleLogs?: ConsoleLogEntry[] | undefined;
+  networkLogs?: NetworkLogEntry[] | undefined;
 }
 
 export interface Failure {

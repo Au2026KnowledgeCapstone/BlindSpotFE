@@ -1,70 +1,70 @@
 "use client";
 
-import React from "react";
-import { useRunDetail } from "@/features/runs";
-import type { Failure, TestStepRun } from "@/features/runs";
+import React, { useState } from "react";
+import { useRunDetail, useRunSelection } from "@/features/runs";
+import { RunHeader } from "./run-header";
+import { FailureSummary } from "./failure-summary";
+import { StepsPane } from "./steps-pane";
+import { EvidencePane } from "./evidence-pane";
+import { DetailsTabs } from "./details-tabs";
 
-function FailureBanner({ failure }: { failure: Failure }) {
+function RunLoadingState() {
   return (
-    <div className="border border-fail-border bg-fail-tint p-4 rounded text-xs space-y-2">
-      <div className="font-semibold text-fail">
-        ✗ Failure at step {failure.stepNumber} — Expected vs Observed
-      </div>
-      <div><b className="text-secondary">Expected:</b> {failure.expected}</div>
-      <div><b className="text-secondary">Observed:</b> {failure.observed}</div>
+    <div className="flex items-center justify-center min-h-[400px] text-xs font-mono text-[var(--bs-text-tertiary)]">
+      Loading run details and execution trace...
     </div>
   );
 }
 
-function StepsList({ steps }: { steps: TestStepRun[] }) {
+function RunErrorState() {
   return (
-    <div className="border border-border rounded p-4 bg-raised space-y-2">
-      <h2 className="text-sm font-semibold text-primary">Steps & Actions</h2>
-      {steps.map((step) => (
-        <div key={step.id} className="p-3 border border-border rounded bg-panel text-xs space-y-2">
-          <div className="flex justify-between font-medium">
-            <span>{step.stepNumber}. {step.title}</span>
-            <span className="font-mono text-tertiary">{step.status}</span>
-          </div>
-          <div className="pl-4 space-y-1 text-tertiary font-mono text-[11px]">
-            {step.actions.map((act) => (
-              <div key={act.id} className="flex gap-2">
-                <span>[{act.badgeType}]</span>
-                <span>{act.description}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="p-6 border border-[var(--bs-fail-border)] bg-[var(--bs-fail-tint)] rounded-lg text-xs text-[var(--bs-fail)]">
+      Failed to load run details. Please check connection or run ID.
     </div>
   );
 }
 
-export function RunDetailContent({ projectId, runId }: { projectId: string; runId: string }) {
-  const { data, isLoading } = useRunDetail(runId);
+export function RunDetailContent({ runId }: { runId: string }) {
+  const { data, isLoading, error } = useRunDetail(runId);
+  const steps = data?.steps ?? [];
+  const selection = useRunSelection(steps);
+  const [collapsedIds, setCollapsedIds] = useState<string[]>([]);
 
-  if (isLoading) return <div className="text-xs text-tertiary">Loading run details...</div>;
+  if (isLoading) return <RunLoadingState />;
+  if (error || !data) return <RunErrorState />;
 
-  const { run, steps, failure } = data!;
+  const toggleStepExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCollapsedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-primary">
-            {run.flowName} <span className="font-mono text-tertiary">#{run.runNumber}</span>
-          </h1>
-          <p className="text-xs text-tertiary">
-            Started {run.startedAt} · {run.durationSeconds}s · branch <code className="text-secondary">{run.branch}</code> @ <code className="text-secondary">{run.commitSha}</code>
-          </p>
-        </div>
-        <span className="font-mono text-xs px-2.5 py-1 rounded bg-panel border border-border">
-          {run.status}
-        </span>
-      </div>
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
+      <RunHeader run={data.run} />
+      <FailureSummary
+        failure={data.failure}
+        lastPassingRunNumber={data.run.runNumber - 1}
+        firstFailingRunNumber={data.run.runNumber}
+      />
 
-      {failure && <FailureBanner failure={failure} />}
-      <StepsList steps={steps} />
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)_400px] gap-4 items-start">
+        <StepsPane
+          steps={steps}
+          selection={selection}
+          collapsedIds={collapsedIds}
+          onToggleExpand={toggleStepExpand}
+        />
+        <EvidencePane steps={steps} selection={selection} />
+        <DetailsTabs
+          steps={steps}
+          currentStep={selection.currentStep}
+          failure={data.failure}
+          activeTab={selection.tab}
+          onSelectTab={selection.selectTab}
+        />
+      </div>
     </div>
   );
 }
