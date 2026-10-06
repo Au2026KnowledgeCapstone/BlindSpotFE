@@ -1,16 +1,8 @@
 import React from "react";
-import { StabilityStrip, type RunBar } from "@/shared/ui/StabilityStrip";
+import { StabilityStrip } from "@/shared/ui/StabilityStrip";
+import type { Flow } from "../types";
 
-export type FlowListRow = {
-  id: string;
-  name: string;
-  featureArea: string;
-  lastStatus: string;
-  lastRunAt: string;
-  history: RunBar[];
-};
-
-export function FlowsList({ flows }: { flows: FlowListRow[] }) {
+export function FlowsList({ flows }: { flows: Flow[] }) {
   const areas = [...new Set(flows.map((f) => f.featureArea))];
 
   return (

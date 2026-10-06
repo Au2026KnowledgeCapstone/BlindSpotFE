@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { flowCreateSchema, type FlowFormValues } from "../api/flow.schema";
+import { flowCreateSchema, type FlowFormValues } from "../api/flow-form.schema";
+import { flowsQueryKey, useFlows } from "../api/use-flows";
 import { draftPlanForGoal } from "../lib/draft-plan-for-goal";
-import type { FlowListRow } from "../components/FlowsList";
-import { SEED_FLOWS } from "../lib/seed-flows";
+import type { Flow } from "../types";
 
 type SaveState = "idle" | "pending" | "error" | "success";
 
-export function useFlowEditor() {
-  const [flows, setFlows] = useState<FlowListRow[]>(SEED_FLOWS);
+export function useFlowEditor(projectId: string) {
+  const queryClient = useQueryClient();
+  const flowsQuery = useFlows(projectId);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
@@ -38,19 +40,29 @@ export function useFlowEditor() {
       setSaveState("error");
       return;
     }
-    setFlows((prev) => [
-      ...prev,
-      {
-        id: `flow-${prev.length + 1}`,
-        name: values.name,
-        featureArea: "Uncategorised",
-        lastStatus: "Queued",
-        lastRunAt: "not yet run",
-        history: [],
-      },
+    queryClient.setQueryData<Flow[]>(flowsQueryKey(projectId), (prev) => [
+      ...(prev ?? []),
+      toSavedFlow(values, projectId, prev?.length ?? 0),
     ]);
     setSaveState("success");
   });
 
-  return { flows, form, submit, generatePlan, isGenerating, saveState };
+  return { flowsQuery, form, submit, generatePlan, isGenerating, saveState };
+}
+
+function toSavedFlow(values: FlowFormValues, projectId: string, existingCount: number): Flow {
+  return {
+    id: `flow-${existingCount + 1}`,
+    projectId,
+    name: values.name,
+    description: values.goal,
+    goal: values.goal,
+    status: "active",
+    featureArea: "Uncategorised",
+    steps: values.steps,
+    settings: values.settings,
+    history: [],
+    lastStatus: "Queued",
+    lastRunAt: "not yet run",
+  };
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
-import type { FlowFormValues } from "../api/flow.schema";
+import type { FlowFormValues } from "../api/flow-form.schema";
 
 export function FlowGoalFields({
   register,

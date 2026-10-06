@@ -1,6 +1,6 @@
 import React from "react";
 import type { UseFormRegister } from "react-hook-form";
-import type { FlowFormValues } from "../api/flow.schema";
+import type { FlowFormValues } from "../api/flow-form.schema";
 
 export function FlowSettingsFields({ register }: { register: UseFormRegister<FlowFormValues> }) {
   return (

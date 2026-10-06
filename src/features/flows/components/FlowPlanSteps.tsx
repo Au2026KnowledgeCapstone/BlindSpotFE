@@ -2,7 +2,7 @@ import React from "react";
 import type { Control, UseFormRegister } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
 import { Inference } from "@/shared/ui/Inference";
-import type { FlowFormValues } from "../api/flow.schema";
+import type { FlowFormValues } from "../api/flow-form.schema";
 
 export function FlowPlanSteps({
   control,

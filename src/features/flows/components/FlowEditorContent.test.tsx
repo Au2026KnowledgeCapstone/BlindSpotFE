@@ -1,8 +1,19 @@
+import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { FlowEditorContent } from "./FlowEditorContent";
 
-function createFlow(name: string, goal: string) {
+function renderEditor() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <FlowEditorContent projectId="acme-corp" />
+    </QueryClientProvider>,
+  );
+}
+
+function fillGoalAndGenerate(name: string, goal: string) {
   fireEvent.change(screen.getByLabelText(/Flow name/i), { target: { value: name } });
   fireEvent.change(screen.getByLabelText(/^Goal$/i), { target: { value: goal } });
   fireEvent.click(screen.getByRole("button", { name: /Generate plan/i }));
@@ -10,13 +21,14 @@ function createFlow(name: string, goal: string) {
 
 describe("FlowEditorContent", () => {
   it("creates a flow, edits its generated plan, saves it and lists it", async () => {
-    render(<FlowEditorContent projectId="acme-corp" />);
+    renderEditor();
+    await screen.findByTestId("flows-list");
 
-    createFlow("Gift card redemption", "redeem a gift card at checkout");
+    fillGoalAndGenerate("Gift card redemption", "redeem a gift card at checkout");
 
-    const firstStep = screen.getAllByLabelText(/^Goal$/i)[1];
-    expect(firstStep).toBeDefined();
-    fireEvent.change(firstStep!, { target: { value: "Open the gift card page" } });
+    const stepGoal = screen.getAllByLabelText(/^Goal$/i)[1];
+    expect(stepGoal).toBeDefined();
+    fireEvent.change(stepGoal!, { target: { value: "Open the gift card page" } });
 
     fireEvent.click(screen.getByRole("button", { name: /Save flow/i }));
 
@@ -26,9 +38,10 @@ describe("FlowEditorContent", () => {
   });
 
   it("keeps the draft plan inside Inference until it is saved", async () => {
-    render(<FlowEditorContent projectId="acme-corp" />);
-    createFlow("Gift card redemption", "redeem a gift card at checkout");
+    renderEditor();
+    await screen.findByTestId("flows-list");
 
+    fillGoalAndGenerate("Gift card redemption", "redeem a gift card at checkout");
     expect(screen.getByTestId("inference-wrapper")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Save flow/i }));
@@ -39,7 +52,8 @@ describe("FlowEditorContent", () => {
   });
 
   it("reports a form error instead of saving an empty plan", async () => {
-    render(<FlowEditorContent projectId="acme-corp" />);
+    renderEditor();
+    await screen.findByTestId("flows-list");
 
     fireEvent.change(screen.getByLabelText(/Flow name/i), { target: { value: "Empty flow" } });
     fireEvent.change(screen.getByLabelText(/^Goal$/i), { target: { value: "do something" } });

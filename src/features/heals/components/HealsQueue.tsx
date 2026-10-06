@@ -1,104 +1,93 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { StatusBadge } from "@/shared/ui/StatusBadge";
+import { ScreenshotFrame } from "@/shared/ui/ScreenshotFrame";
+import { AsyncBoundary } from "@/shared/ui/AsyncBoundary";
+import { useDecideHeal, useHeals, type HealDecision } from "../api/use-heals";
+import type { Heal } from "../api/map-heal";
+import { deriveRunStatusFromHeal } from "../lib/derive-run-status-from-heal";
 
-type HealDecision = "pending" | "accepted" | "rejected";
-
-type PendingHeal = {
-  id: string;
-  runId: string;
-  oldTarget: string;
-  newTarget: string;
-  decision: HealDecision;
-  healedAt: string;
-};
-
-const SEED_HEALS: PendingHeal[] = [
-  {
-    id: "heal-01",
-    runId: "run-4819",
-    oldTarget: 'button[data-test="place-order"]',
-    newTarget: 'button:has-text("Place Order")',
-    decision: "pending",
-    healedAt: "2m ago",
-  },
-  {
-    id: "heal-02",
-    runId: "run-4820",
-    oldTarget: "#checkout-submit",
-    newTarget: 'form#checkout button[type="submit"]',
-    decision: "pending",
-    healedAt: "1h ago",
-  },
-];
-
-export function HealsQueue() {
-  const [heals, setHeals] = useState<PendingHeal[]>(SEED_HEALS);
-
-  const decide = (id: string, decision: HealDecision) =>
-    setHeals((prev) => prev.map((h) => (h.id === id ? { ...h, decision } : h)));
+export function HealsQueue({ projectId }: { projectId: string }) {
+  const { data: heals, isLoading, error, refetch } = useHeals(projectId);
+  const decide = useDecideHeal(projectId);
 
   return (
-    <div className="border border-border bg-panel rounded-md p-4 space-y-3">
-      <h3 className="text-xs font-semibold text-primary uppercase tracking-wider">Pending heals</h3>
-      <div className="space-y-2">
-        {heals.map((heal) => (
-          <HealRow key={heal.id} heal={heal} onDecide={decide} />
-        ))}
-      </div>
-    </div>
+    <AsyncBoundary<Heal[]> isLoading={isLoading} error={error} data={heals ?? null} onRetry={() => void refetch()}>
+      {(loaded) => (
+        <div className="border border-border bg-panel rounded-md p-4 space-y-3">
+          <h3 className="text-xs font-semibold text-primary uppercase tracking-wider">Pending heals</h3>
+          <div className="space-y-2">
+            {loaded.map((heal) => (
+              <HealRow
+                key={heal.id}
+                heal={heal}
+                isPending={decide.isPending}
+                onDecide={(healId, decision) => decide.mutate({ healId, decision })}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </AsyncBoundary>
   );
 }
 
 function HealRow({
   heal,
+  isPending,
   onDecide,
 }: {
-  heal: PendingHeal;
-  onDecide: (id: string, decision: HealDecision) => void;
+  heal: Heal;
+  isPending: boolean;
+  onDecide: (healId: string, decision: HealDecision) => void;
 }) {
   return (
     <div className="border border-border bg-raised rounded-md p-3 space-y-2" data-testid={`heal-${heal.id}`}>
       <div className="flex items-center justify-between text-xs">
-        <span className="font-mono text-tertiary">Source run {heal.runId}</span>
-        <span className="text-secondary">{RUN_LABEL[heal.decision]}</span>
+        <span className="font-mono text-tertiary">Source run {heal.runId} · step {heal.stepNumber}</span>
+        {heal.decision === "pending" ? (
+          <span className="text-secondary">Awaiting review</span>
+        ) : (
+          <StatusBadge status={deriveRunStatusFromHeal(heal.decision)} />
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <TargetCell label="Before" value={heal.oldTarget} />
-        <TargetCell label="After" value={heal.newTarget} />
+        <TargetCell label="Before" target={heal.oldTarget} screenshotUrl={heal.beforeScreenshotUrl} />
+        <TargetCell label="After" target={heal.newTarget} screenshotUrl={heal.afterScreenshotUrl} />
       </div>
       <div className="flex items-center justify-between pt-1">
         <span className="text-[11px] text-tertiary">Healed {heal.healedAt}</span>
-        {heal.decision === "pending" && <HealActions healId={heal.id} onDecide={onDecide} />}
+        {heal.decision === "pending" && (
+          <HealActions healId={heal.id} isPending={isPending} onDecide={onDecide} />
+        )}
       </div>
     </div>
   );
 }
 
-const RUN_LABEL: Record<HealDecision, string> = {
-  pending: "Awaiting review",
-  accepted: "Passed · healed",
-  rejected: "Failed",
-};
-
 function HealActions({
   healId,
+  isPending,
   onDecide,
 }: {
   healId: string;
-  onDecide: (id: string, decision: HealDecision) => void;
+  isPending: boolean;
+  onDecide: (healId: string, decision: HealDecision) => void;
 }) {
   return (
     <div className="flex gap-2">
       <button
         type="button"
+        disabled={isPending}
         onClick={() => onDecide(healId, "accepted")}
         className="px-3 py-1 text-[11px] font-medium rounded border border-border text-pass"
       >
-        Accept
+        {isPending ? "Saving…" : "Accept"}
       </button>
       <button
         type="button"
+        disabled={isPending}
         onClick={() => onDecide(healId, "rejected")}
         className="px-3 py-1 text-[11px] font-medium rounded border border-border text-fail"
       >
@@ -108,11 +97,20 @@ function HealActions({
   );
 }
 
-function TargetCell({ label, value }: { label: string; value: string }) {
+function TargetCell({
+  label,
+  target,
+  screenshotUrl,
+}: {
+  label: string;
+  target: string;
+  screenshotUrl: string;
+}) {
   return (
     <div className="space-y-1">
       <div className="text-tertiary">{label}</div>
-      <div className="bg-panel border border-border rounded p-1 font-mono text-primary break-all">{value}</div>
+      <div className="bg-panel border border-border rounded p-1 font-mono text-primary break-all">{target}</div>
+      <ScreenshotFrame url={target} beforeSrc={screenshotUrl} alt={`${label} target screenshot`} />
     </div>
   );
 }

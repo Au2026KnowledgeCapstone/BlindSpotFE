@@ -1,4 +1,4 @@
-import type { FlowFormValues } from "../api/flow.schema";
+import type { FlowFormValues } from "../api/flow-form.schema";
 
 type DraftStep = FlowFormValues["steps"][number];
 
