@@ -11,6 +11,6 @@
 | P4b | Run detail: live run UI | Run Detail Engineer | fe/run-detail/live-run-ui | - | Pending | Pending |
 | P5 | Project overview | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
 | P6 | Flows list + flow editor | Product Screens Engineer | fe/product-screens/overview | `6567d4888a1624ef14bee7f90f89d92f10e06d73` | APPROVE | PASS |
-| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/heal-run-detail-cache | `9cf03f6fa87924b5d725a8cb2ebc34e68333ea66` | APPROVE | Pending (re-verify run detail cache fix) |
-| P8a | Light-theme contrast + focus rings | Design System Engineer | fe/design-system/light-theme-pass | `bd8c83c59f1053896a935d3daa53c1897d47165b` | APPROVE | Pending |
+| P7 | Heals queue + envs + runs | Product Screens Engineer | fe/product-screens/heal-run-detail-cache | `9cf03f6fa87924b5d725a8cb2ebc34e68333ea66` | APPROVE | PASS |
+| P8a | Light-theme contrast + focus rings | Design System Engineer | fe/design-system/light-theme-pass | `f6ce6787365a6625c291f5e68852303901c55522` | APPROVE | Pending |
 | P8b | Keyboard pass, impeccable audit, Playwright demo path | Design QA + All | - | - | Pending | Pending |
