@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { loginSchema, type LoginFormValues } from "../schemas";
 import { authService } from "../services/auth-service";
 
 export function LoginForm() {
-  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
   const [authError, setAuthError] = useState("");
 
   const {
@@ -27,19 +28,17 @@ export function LoginForm() {
 
   /**
    * Authenticates an existing user through Supabase.
-   * Only a successful authentication creates a session.
+   * Redirects to the dashboard after successful login.
    */
   const onSubmit = async (values: LoginFormValues) => {
     setAuthError("");
-    setSuccessMessage("");
 
     try {
       const { session } = await authService.signIn(values);
 
       if (session) {
-        setSuccessMessage(
-          "Signed in successfully! Your session is active."
-        );
+        router.replace("/projects/acme-corp");
+        router.refresh();
       } else {
         setAuthError(
           "Unable to establish a session. Please try again."
@@ -110,6 +109,16 @@ export function LoginForm() {
         )}
       </div>
 
+      {/* Forgot password link */}
+      <div className="text-right">
+        <Link
+          href="/forgot-password"
+          className="text-sm font-medium text-accent hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       {/* Submit button */}
       <Button
         type="submit"
@@ -124,13 +133,6 @@ export function LoginForm() {
       {authError && (
         <p role="alert" className="text-sm text-fail">
           {authError}
-        </p>
-      )}
-
-      {/* Successful login message */}
-      {successMessage && (
-        <p role="status" className="text-sm text-pass">
-          {successMessage}
         </p>
       )}
 
