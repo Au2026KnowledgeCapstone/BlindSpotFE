@@ -7,14 +7,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { signupSchema, type SignupFormValues } from "../schemas";
+import { authService } from "../services/auth-service";
 
 export function SignupForm() {
-  const [validated, setValidated] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [authError, setAuthError] = useState("");
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -24,21 +26,48 @@ export function SignupForm() {
     },
   });
 
-  // Temporary validation until Supabase Auth is integrated.
-  const onSubmit = () => {
-    setValidated(true);
+  /**
+   * Registers a user through Supabase Auth.
+   * If email confirmation is enabled, the user must verify
+   * their email before signing in.
+   */
+  const onSubmit = async (values: SignupFormValues) => {
+    setAuthError("");
+    setSuccessMessage("");
+
+    try {
+      const { session } = await authService.signUp(values);
+
+      if (session) {
+        setSuccessMessage(
+          "Account created successfully! You are signed in."
+        );
+      } else {
+        setSuccessMessage(
+          "Signup request submitted! Check your email to confirm your account."
+        );
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+
+      setAuthError(
+        "Unable to create your account. Please try again."
+      );
+    }
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      onChange={() => setValidated(false)}
       noValidate
       className="space-y-5"
     >
       {/* Email field */}
       <div className="space-y-2">
-        <label htmlFor="signup-email" className="text-sm font-medium">
+        <label
+          htmlFor="signup-email"
+          className="text-sm font-medium"
+        >
           Email address
         </label>
 
@@ -61,7 +90,10 @@ export function SignupForm() {
 
       {/* Password field */}
       <div className="space-y-2">
-        <label htmlFor="signup-password" className="text-sm font-medium">
+        <label
+          htmlFor="signup-password"
+          className="text-sm font-medium"
+        >
           Password
         </label>
 
@@ -114,14 +146,26 @@ export function SignupForm() {
       </div>
 
       {/* Submit button */}
-      <Button type="submit" variant="outline" className="w-full">
-        Submit
+      <Button
+        type="submit"
+        variant="outline"
+        className="w-full"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Creating account..." : "Create account"}
       </Button>
 
-      {validated && (
-        <p role="status" className="text-sm text-secondary">
-          Details validated. Account creation will be enabled
-          when Supabase is connected.
+      {/* Supabase authentication error */}
+      {authError && (
+        <p role="alert" className="text-sm text-fail">
+          {authError}
+        </p>
+      )}
+
+      {/* Account creation / email confirmation message */}
+      {successMessage && (
+        <p role="status" className="text-sm text-pass">
+          {successMessage}
         </p>
       )}
 
@@ -138,4 +182,3 @@ export function SignupForm() {
     </form>
   );
 }
-
