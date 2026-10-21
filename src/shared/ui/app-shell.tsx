@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Bandage, Globe } from "lucide-react";
+import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe } from "lucide-react";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { label: "Overview", suffix: "", icon: LayoutDashboard },
   { label: "Flows", suffix: "/flows", icon: Zap },
   { label: "Runs", suffix: "/runs", icon: Play },
-  { label: "Heals Queue", suffix: "/heals", icon: Bandage },
   { label: "Environments", suffix: "/environments", icon: Globe },
 ];
 
