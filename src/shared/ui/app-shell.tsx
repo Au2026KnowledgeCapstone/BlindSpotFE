@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AccountMenu } from "@/features/auth";
+import { HeaderContext } from "./header-context";
 import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe } from "lucide-react";
 
 export interface AppShellProps {
@@ -67,26 +69,12 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
 
 function TopHeader({ projectId }: { projectId: string }) {
   return (
-    <header className="flex h-12 items-center justify-between px-6 border-b border-border bg-panel text-xs">
-      <div className="flex items-center gap-3">
-        <select
-          defaultValue={projectId}
-          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-primary font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
-        >
-          <option value="acme-corp">Acme Corp</option>
-        </select>
-        <span className="text-quaternary">/</span>
-        <select
-          defaultValue="staging"
-          className="bg-raised border border-border rounded px-2.5 py-1 text-xs text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
-        >
-          <option value="production">Production</option>
-          <option value="staging">Staging</option>
-          <option value="pr_preview">PR Preview #482</option>
-          <option value="development">Development</option>
-        </select>
+    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-panel px-4 text-xs sm:px-6">
+      <HeaderContext projectId={projectId} />
+      <div className="flex shrink-0 items-center gap-3">
+        <ThemeToggle />
+        <AccountMenu />
       </div>
-      <ThemeToggle />
     </header>
   );
 }

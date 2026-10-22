@@ -7,6 +7,13 @@ import type { LoginFormValues, SignupFormValues } from "../schemas";
  * Supabase handles password verification and session creation.
  */
 export const authService = {
+  async getUser() {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user;
+  },
+
   // Authenticate an existing user.
   async signIn({ email, password }: LoginFormValues) {
     const supabase = createClient();
