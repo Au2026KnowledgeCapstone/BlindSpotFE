@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { NetworkLogEntry, TestStepRun } from "@/features/runs";
+import { FIELD_CHECKBOX } from "@/shared/ui/field";
 
 export interface NetworkTabProps {
   steps: TestStepRun[];
@@ -11,11 +12,11 @@ export interface NetworkTabProps {
 function NetworkRow({ entry }: { entry: NetworkLogEntry }) {
   const isError = entry.status >= 400;
   const shell = isError
-    ? "border-[var(--bs-fail-border)] bg-[var(--bs-fail-tint)] text-[var(--bs-fail)]"
-    : "border-[var(--bs-border-subtle)] bg-[var(--bs-bg-raised)] text-[var(--bs-text-secondary)]";
+    ? "border-fail-border bg-fail-tint text-fail"
+    : "border-subtle bg-raised text-fg-secondary";
   const chip = isError
-    ? "bg-[var(--bs-fail)] text-white"
-    : "bg-[var(--bs-pass-tint)] text-[var(--bs-pass)]";
+    ? "bg-fail text-white"
+    : "bg-pass-tint text-pass";
 
   return (
     <li className={`p-2 rounded border flex items-center justify-between ${shell}`}>
@@ -24,7 +25,7 @@ function NetworkRow({ entry }: { entry: NetworkLogEntry }) {
         <span className="truncate">{entry.url}</span>
       </span>
       <span className="flex items-center gap-2 shrink-0">
-        <span className={`px-1.5 py-0.5 rounded text-[10px] tabular-nums ${chip}`}>
+        <span className={`px-1.5 py-0.5 rounded text-[11px] tabular-nums ${chip}`}>
           {entry.status}
         </span>
         <span className="tabular-nums">{entry.durationMs}ms</span>
@@ -42,15 +43,15 @@ export function NetworkTab({ steps, currentStep }: NetworkTabProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--bs-text-secondary)]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-fg-secondary">
           {showAll ? "All steps" : `Step ${currentStep?.stepNumber ?? "—"}`}
         </span>
-        <label className="flex items-center gap-1.5 text-xs text-[var(--bs-text-tertiary)] cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-fg-tertiary cursor-pointer">
           <input
             type="checkbox"
             checked={showAll}
             onChange={(e) => setShowAll(e.target.checked)}
-            className="rounded border-[var(--bs-border-default)] bg-[var(--bs-bg-raised)]"
+            className={FIELD_CHECKBOX}
           />
           <span>Show all</span>
         </label>

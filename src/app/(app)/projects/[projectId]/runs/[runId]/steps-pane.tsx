@@ -15,9 +15,9 @@ export interface StepsPaneProps {
 
 function StepsHeader({ count }: { count: number }) {
   return (
-    <h2 className="px-4 py-3 border-b border-[var(--bs-border-subtle)] bg-[var(--bs-bg-raised)] text-xs font-semibold uppercase tracking-wider text-[var(--bs-text-primary)] flex items-center justify-between">
+    <h2 className="px-4 py-3 border-b border-subtle bg-raised text-xs font-semibold uppercase tracking-wider text-fg flex items-center justify-between">
       <span>Steps &amp; actions</span>
-      <span className="font-mono tabular-nums text-[var(--bs-text-tertiary)]">({count})</span>
+      <span className="font-mono tabular-nums text-fg-tertiary">({count})</span>
     </h2>
   );
 }
@@ -30,7 +30,7 @@ export function StepsPane({ steps, selection, collapsedIds, currentStepNumber, i
     if (el && el.scrollTop + el.clientHeight >= el.scrollHeight - 60) el.scrollTop = el.scrollHeight;
   }, [steps.length, steps]);
 
-  const shellClass = `border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] rounded-lg overflow-hidden flex flex-col lg:h-[750px] ${isPresentationMode ? "text-2xl" : ""}`;
+  const shellClass = `border border-border bg-panel rounded-lg overflow-hidden flex flex-col lg:h-[750px] ${isPresentationMode ? "text-2xl" : ""}`;
 
   return (
     <section aria-label="Steps and actions" className={shellClass}>

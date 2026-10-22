@@ -3,10 +3,9 @@
 import React from "react";
 import { EnvironmentCards } from "@/features/environments";
 
-export function EnvironmentsContent({ projectId }: { projectId: string }) {
+export function EnvironmentsContent() {
   return (
-    <div className="space-y-4" data-testid="environments-view">
-      <h1 className="text-lg font-bold text-primary">Environments · {projectId}</h1>
+    <div data-testid="environments-view">
       <EnvironmentCards />
     </div>
   );

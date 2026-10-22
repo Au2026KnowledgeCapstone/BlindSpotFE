@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe } from "lucide-react";
+import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe, Sun, Moon } from "lucide-react";
+import { useThemeStore } from "./theme-store";
+import { Button } from "@/components/ui/button";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -23,18 +25,18 @@ function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
   return (
     <div className="flex h-12 items-center justify-between px-4 border-b border-border">
       {!collapsed && (
-        <span className="font-bold text-sm tracking-tight text-primary">
+        <span className="font-bold text-sm tracking-tight text-fg">
           Blind<span className="text-accent">Spot</span>
         </span>
       )}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={onToggle}
-        className="p-1 text-tertiary hover:text-primary rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
-        {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-      </button>
+        {collapsed ? <PanelLeft /> : <PanelLeftClose />}
+      </Button>
     </div>
   );
 }
@@ -52,10 +54,10 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${
+            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
               isActive
-                ? "bg-selected text-primary font-semibold"
-                : "text-secondary hover:text-primary hover:bg-hover"
+                ? "bg-selected text-fg font-semibold"
+                : "text-fg-secondary hover:text-fg hover:bg-hover"
             }`}
           >
             <Icon className="w-4 h-4 shrink-0" />
@@ -79,26 +81,30 @@ function TopHeader({ projectId }: { projectId: string }) {
   );
 }
 
+/**
+ * Reads the shared theme store rather than poking the DOM directly, and names
+ * the theme it switches to — the old control just said "Theme", which told you
+ * neither the current state nor what pressing it would do.
+ */
 function ThemeToggle() {
-  const toggleTheme = () => {
-    const current = document.documentElement.getAttribute("data-theme");
-    const next = current === "light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
-    try {
-      localStorage.setItem("theme", next);
-    } catch {
-      // ignore
-    }
-  };
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  const next = theme === "dark" ? "light" : "dark";
+  const label = `Switch to ${next} theme`;
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="icon-sm"
       onClick={toggleTheme}
-      className="px-2.5 py-1 text-xs border border-border rounded bg-raised text-secondary hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)]"
+      aria-label={label}
+      title={label}
     >
-      Theme
-    </button>
+      {mounted && theme === "dark" ? <Sun /> : <Moon />}
+    </Button>
   );
 }
 
@@ -118,7 +124,11 @@ export function AppShell({ children, projectId }: AppShellProps) {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopHeader projectId={projectId} />
-        <main className="flex-1 overflow-auto p-6 bg-canvas">{children}</main>
+        {/* Content caps its measure so tables and headers don't stretch to the
+            full width of an ultrawide display and lose their left-edge anchor. */}
+        <main className="flex-1 overflow-auto bg-canvas p-6">
+          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+        </main>
       </div>
     </div>
   );

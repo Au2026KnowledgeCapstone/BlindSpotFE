@@ -16,11 +16,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const Icon = config.icon;
   const SecondaryIcon = config.secondaryIcon;
 
-  const style: React.CSSProperties = {
-    backgroundColor: config.tintToken,
-    color: config.token,
-    borderColor: config.borderToken,
-  };
+  const base = `${config.chipClass} inline-flex items-center rounded-full border text-xs font-medium focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50`;
 
   if (compact) {
     return (
@@ -29,8 +25,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         role="status"
         aria-label={config.label}
         title={config.label}
-        style={style}
-        className={`inline-flex items-center justify-center w-5 h-5 rounded-full border text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${className}`}
+        className={`${base} justify-center w-5 h-5 ${className}`}
       >
         <Icon className={`w-3.5 h-3.5 ${config.spins ? "animate-spin" : ""}`} />
         {SecondaryIcon && <SecondaryIcon className="w-2.5 h-2.5 -ml-1" />}
@@ -39,11 +34,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }
 
   return (
-    <span
-      role="status"
-      style={style}
-      className={`inline-flex items-center gap-1.5 h-5 px-2 rounded-full border text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] ${className}`}
-    >
+    <span role="status" className={`${base} gap-1.5 h-5 px-2 ${className}`}>
       <Icon className={`w-3.5 h-3.5 ${config.spins ? "animate-spin" : ""}`} />
       {SecondaryIcon && <SecondaryIcon className="w-3 h-3 -ml-0.5" />}
       <span>{config.label}</span>

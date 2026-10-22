@@ -13,27 +13,27 @@ interface FilmStripItemProps {
 function FilmStripItem({ step, isSelected, onSelect }: FilmStripItemProps) {
   const isFailed = step.status === "failed";
   const borderClass = isSelected
-    ? "border-[var(--bs-accent)] ring-1 ring-[var(--bs-accent)]"
+    ? "border-accent ring-1 ring-accent"
     : isFailed
-    ? "border-[var(--bs-fail)]"
-    : "border-[var(--bs-border-subtle)] opacity-70 hover:opacity-100";
+    ? "border-fail"
+    : "border-subtle opacity-70 hover:opacity-100";
 
   return (
     <button
       type="button"
       onClick={() => onSelect(step.id)}
-      className={`relative w-28 h-18 rounded border overflow-hidden shrink-0 cursor-pointer text-left transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--bs-focus-ring)] ${borderClass}`}
+      className={`relative w-28 h-18 rounded border overflow-hidden shrink-0 cursor-pointer text-left transition-all focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${borderClass}`}
     >
       {step.screenshotUrl ? (
         <img src={step.screenshotUrl} alt={step.title} className="w-full h-full object-cover" />
       ) : (
-        <div className="w-full h-full bg-[var(--bs-bg-inset)] flex items-center justify-center text-[10px] text-[var(--bs-text-tertiary)]">
+        <div className="w-full h-full bg-inset flex items-center justify-center text-[11px] text-fg-tertiary">
           Step {step.stepNumber}
         </div>
       )}
-      <span className="absolute bottom-0 inset-x-0 bg-black/70 px-1 py-0.5 text-[9px] font-mono text-white truncate flex items-center justify-between">
+      <span className="absolute bottom-0 inset-x-0 bg-black/70 px-1 py-0.5 text-[11px] font-mono text-white truncate flex items-center justify-between">
         <span>{step.stepNumber}. {step.title}</span>
-        {isFailed && <span className="w-2 h-2 rounded-full bg-[var(--bs-fail)] animate-pulse" />}
+        {isFailed && <span className="w-2 h-2 rounded-full bg-fail animate-pulse" />}
       </span>
     </button>
   );
@@ -47,7 +47,7 @@ interface FilmStripProps {
 
 function FilmStrip({ steps, currentStepId, onSelectStep }: FilmStripProps) {
   return (
-    <div className="h-24 bg-[var(--bs-bg-raised)] border border-[var(--bs-border-subtle)] rounded-lg p-2 flex items-center gap-3 overflow-x-auto shrink-0">
+    <div className="h-24 bg-raised border border-subtle rounded-lg p-2 flex items-center gap-3 overflow-x-auto shrink-0">
       {steps.map((st) => (
         <FilmStripItem
           key={st.id}
@@ -91,13 +91,13 @@ export function EvidencePane({ steps, selection }: EvidencePaneProps) {
   return (
     <section
       aria-label="Evidence viewer"
-      className="border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] rounded-lg overflow-hidden flex flex-col lg:h-[750px]"
+      className="border border-border bg-panel rounded-lg overflow-hidden flex flex-col lg:h-[750px]"
     >
-      <div className="px-4 py-3 border-b border-[var(--bs-border-subtle)] flex items-center justify-between bg-[var(--bs-bg-raised)]">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--bs-text-primary)]">
+      <div className="px-4 py-3 border-b border-subtle flex items-center justify-between bg-raised">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-fg">
           Evidence viewer
         </h2>
-        <span className="font-mono text-[11px] text-[var(--bs-text-tertiary)]">{actionLabel}</span>
+        <span className="font-mono text-[11px] text-fg-tertiary">{actionLabel}</span>
       </div>
 
       <div className="flex-1 p-4 flex flex-col gap-4 overflow-hidden">

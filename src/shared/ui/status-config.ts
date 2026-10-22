@@ -23,9 +23,17 @@ export type RunStatus =
   | "cancelled";
 
 export interface StatusConfigItem {
-  token: string;
-  tintToken: string;
-  borderToken: string;
+  /**
+   * Tint fill, hue text, hue border — the badge/callout treatment.
+   *
+   * These are written as literal utility classes rather than `var(--bs-*)`
+   * strings so they survive Tailwind's JIT scan and can be composed with
+   * variants. A dynamically built class name (`bg-${hue}-tint`) would not be
+   * generated at all, so the literals here are deliberate.
+   */
+  chipClass: string;
+  /** The hue as a plain background, for the stability strip's bars. */
+  barClass: string;
   icon: LucideIcon;
   secondaryIcon?: LucideIcon;
   label: string;
@@ -34,67 +42,58 @@ export interface StatusConfigItem {
 
 export const STATUS_CONFIG: Record<RunStatus, StatusConfigItem> = {
   passed: {
-    token: "var(--bs-pass)",
-    tintToken: "var(--bs-pass-tint)",
-    borderToken: "var(--bs-pass-border)",
+    chipClass: "bg-pass-tint text-pass border-pass-border",
+    barClass: "bg-pass",
     icon: CircleCheck,
     label: "Passed",
   },
   passed_healed: {
-    token: "var(--bs-healed)",
-    tintToken: "var(--bs-healed-tint)",
-    borderToken: "var(--bs-healed-border)",
+    chipClass: "bg-healed-tint text-healed border-healed-border",
+    barClass: "bg-healed",
     icon: CircleCheck,
     secondaryIcon: Bandage,
     label: "Passed · healed",
   },
   failed: {
-    token: "var(--bs-fail)",
-    tintToken: "var(--bs-fail-tint)",
-    borderToken: "var(--bs-fail-border)",
+    chipClass: "bg-fail-tint text-fail border-fail-border",
+    barClass: "bg-fail",
     icon: CircleX,
     label: "Failed",
   },
   regression: {
-    token: "var(--bs-fail)",
-    tintToken: "var(--bs-fail-tint)",
-    borderToken: "var(--bs-fail-border)",
+    chipClass: "bg-fail-tint text-fail border-fail-border",
+    barClass: "bg-fail",
     icon: TrendingDown,
     label: "Regression",
   },
   agent_error: {
-    token: "var(--bs-neutral)",
-    tintToken: "var(--bs-neutral-tint)",
-    borderToken: "var(--bs-neutral-border)",
+    chipClass: "bg-neutral-tint text-neutral border-neutral-border",
+    barClass: "bg-neutral",
     icon: BotOff,
     label: "Agent error",
   },
   flaky: {
-    token: "var(--bs-warn)",
-    tintToken: "var(--bs-warn-tint)",
-    borderToken: "var(--bs-warn-border)",
+    chipClass: "bg-warn-tint text-warn border-warn-border",
+    barClass: "bg-warn",
     icon: Shuffle,
     label: "Flaky",
   },
   running: {
-    token: "var(--bs-accent)",
-    tintToken: "var(--bs-accent-tint)",
-    borderToken: "var(--bs-accent-border)",
+    chipClass: "bg-accent-tint text-accent border-accent-border",
+    barClass: "bg-accent",
     icon: LoaderCircle,
     label: "Running",
     spins: true,
   },
   queued: {
-    token: "var(--bs-neutral)",
-    tintToken: "var(--bs-neutral-tint)",
-    borderToken: "var(--bs-neutral-border)",
+    chipClass: "bg-neutral-tint text-neutral border-neutral-border",
+    barClass: "bg-neutral",
     icon: CircleDashed,
     label: "Queued",
   },
   cancelled: {
-    token: "var(--bs-neutral)",
-    tintToken: "var(--bs-neutral-tint)",
-    borderToken: "var(--bs-neutral-border)",
+    chipClass: "bg-neutral-tint text-neutral border-neutral-border",
+    barClass: "bg-neutral",
     icon: CircleSlash,
     label: "Cancelled",
   },
