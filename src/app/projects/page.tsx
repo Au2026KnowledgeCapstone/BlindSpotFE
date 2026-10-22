@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Building2, ChevronRight } from "lucide-react";
+import { AccountMenu } from "@/features/auth";
 
 const PROJECTS = [{ id: "acme-corp", name: "Acme Corp" }];
 
@@ -7,11 +8,14 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-canvas text-fg p-6">
       <div className="max-w-2xl mx-auto space-y-6">
-        <div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
           <span className="font-bold text-sm tracking-tight text-primary">
             Blind<span className="text-accent">Spot</span>
           </span>
           <h1 className="text-lg font-bold text-primary mt-3">Projects</h1>
+          </div>
+          <AccountMenu />
         </div>
 
         <div className="border border-border bg-panel rounded-md divide-y divide-border">

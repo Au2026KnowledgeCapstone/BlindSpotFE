@@ -50,6 +50,7 @@ const SURFACES = [
   "--bs-bg-panel",
   "--bs-bg-raised",
   "--bs-bg-inset",
+  "--bs-bg-overlay",
 ] as const;
 
 const STATUS_HUES = [
@@ -73,8 +74,8 @@ describe("P8 light theme status & border contrast", () => {
   });
 
   it.each(STATUS_HUES)("%s carries white text at 4.5:1 when used as a solid fill", (hue) => {
-    const canvasToken = token("--bs-bg-canvas");
-    expect(contrast(canvasToken, token(hue))).toBeGreaterThanOrEqual(4.5);
+    const foreground = token("--primary-foreground");
+    expect(contrast(foreground, token(hue))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("border-strong clears the 3:1 non-text floor on every surface", () => {
@@ -87,6 +88,12 @@ describe("P8 light theme status & border contrast", () => {
 });
 
 describe("P8 light theme UI element contrast", () => {
+  it.each(["--bs-text-primary", "--bs-text-secondary", "--bs-text-tertiary"])("%s reads at 4.5:1 on every surface", (text) => {
+    for (const surface of SURFACES) {
+      expect(contrast(token(text), token(surface))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("focus ring clears 3:1 on every surface", () => {
     const ring = token("--bs-focus-ring");
     for (const surface of SURFACES) {
