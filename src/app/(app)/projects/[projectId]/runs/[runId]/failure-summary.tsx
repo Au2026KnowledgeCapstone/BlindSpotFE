@@ -24,14 +24,14 @@ function RegressionBlock({
   firstFailing: number;
 }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--bs-fail-border)] bg-[var(--bs-fail-tint)] text-xs text-[var(--bs-text-primary)]">
-      <TrendingDown className="w-4 h-4 text-[var(--bs-fail)]" aria-hidden="true" />
-      <span className="font-medium text-[var(--bs-fail)]">Regression</span>
-      <span className="text-[var(--bs-text-secondary)]">
+    <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-fail-border bg-fail-tint text-xs text-fg">
+      <TrendingDown className="w-4 h-4 text-fail" aria-hidden="true" />
+      <span className="font-medium text-fail">Regression</span>
+      <span className="text-fg-secondary">
         last passing run{" "}
-        <span className="font-mono tabular-nums text-[var(--bs-text-primary)]">#{lastPassing}</span>
+        <span className="font-mono tabular-nums text-fg">#{lastPassing}</span>
         {" → first failing run "}
-        <span className="font-mono tabular-nums text-[var(--bs-text-primary)]">#{firstFailing}</span>
+        <span className="font-mono tabular-nums text-fg">#{firstFailing}</span>
       </span>
     </div>
   );
@@ -49,7 +49,7 @@ export function FailureSummary({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-lg bg-[var(--bs-fail-tint)] border border-[var(--bs-fail-border)] text-xs font-medium text-[var(--bs-fail)]">
+      <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-lg bg-fail-tint border border-fail-border text-xs font-medium text-fail">
         <span className="flex items-center gap-2">
           <CircleX className="w-4 h-4" aria-hidden="true" />
           <span>
@@ -59,7 +59,7 @@ export function FailureSummary({
             <strong>{CATEGORY_COPY[failure.category]}</strong>
           </span>
         </span>
-        <span className="font-mono text-[11px] text-[var(--bs-text-tertiary)]">{failure.id}</span>
+        <span className="font-mono text-[11px] text-fg-tertiary">{failure.id}</span>
       </div>
 
       <ExpectedObserved expected={failure.expected} observed={failure.observed} />

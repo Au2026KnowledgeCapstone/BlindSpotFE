@@ -20,6 +20,12 @@
   --bs-border-strong: #ffffff26;
   --bs-focus-ring: #7c93ff;
 
+  /* 3.5 Elevation. Depth is tonal first; these two are the whole shadow
+     vocabulary. "ambient" is the resting lift on raised cards, "overlay"
+     belongs only to portalled surfaces that leave the document flow. */
+  --bs-shadow-ambient: 0 1px 2px rgb(0 0 0 / 0.28), 0 4px 12px rgb(0 0 0 / 0.16);
+  --bs-shadow-overlay: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+
   /* 3.2 Accent: Signal Blue */
   --bs-accent: #7c93ff;
   --bs-accent-solid: #3d5afe;
@@ -98,6 +104,11 @@
   --bs-border-default: #34483b21;
   --bs-border-strong: #34483ba3;
   --bs-focus-ring: #4658a8;
+
+  /* 3.5 Elevation. Tinted from the sage neutral rather than pure black, and
+     much softer — on a light canvas the same opacities read as dirt. */
+  --bs-shadow-ambient: 0 1px 2px rgb(52 72 59 / 0.08), 0 4px 12px rgb(52 72 59 / 0.06);
+  --bs-shadow-overlay: 0 10px 15px -3px rgb(52 72 59 / 0.12), 0 4px 6px -4px rgb(52 72 59 / 0.1);
 
   /* Muted blue and status hues remain readable on their tinted surfaces. */
   --bs-accent: #4658a8;

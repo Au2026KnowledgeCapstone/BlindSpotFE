@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
 
 export function FlowSaveRow({
   saveState,
@@ -7,13 +8,9 @@ export function FlowSaveRow({
 }) {
   return (
     <div className="flex items-center gap-3 pt-2">
-      <button
-        type="submit"
-        disabled={saveState === "pending"}
-        className="px-4 py-2 border border-border rounded text-xs font-medium text-accent"
-      >
+      <Button type="submit" disabled={saveState === "pending"}>
         {saveState === "pending" ? "Saving…" : "Save flow"}
-      </button>
+      </Button>
       {saveState === "error" && (
         <span className="text-xs text-fail">Generate a plan before saving this flow.</span>
       )}

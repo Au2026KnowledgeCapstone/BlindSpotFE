@@ -6,13 +6,13 @@ import { ActionRow } from "./action-row";
 import { CheckCircle2, XCircle, Bandage, LoaderCircle, ChevronDown, ChevronRight } from "lucide-react";
 
 const STEP_ICON = { passed: CheckCircle2, failed: XCircle, healed: Bandage, running: LoaderCircle } as const;
-const STEP_TONE = { passed: "var(--bs-pass)", failed: "var(--bs-fail)", healed: "var(--bs-healed)", running: "var(--bs-accent)" } as const;
+const STEP_TONE = { passed: "text-pass", failed: "text-fail", healed: "text-healed", running: "text-accent" } as const;
 
 function stepShellClass(status: TestStepRun["status"], isSelected: boolean): string {
-  if (status === "failed") return "border-[var(--bs-fail-border)] bg-[var(--bs-fail-tint)]";
-  if (status === "healed") return "border-[var(--bs-healed-border)] bg-[var(--bs-healed-tint)]";
-  if (isSelected) return "border-[var(--bs-accent)] bg-[var(--bs-bg-selected)]";
-  return "border-[var(--bs-border-subtle)] bg-[var(--bs-bg-raised)]";
+  if (status === "failed") return "border-fail-border bg-fail-tint";
+  if (status === "healed") return "border-healed-border bg-healed-tint";
+  if (isSelected) return "border-accent bg-selected";
+  return "border-subtle bg-raised";
 }
 
 export interface StepRowProps {
@@ -35,16 +35,16 @@ function StepRowHeader(props: StepRowProps & { effectiveStatus: TestStepRun["sta
 
   return (
     <div className="px-2 py-2 flex items-center justify-between gap-2">
-      <button type="button" aria-expanded={isExpanded} aria-label={isExpanded ? `Collapse step ${step.stepNumber}` : `Expand step ${step.stepNumber}`} onClick={(e) => onToggleExpand(step.id, e)} className="text-[var(--bs-text-tertiary)] hover:text-[var(--bs-text-primary)] rounded p-1">
+      <button type="button" aria-expanded={isExpanded} aria-label={isExpanded ? `Collapse step ${step.stepNumber}` : `Expand step ${step.stepNumber}`} onClick={(e) => onToggleExpand(step.id, e)} className="text-fg-tertiary hover:text-fg rounded p-1">
         <Chevron className="w-4 h-4" aria-hidden="true" />
       </button>
       <button type="button" aria-current={isSelected} onClick={() => onSelectStep(step.id)} className="flex-1 min-w-0 flex items-center gap-2 text-left rounded">
-        <span className="font-mono text-xs tabular-nums text-[var(--bs-text-secondary)]">{step.stepNumber}.</span>
-        <span className={`text-[var(--bs-text-primary)] truncate ${titleClass}`}>{step.title}</span>
+        <span className="font-mono text-xs tabular-nums text-fg-secondary">{step.stepNumber}.</span>
+        <span className={`text-fg truncate ${titleClass}`}>{step.title}</span>
       </button>
       <span className="flex items-center gap-1.5 shrink-0">
-        <span className="font-mono text-[10px] tabular-nums text-[var(--bs-text-tertiary)]">{step.durationMs}ms</span>
-        <Icon aria-label={effectiveStatus} style={{ color: STEP_TONE[effectiveStatus] }} className={`w-4 h-4 ${effectiveStatus === "running" ? "animate-spin" : ""}`} />
+        <span className="font-mono text-[11px] tabular-nums text-fg-tertiary">{step.durationMs}ms</span>
+        <Icon aria-label={effectiveStatus} className={`w-4 h-4 ${STEP_TONE[effectiveStatus]} ${effectiveStatus === "running" ? "animate-spin" : ""}`} />
       </span>
     </div>
   );
@@ -58,7 +58,7 @@ export function StepRow(props: StepRowProps) {
     <li className={`rounded-md border transition-all ${stepShellClass(effectiveStatus, isSelected)}`}>
       <StepRowHeader {...props} effectiveStatus={effectiveStatus} />
       {isExpanded && (
-        <ul className="px-2 pb-2 pt-1 space-y-1.5 border-t border-[var(--bs-border-subtle)] list-none">
+        <ul className="px-2 pb-2 pt-1 space-y-1.5 border-t border-subtle list-none">
           {step.actions.map((action) => (
             <li key={action.id}>
               <ActionRow action={action} isSelected={action.id === currentActionId} isPresentationMode={isPresentationMode} onSelect={(a, e) => { e.stopPropagation(); onSelectAction(step, a); }} />

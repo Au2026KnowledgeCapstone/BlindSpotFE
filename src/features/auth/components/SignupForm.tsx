@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { signupSchema, type SignupFormValues } from "../schemas";
 import { authService } from "../services/auth-service";
+import { FIELD } from "@/shared/ui/field";
 
 export function SignupForm() {
   const [successMessage, setSuccessMessage] = useState("");
@@ -78,7 +79,7 @@ export function SignupForm() {
           placeholder="you@example.com"
           {...register("email")}
           aria-invalid={!!errors.email}
-          className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-primary"
+          className={FIELD}
         />
 
         {errors.email && (
@@ -104,10 +105,10 @@ export function SignupForm() {
           placeholder="Create a password"
           {...register("password")}
           aria-invalid={!!errors.password}
-          className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-primary"
+          className={FIELD}
         />
 
-        <p className="text-xs text-secondary">
+        <p className="text-xs text-fg-secondary">
           Use at least 8 characters, including uppercase,
           lowercase, a number, and a special character.
         </p>
@@ -135,7 +136,7 @@ export function SignupForm() {
           placeholder="Confirm your password"
           {...register("confirmPassword")}
           aria-invalid={!!errors.confirmPassword}
-          className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-primary"
+          className={FIELD}
         />
 
         {errors.confirmPassword && (
@@ -170,7 +171,7 @@ export function SignupForm() {
       )}
 
       {/* Link to login page */}
-      <p className="text-center text-sm text-secondary">
+      <p className="text-center text-sm text-fg-secondary">
         Already have an account?{" "}
         <Link
           href="/login"

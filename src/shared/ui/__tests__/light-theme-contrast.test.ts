@@ -101,7 +101,7 @@ describe("P8 light theme UI element contrast", () => {
     }
   });
 
-  it("text-quaternary clears 3:1 as decorative text on every surface", () => {
+  it("text-fg-quaternary clears 3:1 as decorative text on every surface", () => {
     const fg = token("--bs-text-quaternary");
     for (const surface of SURFACES) {
       expect(contrast(fg, token(surface))).toBeGreaterThanOrEqual(3);

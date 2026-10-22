@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const SEED_COMMENTS = [
   "Investigating the POST /api/orders 500 on staging.",
@@ -13,9 +14,9 @@ function CommentList({ comments }: { comments: string[] }) {
       {comments.map((comment, idx) => (
         <li
           key={`${idx}-${comment.slice(0, 12)}`}
-          className="p-3 rounded-lg border border-[var(--bs-border-subtle)] bg-[var(--bs-bg-raised)] text-xs text-[var(--bs-text-primary)] space-y-1"
+          className="p-3 rounded-lg border border-subtle bg-raised text-xs text-fg space-y-1"
         >
-          <span className="block text-[10px] font-semibold text-[var(--bs-text-tertiary)]">
+          <span className="block text-[11px] font-semibold text-fg-tertiary">
             Engineer
           </span>
           <span className="block">{comment}</span>
@@ -37,8 +38,8 @@ function CommentForm({ onSubmit }: { onSubmit: (text: string) => void }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-2 pt-2 border-t border-[var(--bs-border-subtle)]">
-      <label htmlFor="run-comment" className="block text-[11px] text-[var(--bs-text-tertiary)]">
+    <form onSubmit={submit} className="space-y-2 pt-2 border-t border-subtle">
+      <label htmlFor="run-comment" className="block text-[11px] text-fg-tertiary">
         Add a comment
       </label>
       <textarea
@@ -46,14 +47,11 @@ function CommentForm({ onSubmit }: { onSubmit: (text: string) => void }) {
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         rows={3}
-        className="w-full p-2.5 rounded-md border border-[var(--bs-border-default)] bg-[var(--bs-bg-inset)] text-xs text-[var(--bs-text-primary)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--bs-focus-ring)] resize-none"
+        className="w-full p-2.5 rounded-md border border-border bg-inset text-xs text-fg focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 resize-none"
       />
-      <button
-        type="submit"
-        className="px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--bs-accent-solid)] text-white hover:bg-[var(--bs-accent-solid-hover)] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--bs-focus-ring)]"
-      >
+      <Button type="submit" size="sm">
         Post comment
-      </button>
+      </Button>
     </form>
   );
 }

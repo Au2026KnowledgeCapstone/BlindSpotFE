@@ -10,12 +10,6 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   style,
 }) => {
   return (
-    <div
-      style={{
-        backgroundColor: "var(--bs-bg-raised)",
-        ...style,
-      }}
-      className={`animate-pulse rounded ${className}`}
-    />
+    <div style={style} className={`animate-pulse rounded bg-raised ${className}`} />
   );
 };

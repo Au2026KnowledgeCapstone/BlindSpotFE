@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { authService } from "@/features/auth/services/auth-service";
+import { FIELD } from "@/shared/ui/field";
+import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -146,20 +148,20 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-screen items-center justify-center bg-canvas p-6">
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-primary">
+          <h1 className="text-3xl font-bold text-fg">
             Reset Password
           </h1>
 
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-fg-secondary">
             Create a new password for your BlindSpot account.
           </p>
         </div>
 
         {checking ? (
-          <p className="text-secondary">
+          <p className="text-fg-secondary">
             Verifying your reset link...
           </p>
         ) : success ? (
@@ -209,7 +211,7 @@ export default function ResetPasswordPage() {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-primary"
+                className={FIELD}
               />
             </div>
 
@@ -230,7 +232,7 @@ export default function ResetPasswordPage() {
                 onChange={(e) =>
                   setConfirmPassword(e.target.value)
                 }
-                className="w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-primary"
+                className={FIELD}
               />
             </div>
 
@@ -240,13 +242,9 @@ export default function ResetPasswordPage() {
               </p>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium text-primary disabled:opacity-50"
-            >
+            <Button type="submit" variant="outline" size="lg" className="w-full" disabled={loading}>
               {loading ? "Updating..." : "Reset Password"}
-            </button>
+            </Button>
           </form>
         )}
       </div>

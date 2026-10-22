@@ -48,7 +48,7 @@ function PasswordSettings({ email }: { email: string }) {
   return (
     <section className="space-y-3 border-t border-border pt-5" aria-labelledby="password-heading">
       <h2 id="password-heading" className="text-sm font-semibold">Password</h2>
-      <p className="text-sm text-secondary">We’ll email you a link to securely change your password.</p>
+      <p className="text-sm text-fg-secondary">We’ll email you a link to securely change your password.</p>
       <Button variant="outline" onClick={sendResetLink} disabled={!email || sending || sent}>
         {sending ? "Sending..." : sent ? "Reset email sent" : "Send password reset email"}
       </Button>
@@ -65,12 +65,12 @@ export function AccountSettings() {
     <div className="mx-auto max-w-xl space-y-6">
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">Account settings</h1>
-        <p className="text-sm text-secondary">Manage your BlindSpot account and security.</p>
+        <p className="text-sm text-fg-secondary">Manage your BlindSpot account and security.</p>
       </div>
       <div className="space-y-5 rounded-lg border border-border bg-panel p-6">
         <div className="space-y-2">
           <h2 className="text-sm font-semibold">Email address</h2>
-          {loading ? <p role="status" className="text-sm text-secondary">Loading account...</p> : email && <p className="break-words text-sm text-secondary">{email}</p>}
+          {loading ? <p role="status" className="text-sm text-fg-secondary">Loading account...</p> : email && <p className="break-words text-sm text-fg-secondary">{email}</p>}
           {error && <p role="alert" className="text-sm text-fail">{error}</p>}
         </div>
         <PasswordSettings email={email} />

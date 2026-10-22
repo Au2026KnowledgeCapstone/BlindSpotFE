@@ -13,14 +13,14 @@ export function AiAnalysisTab({ failure }: AiAnalysisTabProps) {
 
   return (
     <Inference title="AI analysis · likely cause" certainty="high" evidenceLinks={evidenceLinks}>
-      <p className="text-[13px] font-medium">
+      <p className="text-sm font-medium">
         {failure?.likelyCause ?? "No AI analysis recorded for this run."}
       </p>
 
       {failure && failure.suggestedNextSteps.length > 0 && (
         <div className="mt-2 space-y-1 text-xs">
-          <span className="font-medium text-[var(--bs-infer)]">Suggested next steps</span>
-          <ul className="list-disc pl-4 space-y-0.5 text-[var(--bs-text-secondary)]">
+          <span className="font-medium text-infer">Suggested next steps</span>
+          <ul className="list-disc pl-4 space-y-0.5 text-fg-secondary">
             {failure.suggestedNextSteps.map((step) => (
               <li key={step}>{step}</li>
             ))}
