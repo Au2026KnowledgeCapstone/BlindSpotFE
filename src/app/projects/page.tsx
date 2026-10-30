@@ -21,6 +21,7 @@ export default function ProjectsPage() {
           description="Pick a project to see what its flows have been doing."
         />
 
+        <Link href="/workspace" className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground">Open your workspace</Link>
         <ul className="divide-y divide-subtle overflow-hidden rounded-md border border-border bg-panel shadow-ambient">
           {PROJECTS.map((project) => (
             <li key={project.id}>
