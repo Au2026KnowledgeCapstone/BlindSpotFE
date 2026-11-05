@@ -1,6 +1,19 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("BlindSpot E2E Demo Path (§P8)", () => {
+  test.beforeEach(async ({ page }) => {
+    // This fixture demo now passes through the backend session UI guard.
+    // Keep it independent of real accounts and running auth infrastructure.
+    await page.route("**/auth/me", (route) => route.fulfill({
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "http://localhost:3000",
+        "Access-Control-Allow-Credentials": "true",
+      },
+      body: JSON.stringify({ id: "11111111-1111-4111-8111-111111111111", email: "demo@example.com" }),
+    }));
+  });
   test("navigates overview -> failing run -> deep link step -> analysis tab -> comment", async ({ page }) => {
     // 1. Overview landing page
     await page.goto("/projects/acme-corp");

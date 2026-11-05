@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { LogoutButton } from "@/features/auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Bandage, Globe } from "lucide-react";
@@ -87,7 +88,10 @@ function TopHeader({ projectId }: { projectId: string }) {
           <option value="development">Development</option>
         </select>
       </div>
-      <ThemeToggle />
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        <LogoutButton />
+      </div>
     </header>
   );
 }

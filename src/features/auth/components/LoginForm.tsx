@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginFormValues } from "../schemas";
+import { AuthRequestError } from "../services/backend-auth";
 import { authService } from "../services/auth-service";
 
 export function LoginForm() {
@@ -27,16 +28,16 @@ export function LoginForm() {
   });
 
   /**
-   * Authenticates an existing user through Supabase.
+   * Authenticates an existing user through the backend cookie session.
    * Redirects to the dashboard after successful login.
    */
   const onSubmit = async (values: LoginFormValues) => {
     setAuthError("");
 
     try {
-      const { session } = await authService.signIn(values);
+      const { authenticated, user } = await authService.signIn(values);
 
-      if (session) {
+      if (authenticated && user) {
         router.replace("/projects/acme-corp");
         router.refresh();
       } else {
@@ -44,10 +45,9 @@ export function LoginForm() {
           "Unable to establish a session. Please try again."
         );
       }
-    } catch {
-      setAuthError(
-        "Unable to sign in. Check your email, password, and email verification."
-      );
+    } catch (error) {
+      setAuthError(error instanceof AuthRequestError ? error.message :
+        "Unable to sign in. Please try again.");
     }
   };
 

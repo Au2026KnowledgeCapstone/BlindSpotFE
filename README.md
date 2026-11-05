@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## FastAPI cookie login
+
+Configure `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` in your local environment
+without replacing existing Supabase settings. Run the frontend at
+`http://localhost:3000` and backend at `http://localhost:8000`; use localhost for both.
+See [setup, session/CSRF contract, checks, and manual login/reload/logout steps](docs/backend-authentication.md).
+
+Login, current-user lookup and logout now use the FastAPI HttpOnly-cookie session.
+Signup and password recovery still use the separate legacy Supabase SDK session;
+confirmation/recovery integration is pending. The application UI guard does not
+secure backend feature endpoints or make Server Components authenticated.

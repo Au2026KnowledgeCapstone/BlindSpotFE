@@ -1,24 +1,17 @@
+import { backendAuth } from "./backend-auth";
 
 import { createClient } from "@/lib/supabase/client";
-import type { LoginFormValues, SignupFormValues } from "../schemas";
+import type { SignupFormValues } from "../schemas";
 
 /**
  * Browser-side authentication operations for BlindSpot.
- * Supabase handles password verification and session creation.
+ * Backend cookies handle login/current-user/logout.
+ * Signup and recovery temporarily retain their separate Supabase SDK session.
  */
 export const authService = {
-  // Authenticate an existing user.
-  async signIn({ email, password }: LoginFormValues) {
-    const supabase = createClient();
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-    return data;
-  },
+  // Cookie sessions are verified and refreshed only through the backend.
+  signIn: backendAuth.signIn,
+  getUser: backendAuth.getUser,
 
   // Register a new user.
   async signUp({ email, password }: SignupFormValues) {
@@ -33,14 +26,7 @@ export const authService = {
     return data;
   },
 
-  // End the current user's session.
-  async signOut() {
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.signOut();
-
-    if (error) throw error;
-  },
+  signOut: backendAuth.signOut,
 
   // Send a password reset email.
   async requestPasswordReset(email: string) {
