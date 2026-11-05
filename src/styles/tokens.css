@@ -10,6 +10,14 @@
   --bs-bg-hover: #ffffff0a;
   --bs-bg-selected: #ffffff12;
 
+  /* Theme-invariant dark surface for a single "featured" tile (e.g. the
+     primary stat on the overview dashboard). Stays dark in both themes
+     rather than flipping with --bs-bg-canvas, so it reads as emphasis.
+     Lighter than --bs-bg-overlay so it's still visibly distinct from the
+     surrounding panels when the base theme is already dark. */
+  --bs-bg-contrast: #2b2c2f;
+  --bs-text-on-contrast: #ffffff;
+
   --bs-text-primary: #f7f8f8;
   --bs-text-secondary: #c9ced6;
   --bs-text-tertiary: #8a8f98;
@@ -93,6 +101,9 @@
   --bs-bg-inset: #e3e7e1;
   --bs-bg-hover: #34483b0a;
   --bs-bg-selected: #4658a810;
+
+  --bs-bg-contrast: #1c1d1f;
+  --bs-text-on-contrast: #ffffff;
 
   --bs-text-primary: #303932;
   --bs-text-secondary: #525d55;

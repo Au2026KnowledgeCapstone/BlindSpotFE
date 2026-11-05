@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authService } from "../services/auth-service";
+import { useThemeStore, type Theme } from "@/shared/ui/theme-store";
 
 function useAccountEmail() {
   const [email, setEmail] = useState("");
@@ -58,6 +60,45 @@ function PasswordSettings({ email }: { email: string }) {
   );
 }
 
+const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+];
+
+function AppearanceSettings() {
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Matches the SSR default theme (light — see app/layout.tsx) until mounted,
+  // so the pre-hydration client render doesn't disagree with server markup.
+  const displayTheme = mounted ? theme : "light";
+
+  return (
+    <section className="space-y-3 border-t border-border pt-5" aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading" className="text-sm font-semibold">Appearance</h2>
+      <p className="text-sm text-fg-secondary">
+        Choose how BlindSpot looks on this device. This preference is stored in your browser only.
+      </p>
+      <div className="flex gap-2" role="radiogroup" aria-labelledby="appearance-heading">
+        {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+          <Button
+            key={value}
+            type="button"
+            variant={displayTheme === value ? "secondary" : "outline"}
+            role="radio"
+            aria-checked={displayTheme === value}
+            onClick={() => setTheme(value)}
+          >
+            <Icon aria-hidden="true" className="size-4" />
+            {label}
+          </Button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function AccountSettings() {
   const { email, loading, error } = useAccountEmail();
 
@@ -74,6 +115,7 @@ export function AccountSettings() {
           {error && <p role="alert" className="text-sm text-fail">{error}</p>}
         </div>
         <PasswordSettings email={email} />
+        <AppearanceSettings />
       </div>
     </div>
   );

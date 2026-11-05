@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Clean Perfect Outer Circle Enclosure -->
+  <circle cx="256" cy="256" r="190" stroke="#111111" stroke-width="20"/>
+
+  <!-- Top Eyelid Arc: Highly circular (almost semi-circular arc of a circle centered at 256, 256) -->
+  <!-- Circular arc from (150, 240) arched up high to y=150 at center and down to (362, 240) -->
+  <path d="M 148 236 A 115 115 0 0 1 364 236" stroke="#111111" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Bottom Eyelid Arc: Highly circular matching counterpart with separated gap at the left & right sides -->
+  <path d="M 148 276 A 115 115 0 0 0 364 276" stroke="#111111" stroke-width="20" stroke-linecap="round"/>
+</svg>

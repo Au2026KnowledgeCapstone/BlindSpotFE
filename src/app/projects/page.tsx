@@ -9,8 +9,9 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-canvas text-fg">
       <header className="flex h-14 items-center justify-between border-b border-border bg-panel px-4 sm:px-6">
-        <span className="text-sm font-semibold tracking-tight text-fg">
-          Blind<span className="text-accent">Spot</span>
+        <span className="flex items-center gap-2 text-sm font-semibold tracking-tight text-fg">
+          <img src="/blindspot-icon.svg" alt="" width={20} height={20} />
+          <span>BlindSpot</span>
         </span>
         <AccountMenu />
       </header>
@@ -21,7 +22,6 @@ export default function ProjectsPage() {
           description="Pick a project to see what its flows have been doing."
         />
 
-        <Link href="/workspace" className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground">Open your workspace</Link>
         <ul className="divide-y divide-subtle overflow-hidden rounded-md border border-border bg-panel shadow-ambient">
           {PROJECTS.map((project) => (
             <li key={project.id}>

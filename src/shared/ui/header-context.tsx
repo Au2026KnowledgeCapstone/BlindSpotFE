@@ -34,6 +34,7 @@ function ProjectMenu({ projectId, projectName }: { projectId: string; projectNam
 }
 
 const SECTION_LABELS: Record<string, string> = {
+  requirements: "Requirements",
   flows: "Flows",
   runs: "Runs",
   environments: "Environments",
