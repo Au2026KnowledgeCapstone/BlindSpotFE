@@ -38,7 +38,7 @@ export function LoginForm() {
       const { session } = await authService.signIn(values);
 
       if (session) {
-        router.replace("/projects/acme-corp");
+        router.replace("/projects");
         router.refresh();
       } else {
         setAuthError(

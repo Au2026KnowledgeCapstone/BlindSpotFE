@@ -1,14 +1,19 @@
 "use client";
 
 import React from "react";
-import { useRuns } from "@/features/runs";
-import { OverviewDashboard } from "@/features/overview";
+import { LayoutDashboard } from "lucide-react";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { EmptyState } from "@/shared/ui/EmptyState";
 
-export function OverviewContent({ projectId }: { projectId: string }) {
-  const { data: runs, isLoading, error } = useRuns(projectId);
-
-  if (isLoading) return <div className="text-xs text-fg-tertiary">Loading overview...</div>;
-  if (error) return <div className="text-xs text-fail">Failed to load overview data</div>;
-
-  return <OverviewDashboard runs={runs ?? []} projectId={projectId} />;
+export function OverviewContent(_props: { projectId: string }) {
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Overview" />
+      <EmptyState
+        icon={LayoutDashboard}
+        title="Overview is being rebuilt"
+        description="This screen is being redesigned for the product-manager workflow."
+      />
+    </div>
+  );
 }

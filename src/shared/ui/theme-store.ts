@@ -9,14 +9,14 @@ interface ThemeState {
 }
 
 const getInitialTheme = (): Theme => {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   try {
     const stored = localStorage.getItem("theme");
     if (stored === "light" || stored === "dark") return stored;
   } catch {
     // Fallback if localStorage fails
   }
-  return "dark";
+  return "light";
 };
 
 export const useThemeStore = create<ThemeState>((set) => ({

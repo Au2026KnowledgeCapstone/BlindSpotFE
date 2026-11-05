@@ -40,8 +40,9 @@ function DemoFinding() {
 function ProductIntroduction() {
   return (
     <section className="flex flex-col justify-center gap-8 border-b border-border bg-panel px-8 py-14 lg:border-b-0 lg:border-r lg:px-16">
-      <div className="text-xl font-semibold tracking-tight">
-        Blind<span className="text-accent">Spot</span>
+      <div className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+        <img src="/blindspot-icon.svg" alt="" width={28} height={28} />
+        <span>BlindSpot</span>
       </div>
       <div className="max-w-lg space-y-6">
         <div className="space-y-4">

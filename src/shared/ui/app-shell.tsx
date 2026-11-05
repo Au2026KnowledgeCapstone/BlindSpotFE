@@ -21,22 +21,41 @@ const NAV_ITEMS = [
   { label: "Environments", suffix: "/environments", icon: Globe },
 ];
 
-function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
-    <div className="flex h-12 items-center justify-between px-4 border-b border-border">
+    <div className="flex shrink-0 items-center gap-2">
+      <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
       {!collapsed && (
-        <span className="font-bold text-sm tracking-tight text-fg">
-          Blind<span className="text-accent">Spot</span>
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold tracking-tight text-fg">BlindSpot</p>
+          <p className="truncate text-[11px] text-fg-tertiary">Product validation</p>
+        </div>
       )}
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={onToggle}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="shrink-0"
       >
         {collapsed ? <PanelLeft /> : <PanelLeftClose />}
       </Button>
+    </div>
+  );
+}
+
+function SidebarFooter({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-raised text-[11px] font-semibold text-fg-secondary">
+        PM
+      </span>
+      {!collapsed && (
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-fg">Product manager</p>
+          <p className="truncate text-[11px] text-fg-tertiary">Local workspace</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -45,7 +64,12 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 p-2 space-y-1 text-xs font-medium">
+    <nav className="flex-1 space-y-1 text-xs font-medium">
+      {!collapsed && (
+        <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-tertiary">
+          Workspace
+        </p>
+      )}
       {NAV_ITEMS.map((item) => {
         const href = `/projects/${projectId}${item.suffix}`;
         const Icon = item.icon;
@@ -54,10 +78,10 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
               isActive
-                ? "bg-selected text-fg font-semibold"
-                : "text-fg-secondary hover:text-fg hover:bg-hover"
+                ? "border border-border bg-panel font-semibold text-fg shadow-ambient"
+                : "border border-transparent text-fg-secondary hover:text-fg hover:bg-hover"
             }`}
           >
             <Icon className="w-4 h-4 shrink-0" />
@@ -71,7 +95,7 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
 
 function TopHeader({ projectId }: { projectId: string }) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-panel px-4 text-xs sm:px-6">
+    <header className="mt-3 mr-3 mb-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-xl border border-border bg-panel px-4 text-xs shadow-ambient sm:px-6">
       <HeaderContext projectId={projectId} />
       <div className="flex shrink-0 items-center gap-3">
         <ThemeToggle />
@@ -114,12 +138,13 @@ export function AppShell({ children, projectId }: AppShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-canvas text-fg">
       <aside
-        className={`flex flex-col border-r border-border bg-panel transition-all duration-180 ${
-          collapsed ? "w-16" : "w-[240px]"
+        className={`m-3 flex flex-col gap-3 rounded-xl border border-border bg-panel p-3 shadow-ambient transition-all duration-180 ${
+          collapsed ? "w-20" : "w-[240px]"
         }`}
       >
-        <SidebarHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+        <SidebarLogo collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
         <NavList projectId={projectId} collapsed={collapsed} />
+        <SidebarFooter collapsed={collapsed} />
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
