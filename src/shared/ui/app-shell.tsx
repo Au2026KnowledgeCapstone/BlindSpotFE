@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe, Sun, Moon } from "lucide-react";
+import { PanelLeftClose, PanelLeft, LayoutDashboard, FileCheck2, Zap, Play, Globe, Sun, Moon } from "lucide-react";
 import { useThemeStore } from "./theme-store";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,7 @@ export interface AppShellProps {
 
 const NAV_ITEMS = [
   { label: "Overview", suffix: "", icon: LayoutDashboard },
+  { label: "Requirements", suffix: "/requirements", icon: FileCheck2 },
   { label: "Flows", suffix: "/flows", icon: Zap },
   { label: "Runs", suffix: "/runs", icon: Play },
   { label: "Environments", suffix: "/environments", icon: Globe },
@@ -116,7 +117,15 @@ function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const next = theme === "dark" ? "light" : "dark";
+  /**
+   * Until mounted, render as if the SSR default theme (light — see
+   * app/layout.tsx) is active, even if localStorage disagrees. Reading the
+   * real `theme` before mount produces a label/icon that matches the client
+   * but not the server-rendered markup, which React flags as a hydration
+   * mismatch.
+   */
+  const displayTheme = mounted ? theme : "light";
+  const next = displayTheme === "dark" ? "light" : "dark";
   const label = `Switch to ${next} theme`;
 
   return (
@@ -127,7 +136,7 @@ function ThemeToggle() {
       aria-label={label}
       title={label}
     >
-      {mounted && theme === "dark" ? <Sun /> : <Moon />}
+      {displayTheme === "dark" ? <Sun /> : <Moon />}
     </Button>
   );
 }

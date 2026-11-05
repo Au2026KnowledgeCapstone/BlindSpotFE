@@ -68,6 +68,11 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
 function AppearanceSettings() {
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Matches the SSR default theme (light — see app/layout.tsx) until mounted,
+  // so the pre-hydration client render doesn't disagree with server markup.
+  const displayTheme = mounted ? theme : "light";
 
   return (
     <section className="space-y-3 border-t border-border pt-5" aria-labelledby="appearance-heading">
@@ -80,9 +85,9 @@ function AppearanceSettings() {
           <Button
             key={value}
             type="button"
-            variant={theme === value ? "secondary" : "outline"}
+            variant={displayTheme === value ? "secondary" : "outline"}
             role="radio"
-            aria-checked={theme === value}
+            aria-checked={displayTheme === value}
             onClick={() => setTheme(value)}
           >
             <Icon aria-hidden="true" className="size-4" />
