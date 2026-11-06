@@ -11,3 +11,5 @@ export { AccountSettings } from "./components/AccountSettings";
 export { LoginForm } from "./components/LoginForm";
 export { SignupForm } from "./components/SignupForm";
 export { authService } from "./services/auth-service";
+export { RequireSession } from "./components/RequireSession";
+export { LogoutButton } from "./components/logout-button";

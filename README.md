@@ -1,31 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BlindSpot Frontend
 
-## Getting Started
+BlindSpot uses the Next.js App Router with React and TypeScript. Application
+routes live in `src/app`. Fonts are Inter and JetBrains Mono, loaded through
+`next/font/google`.
 
-First, run the development server:
+## Local setup
+
+Use Node.js 22 (see `.nvmrc`) and install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Use `.env.example` as a configuration reference. Add missing variables to your
+existing local environment file without overwriting its other settings:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`: FastAPI authentication backend.
+- `NEXT_PUBLIC_SUPABASE_URL`: existing Supabase project's URL.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Supabase variables remain necessary for the SDK-backed workspace. Signup
+and password recovery now use the FastAPI backend. Use the same Supabase project in both repositories. Keep
+real environment values out of version control; `.env.example` contains only
+placeholders. Restart Next.js after changing public environment variables.
 
-## Learn More
+Start the configured backend in a separate terminal:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cd /Users/vanshika/Desktop/capstone/BlindSpotBE
+make run
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Start the frontend from BlindSpotFE:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev -- --hostname localhost --port 3000
+```
 
+Open http://localhost:3000/login. Use **localhost for both applications**:
+frontend `http://localhost:3000`, backend `http://localhost:8000`. Do not mix
+localhost with 127.0.0.1. The backend must allow `http://localhost:3000` through
+its explicit auth-origin configuration. See the
+[backend-authentication guide](docs/backend-authentication.md) for complete
+backend setup, CSRF/session contracts, refresh behavior, and manual tests.
+
+## Authentication and current limitations
+
+The backend authentication integration uses POST `/auth/login`, GET `/auth/me`,
+POST `/auth/refresh`, and POST `/auth/logout`. Login consumes user information
+and authentication flags, not Supabase session tokens in JSON. Requests include
+credentials; mutations send JSON and `X-CSRF-Protection: 1`. Access and refresh
+tokens are held in backend HttpOnly cookies rather than frontend localStorage.
+The application layout uses `RequireSession` for browser-side identity checks;
+it does not secure backend feature endpoints or authenticate Server Components.
+
+Signup, email confirmation, recovery requests and password updates use the same
+backend cookie session with backend-owned PKCE. Keep the shared Supabase email
+templates unchanged, and add the backend callback allowlist patterns documented
+in [the authentication guide](docs/backend-authentication.md). The backend exchanges
+authorization codes and stores tokens only in HttpOnly cookies. Password resets
+require a server-issued recovery permission bound to the recovered session.
+
+The `/workspace` page still uses Supabase SDK authentication/data access; backend
+cookie login does not establish that SDK session. Helpers and packages remain
+for those consumers, with no fallback from backend session checks to SDK identity.
+Feature-level authorization and workspace/data migration remain separate work.
+
+## Checks
+
+```bash
+npm run test
+npm run typecheck
+npm run lint
+npm run test -- src/features/auth/services/backend-auth.test.tsx
+```
+
+Auth integration tests use mocked backend responses and synthetic data. For
+manual login, page-reload, refresh and logout checks, follow the
+[manual test instructions](docs/backend-authentication.md#manual-test).
+
+## Next.js resources
+
+- [Next.js documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [Next.js source](https://github.com/vercel/next.js)

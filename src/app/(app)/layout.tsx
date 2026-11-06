@@ -1,4 +1,5 @@
 import React from "react";
+import { RequireSession } from "@/features/auth";
 import { Providers } from "@/app/providers";
 import { AppShell } from "@/shared/ui/app-shell";
 
@@ -14,7 +15,9 @@ export default async function AppLayout({
 
   return (
     <Providers>
-      <AppShell projectId={projectId}>{children}</AppShell>
+      <RequireSession>
+        <AppShell projectId={projectId}>{children}</AppShell>
+      </RequireSession>
     </Providers>
   );
 }
