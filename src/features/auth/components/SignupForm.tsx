@@ -37,9 +37,9 @@ export function SignupForm() {
     setSuccessMessage("");
 
     try {
-      const { session } = await authService.signUp(values);
+      const { authenticated, confirmation_required } = await authService.signUp(values);
 
-      if (session) {
+      if (authenticated && !confirmation_required) {
         setSuccessMessage(
           "Account created successfully! You are signed in."
         );
@@ -48,9 +48,7 @@ export function SignupForm() {
           "Signup request submitted! Check your email to confirm your account."
         );
       }
-    } catch (error) {
-      console.error("Signup failed:", error);
-
+    } catch {
       setAuthError(
         "Unable to create your account. Please try again."
       );

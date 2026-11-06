@@ -157,18 +157,20 @@ describe("backend cookie auth integration", () => {
     await expect(backendAuth.signIn(credentials)).rejects.toThrow("not configured");
   });
 
-  it("preserves Supabase signup and recovery without passing backend tokens", async () => {
-    mocks.signup.mockResolvedValue({ data: { session: null }, error: null });
-    mocks.recovery.mockResolvedValue({ error: null });
-    mocks.update.mockResolvedValue({ error: null });
+  it("routes signup, reset requests and password updates through the backend, never the SDK", async () => {
+    fetchMock.mockResolvedValueOnce(json({ user: null, authenticated: false, confirmation_required: true }))
+      .mockResolvedValueOnce(json({ message: "If an account exists, a link will be sent." }))
+      .mockResolvedValueOnce(json({ message: "Password updated. Sign in again." }));
     const { authService } = await import("./auth-service");
-    expect(await authService.signUp({ ...credentials, confirmPassword: credentials.password })).toEqual({ session: null });
+    expect(await authService.signUp({ ...credentials, confirmPassword: credentials.password }))
+      .toEqual({ user: null, authenticated: false, confirmation_required: true });
     await authService.requestPasswordReset(USER.email);
     await authService.updatePassword("Synthetic-new-pass-2!");
-    expect(mocks.signup).toHaveBeenCalledWith(credentials);
-    expect(mocks.recovery).toHaveBeenCalled();
-    expect(mocks.update).toHaveBeenCalled();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.map(([url]) => String(url).split("/auth/")[1])).toEqual([
+      "signup", "password/reset-request", "password/update",
+    ]);
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify(credentials));
+    expect(mocks.createClient).not.toHaveBeenCalled();
   });
 });
 

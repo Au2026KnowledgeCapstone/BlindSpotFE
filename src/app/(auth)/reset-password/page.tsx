@@ -3,8 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { authService } from "@/features/auth/services/auth-service";
+import { authService } from "@/features/auth";
 import { FIELD } from "@/shared/ui/field";
 import { Button } from "@/components/ui/button";
 
@@ -15,98 +14,19 @@ export default function ResetPasswordPage() {
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const supabase = createClient();
     let active = true;
-    let recoveryDetected = false;
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === "PASSWORD_RECOVERY") {
-          recoveryDetected = true;
-
-          if (active) {
-            setAuthorized(true);
-            setChecking(false);
-            setError("");
-          }
-        }
-      }
-    );
-
-    async function verifyRecoveryLink() {
-      const url = new URL(window.location.href);
-      const tokenHash = url.searchParams.get("token_hash");
-      const code = url.searchParams.get("code");
-      const type = url.searchParams.get("type");
-
-      try {
-        if (tokenHash && type === "recovery") {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: "recovery",
-          });
-
-          if (error) throw error;
-
-          if (active) {
-            recoveryDetected = true;
-            setAuthorized(true);
-          }
-
-          window.history.replaceState(
-            {},
-            "",
-            "/reset-password"
-          );
-        } else if (code) {
-          const { error } =
-            await supabase.auth.exchangeCodeForSession(code);
-
-          if (error) throw error;
-
-          if (active) {
-            recoveryDetected = true;
-            setAuthorized(true);
-          }
-
-          window.history.replaceState(
-            {},
-            "",
-            "/reset-password"
-          );
-        } else if (
-          window.location.hash.includes("type=recovery")
-        ) {
-          // Supabase processes implicit recovery tokens
-          // and emits PASSWORD_RECOVERY.
-          await supabase.auth.getSession();
-        }
-
-        if (active && !recoveryDetected) {
-          setError(
-            "Invalid or expired reset link. Please request a new one."
-          );
-        }
-      } catch {
-        if (active) {
-          setError(
-            "Unable to verify your reset link. Please request a new one."
-          );
-        }
-      } finally {
-        if (active) setChecking(false);
-      }
-    }
-
-    verifyRecoveryLink();
-
-    return () => {
-      active = false;
-      listener.subscription.unsubscribe();
-    };
+    authService.getRecoveryUser().then((user) => {
+      if (!active) return;
+      setAuthorized(Boolean(user));
+      if (!user) setError("Invalid or expired reset link. Please request a new one.");
+    }).catch(() => {
+      if (active) setError("Unable to verify your session. Please reload to try again.");
+    }).finally(() => { if (active) setChecking(false); });
+    return () => { active = false; };
   }, []);
 
   async function handleSubmit(
@@ -133,8 +53,8 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      await authService.updatePassword(password);
-      await createClient().auth.signOut();
+      const result = await authService.updatePassword(password);
+      setSuccessMessage(result.message);
       setSuccess(true);
     } catch (err) {
       setError(
@@ -167,7 +87,7 @@ export default function ResetPasswordPage() {
         ) : success ? (
           <div className="space-y-4">
             <p role="status" className="text-pass">
-              Your password has been updated successfully!
+              {successMessage || "Your password has been updated successfully!"}
             </p>
 
             <Link

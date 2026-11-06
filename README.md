@@ -19,8 +19,8 @@ existing local environment file without overwriting its other settings:
 - `NEXT_PUBLIC_SUPABASE_URL`: existing Supabase project's URL.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
 
-The Supabase variables remain necessary for signup, password recovery, and the
-SDK-backed workspace. Use the same Supabase project in both repositories. Keep
+The Supabase variables remain necessary for the SDK-backed workspace. Signup
+and password recovery now use the FastAPI backend. Use the same Supabase project in both repositories. Keep
 real environment values out of version control; `.env.example` contains only
 placeholders. Restart Next.js after changing public environment variables.
 
@@ -54,13 +54,17 @@ tokens are held in backend HttpOnly cookies rather than frontend localStorage.
 The application layout uses `RequireSession` for browser-side identity checks;
 it does not secure backend feature endpoints or authenticate Server Components.
 
-Signup, confirmation/recovery handling, and password updates still use the
-Supabase SDK and its separate session. The `/workspace` page also uses direct
-Supabase SDK authentication/data access; backend cookie login alone does not
-establish that SDK session. Backend logout does not clear a retained SDK session.
-After confirming signup, sign in through the login page for backend cookie
-access to the application. These flows still need to be unified; the complete
-authentication migration is not finished.
+Signup, email confirmation, recovery requests and password updates use the same
+backend cookie session with backend-owned PKCE. Keep the shared Supabase email
+templates unchanged, and add the backend callback allowlist patterns documented
+in [the authentication guide](docs/backend-authentication.md). The backend exchanges
+authorization codes and stores tokens only in HttpOnly cookies. Password resets
+require a server-issued recovery permission bound to the recovered session.
+
+The `/workspace` page still uses Supabase SDK authentication/data access; backend
+cookie login does not establish that SDK session. Helpers and packages remain
+for those consumers, with no fallback from backend session checks to SDK identity.
+Feature-level authorization and workspace/data migration remain separate work.
 
 ## Checks
 

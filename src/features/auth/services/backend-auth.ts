@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { LoginFormValues } from "../schemas";
+import type { LoginFormValues, SignupFormValues } from "../schemas";
 
 const userSchema = z.object({ id: z.uuid(), email: z.email().nullable() });
 const resultSchema = z.object({
@@ -27,6 +27,17 @@ function baseUrl() {
   return url.origin;
 }
 
+function failureMessage(status: number, path: string) {
+  if (status === 401) return path === "login"
+    ? "Unable to sign in. Check your email, password, and email verification."
+    : "Your session is missing or expired. Sign in or request a new recovery link.";
+  if (status === 400 && path === "password/update")
+    return "Unable to update your password. Check the password requirements or request a fresh recovery link.";
+  if (status === 429) return "Too many authentication attempts. Please try again later.";
+  if (status === 403) return "Authentication request rejected. Check your frontend origin configuration.";
+  return "The authentication service could not complete this request. Please try again.";
+}
+
 async function request(path: string, method: "GET" | "POST", body?: unknown) {
   let response: Response;
   try {
@@ -46,15 +57,8 @@ async function request(path: string, method: "GET" | "POST", body?: unknown) {
     throw new AuthRequestError(0, "Unable to reach the authentication service. Please try again.");
   }
   if (!response.ok) {
-    const message = response.status === 401
-      ? "Unable to sign in. Check your email, password, and email verification."
-      : response.status === 429
-        ? "Too many authentication attempts. Please try again later."
-        : response.status === 403
-          ? "Authentication request rejected. Check your frontend origin configuration."
-          : "The authentication service could not complete this request. Please try again.";
     // Do not expose or log raw upstream error bodies.
-    throw new AuthRequestError(response.status, message);
+    throw new AuthRequestError(response.status, failureMessage(response.status, path));
   }
   try {
     return await response.json() as unknown;
@@ -107,6 +111,43 @@ function announceSessionChange() {
 let lookup: Promise<BackendUser | null> | undefined;
 
 export const backendAuth = {
+  async signUp({ email, password }: SignupFormValues) {
+    const result = await withSessionLock(async () =>
+      parse(resultSchema, await request("signup", "POST", { email, password })));
+    if (result.authenticated) announceSessionChange();
+    return result;
+  },
+
+  async getRecoveryUser(): Promise<BackendUser | null> {
+    return withSessionLock(async () => {
+      try {
+        return parse(userSchema, await request("recovery", "GET"));
+      } catch (error) {
+        if (error instanceof AuthRequestError && error.status === 403) return null;
+        if (!unauthorized(error)) throw error;
+      }
+      if (!hasWebLocks()) return null;
+      try {
+        parse(resultSchema, await request("refresh", "POST"));
+        return parse(userSchema, await request("recovery", "GET"));
+      } catch (error) {
+        if (error instanceof AuthRequestError && [401, 403].includes(error.status)) return null;
+        throw error;
+      }
+    });
+  },
+
+  async requestPasswordReset(email: string) {
+    return parse(z.object({ message: z.string() }), await request("password/reset-request", "POST", { email }));
+  },
+
+  async updatePassword(password: string) {
+    try {
+      return await withSessionLock(async () => parse(z.object({ message: z.string() }),
+        await request("password/update", "POST", { password })));
+    } finally { announceSessionChange(); }
+  },
+
   async signIn(credentials: LoginFormValues) {
     const result = await withSessionLock(async () => {
       const data = parse(resultSchema, await request("login", "POST", {
