@@ -17,79 +17,33 @@ export interface ActionBadgeProps {
   className?: string;
 }
 
-interface ActionBadgeConfig {
-  bgColor: string;
-  textColor: string;
-  borderColor: string;
-}
-
-const ACTION_CONFIG: Record<ActionType, ActionBadgeConfig> = {
-  NAVIGATE: {
-    bgColor: "var(--bs-accent-tint)",
-    textColor: "var(--bs-accent)",
-    borderColor: "var(--bs-accent-tint)",
-  },
-  NETWORK: {
-    bgColor: "var(--bs-accent-tint)",
-    textColor: "var(--bs-accent)",
-    borderColor: "var(--bs-accent-tint)",
-  },
-  CLICK: {
-    bgColor: "var(--bs-bg-selected)",
-    textColor: "var(--bs-text-primary)",
-    borderColor: "var(--bs-border-strong)",
-  },
-  FILL: {
-    bgColor: "var(--bs-bg-selected)",
-    textColor: "var(--bs-text-primary)",
-    borderColor: "var(--bs-border-strong)",
-  },
-  WAIT: {
-    bgColor: "var(--bs-bg-hover)",
-    textColor: "var(--bs-text-tertiary)",
-    borderColor: "var(--bs-border-subtle)",
-  },
-  OBSERVE: {
-    bgColor: "var(--bs-bg-hover)",
-    textColor: "var(--bs-text-tertiary)",
-    borderColor: "var(--bs-border-subtle)",
-  },
-  RECOVERY: {
-    bgColor: "var(--bs-warn-tint)",
-    textColor: "var(--bs-warn)",
-    borderColor: "var(--bs-warn-border)",
-  },
-  HEAL: {
-    bgColor: "var(--bs-healed-tint)",
-    textColor: "var(--bs-healed)",
-    borderColor: "var(--bs-healed-border)",
-  },
-  FAIL_STEP: {
-    bgColor: "var(--bs-fail-tint)",
-    textColor: "var(--bs-fail)",
-    borderColor: "var(--bs-fail-border)",
-  },
-  COMPLETE_STEP: {
-    bgColor: "var(--bs-pass-tint)",
-    textColor: "var(--bs-pass)",
-    borderColor: "var(--bs-pass-border)",
-  },
+/**
+ * Literal utility classes, not `var(--bs-*)` strings: a dynamically assembled
+ * class name would never reach Tailwind's JIT scan, and inline styles can't be
+ * overridden by a caller's className or carry variants.
+ */
+const ACTION_CONFIG: Record<ActionType, string> = {
+  NAVIGATE: "bg-accent-tint text-accent border-accent-tint",
+  NETWORK: "bg-accent-tint text-accent border-accent-tint",
+  CLICK: "bg-selected text-fg border-strong",
+  FILL: "bg-selected text-fg border-strong",
+  WAIT: "bg-hover text-fg-tertiary border-subtle",
+  OBSERVE: "bg-hover text-fg-tertiary border-subtle",
+  RECOVERY: "bg-warn-tint text-warn border-warn-border",
+  HEAL: "bg-healed-tint text-healed border-healed-border",
+  FAIL_STEP: "bg-fail-tint text-fail border-fail-border",
+  COMPLETE_STEP: "bg-pass-tint text-pass border-pass-border",
 };
 
 export const ActionBadge: React.FC<ActionBadgeProps> = ({
   action,
   className = "",
 }) => {
-  const config = ACTION_CONFIG[action] || ACTION_CONFIG.OBSERVE;
+  const tone = ACTION_CONFIG[action] || ACTION_CONFIG.OBSERVE;
 
   return (
     <span
-      style={{
-        backgroundColor: config.bgColor,
-        color: config.textColor,
-        borderColor: config.borderColor,
-      }}
-      className={`inline-flex items-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold uppercase tracking-wide leading-none ${className}`}
+      className={`${tone} inline-flex items-center px-1.5 py-0.5 rounded border font-mono text-[11px] font-semibold uppercase tracking-wide leading-none ${className}`}
     >
       {action}
     </span>

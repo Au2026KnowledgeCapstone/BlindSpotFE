@@ -23,13 +23,13 @@ const CopyButton: React.FC<{ rawText: string }> = ({ rawText }) => {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 hover:text-[var(--bs-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bs-focus-ring)] rounded px-1 py-0.5"
+      className="inline-flex items-center gap-1 rounded px-1 py-0.5 hover:text-fg focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"
       aria-label="Copy evidence"
     >
       {copied ? (
         <>
-          <Check className="w-3 h-3 text-[var(--bs-pass)]" />
-          <span className="text-[var(--bs-pass)]">Copied</span>
+          <Check className="w-3 h-3 text-pass" />
+          <span className="text-pass">Copied</span>
         </>
       ) : (
         <>
@@ -48,11 +48,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   className = "",
 }) => (
   <div
-    style={{ backgroundColor: "var(--bs-bg-inset)", borderColor: "var(--bs-border-default)" }}
-    className={`rounded-md border p-3 font-mono text-[12px] text-[var(--bs-text-secondary)] ${className}`}
+    className={`rounded-md border border-border bg-inset p-3 font-mono text-[12px] text-fg-secondary ${className}`}
   >
     {(title || rawTextToCopy) && (
-      <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[var(--bs-border-subtle)] text-[11px] text-[var(--bs-text-tertiary)]">
+      <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-subtle text-[11px] text-fg-tertiary">
         <span className="font-medium uppercase tracking-wider">{title}</span>
         {rawTextToCopy && <CopyButton rawText={rawTextToCopy} />}
       </div>

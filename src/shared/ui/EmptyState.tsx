@@ -18,21 +18,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      style={{
-        backgroundColor: "var(--bs-bg-panel)",
-        borderColor: "var(--bs-border-subtle)",
-      }}
-      className={`p-8 rounded-lg border text-center flex flex-col items-center justify-center space-y-3 ${className}`}
+      className={`p-8 rounded-lg border border-subtle bg-panel shadow-ambient text-center flex flex-col items-center justify-center space-y-3 ${className}`}
     >
-      <div className="p-3 rounded-full bg-[var(--bs-bg-raised)] text-[var(--bs-text-tertiary)]">
+      <div className="p-3 rounded-full bg-raised text-fg-tertiary">
         <Icon className="w-6 h-6" />
       </div>
       <div className="space-y-1 max-w-sm">
-        <h3 className="text-sm font-medium text-[var(--bs-text-primary)]">
-          {title}
-        </h3>
+        <h3 className="text-sm font-medium text-fg">{title}</h3>
         {description && (
-          <p className="text-xs text-[var(--bs-text-tertiary)] leading-relaxed">
+          <p className="text-xs leading-relaxed text-fg-tertiary">
             {description}
           </p>
         )}

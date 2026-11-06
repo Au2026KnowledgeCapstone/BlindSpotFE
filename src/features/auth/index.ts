@@ -6,6 +6,8 @@
  */
 
 export { AuthShell } from "./components/AuthShell";
+export { AccountMenu } from "./components/AccountMenu";
+export { AccountSettings } from "./components/AccountSettings";
 export { LoginForm } from "./components/LoginForm";
 export { SignupForm } from "./components/SignupForm";
 export { authService } from "./services/auth-service";

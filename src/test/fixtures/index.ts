@@ -138,5 +138,4 @@ export const fixtureSeedRuns: RunSnakeCase[] = [
   makeRun({ id: "run-4818", run_number: 4818, status: "regression", environment: "pr_preview", pr_number: 482, failure_id: "fail-4818-3" }),
 ];
 
-export * from "./heals";
 export * from "./flows";

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { authService } from "@/features/auth/services/auth-service";
+import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -67,13 +68,9 @@ export default function ForgotPasswordPage() {
               </p>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-md bg-black p-3 text-white disabled:opacity-50"
-            >
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? "Sending..." : "Send Reset Link"}
-            </button>
+            </Button>
           </form>
         )}
 

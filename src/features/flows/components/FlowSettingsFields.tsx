@@ -1,14 +1,15 @@
 import React from "react";
 import type { UseFormRegister } from "react-hook-form";
 import type { FlowFormValues } from "../api/flow-form.schema";
+import { FIELD_DENSE } from "@/shared/ui/field";
 
 export function FlowSettingsFields({ register }: { register: UseFormRegister<FlowFormValues> }) {
   return (
-    <div className="border border-border rounded p-3 space-y-3 bg-raised">
-      <h3 className="text-xs font-semibold text-primary">Flow settings</h3>
+    <div className="border border-border rounded p-3 space-y-3 bg-raised shadow-ambient">
+      <h3 className="text-xs font-semibold text-fg">Flow settings</h3>
       <div className="grid grid-cols-3 gap-3">
         <label className="block">
-          <span className="text-xs text-secondary">Environment</span>
+          <span className="text-xs text-fg-secondary">Environment</span>
           <select {...register("settings.environment")} className={FIELD}>
             <option value="development">Development</option>
             <option value="staging">Staging</option>
@@ -17,7 +18,7 @@ export function FlowSettingsFields({ register }: { register: UseFormRegister<Flo
           </select>
         </label>
         <label className="block">
-          <span className="text-xs text-secondary">Schedule</span>
+          <span className="text-xs text-fg-secondary">Schedule</span>
           <select {...register("settings.schedule")} className={FIELD}>
             <option value="now">Now</option>
             <option value="weekly">Weekly</option>
@@ -26,7 +27,7 @@ export function FlowSettingsFields({ register }: { register: UseFormRegister<Flo
           </select>
         </label>
         <label className="block">
-          <span className="text-xs text-secondary">Credentials reference</span>
+          <span className="text-xs text-fg-secondary">Credentials reference</span>
           {/* Reference only — secret values are never fetched or displayed (§P6). */}
           <input {...register("settings.credentialsReference")} className={FIELD} placeholder="vault://flow-creds" />
         </label>
@@ -35,4 +36,4 @@ export function FlowSettingsFields({ register }: { register: UseFormRegister<Flo
   );
 }
 
-const FIELD = "w-full bg-panel border border-border rounded p-1.5 text-xs text-primary mt-1";
+const FIELD = `${FIELD_DENSE} mt-1`;

@@ -1,6 +1,8 @@
 import React from "react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { FlowFormValues } from "../api/flow-form.schema";
+import { FIELD_DENSE } from "@/shared/ui/field";
+import { Button } from "@/components/ui/button";
 
 export function FlowGoalFields({
   register,
@@ -16,27 +18,27 @@ export function FlowGoalFields({
   return (
     <>
       <label className="block space-y-1">
-        <span className="text-xs text-secondary font-medium">Flow name</span>
+        <span className="text-xs text-fg-secondary font-medium">Flow name</span>
         <input {...register("name")} className={NAME_FIELD} />
         {errors.name && <span className="text-[11px] text-fail">{errors.name.message}</span>}
       </label>
 
       <label className="block space-y-1">
-        <span className="text-xs text-secondary font-medium">Goal</span>
+        <span className="text-xs text-fg-secondary font-medium">Goal</span>
         <div className="flex gap-2">
           <textarea
             {...register("goal")}
-            className="w-full bg-raised border border-border rounded p-2 text-xs text-primary h-20"
+            className={`${FIELD_DENSE} h-20 resize-y`}
             placeholder="Describe what the agent should achieve"
           />
-          <button
-            type="button"
+          <Button
+            variant="outline"
             onClick={onGeneratePlan}
             disabled={isGenerating}
-            className="px-4 py-2 border border-border rounded text-xs font-medium text-accent h-fit shrink-0"
+            className="shrink-0"
           >
             {isGenerating ? "Generating…" : "Generate plan"}
-          </button>
+          </Button>
         </div>
         {errors.goal && <span className="text-[11px] text-fail">{errors.goal.message}</span>}
       </label>
@@ -44,4 +46,4 @@ export function FlowGoalFields({
   );
 }
 
-const NAME_FIELD = "w-full bg-raised border border-border rounded px-3 py-1.5 text-xs text-primary";
+const NAME_FIELD = FIELD_DENSE;

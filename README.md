@@ -1,48 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BlindSpot Frontend
 
-## Getting Started
+BlindSpot uses the Next.js App Router with React and TypeScript. Application
+routes live in `src/app`. Fonts are Inter and JetBrains Mono, loaded through
+`next/font/google`.
 
-First, run the development server:
+## Local setup
+
+Use Node.js 22 (see `.nvmrc`) and install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Use `.env.example` as a configuration reference. Add missing variables to your
+existing local environment file without overwriting its other settings:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`: FastAPI authentication backend.
+- `NEXT_PUBLIC_SUPABASE_URL`: existing Supabase project's URL.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Supabase variables remain necessary for signup, password recovery, and the
+SDK-backed workspace. Use the same Supabase project in both repositories. Keep
+real environment values out of version control; `.env.example` contains only
+placeholders. Restart Next.js after changing public environment variables.
 
-## Learn More
+Start the configured backend in a separate terminal:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cd /Users/vanshika/Desktop/capstone/BlindSpotBE
+make run
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Start the frontend from BlindSpotFE:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev -- --hostname localhost --port 3000
+```
 
-## Deploy on Vercel
+Open http://localhost:3000/login. Use **localhost for both applications**:
+frontend `http://localhost:3000`, backend `http://localhost:8000`. Do not mix
+localhost with 127.0.0.1. The backend must allow `http://localhost:3000` through
+its explicit auth-origin configuration. See the
+[backend-authentication guide](docs/backend-authentication.md) for complete
+backend setup, CSRF/session contracts, refresh behavior, and manual tests.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication and current limitations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The backend authentication integration uses POST `/auth/login`, GET `/auth/me`,
+POST `/auth/refresh`, and POST `/auth/logout`. Login consumes user information
+and authentication flags, not Supabase session tokens in JSON. Requests include
+credentials; mutations send JSON and `X-CSRF-Protection: 1`. Access and refresh
+tokens are held in backend HttpOnly cookies rather than frontend localStorage.
+The application layout uses `RequireSession` for browser-side identity checks;
+it does not secure backend feature endpoints or authenticate Server Components.
 
-## FastAPI cookie login
+Signup, confirmation/recovery handling, and password updates still use the
+Supabase SDK and its separate session. The `/workspace` page also uses direct
+Supabase SDK authentication/data access; backend cookie login alone does not
+establish that SDK session. Backend logout does not clear a retained SDK session.
+After confirming signup, sign in through the login page for backend cookie
+access to the application. These flows still need to be unified; the complete
+authentication migration is not finished.
 
-Configure `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` in your local environment
-without replacing existing Supabase settings. Run the frontend at
-`http://localhost:3000` and backend at `http://localhost:8000`; use localhost for both.
-See [setup, session/CSRF contract, checks, and manual login/reload/logout steps](docs/backend-authentication.md).
+## Checks
 
-Login, current-user lookup and logout now use the FastAPI HttpOnly-cookie session.
-Signup and password recovery still use the separate legacy Supabase SDK session;
-confirmation/recovery integration is pending. The application UI guard does not
-secure backend feature endpoints or make Server Components authenticated.
+```bash
+npm run test
+npm run typecheck
+npm run lint
+npm run test -- src/features/auth/services/backend-auth.test.tsx
+```
+
+Auth integration tests use mocked backend responses and synthetic data. For
+manual login, page-reload, refresh and logout checks, follow the
+[manual test instructions](docs/backend-authentication.md#manual-test).
+
+## Next.js resources
+
+- [Next.js documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [Next.js source](https://github.com/vercel/next.js)

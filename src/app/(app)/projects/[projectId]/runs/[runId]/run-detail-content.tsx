@@ -8,6 +8,7 @@ import { FailureSummary } from "./failure-summary";
 import { StepsPane } from "./steps-pane";
 import { EvidencePane } from "./evidence-pane";
 import { DetailsTabs } from "./details-tabs";
+import { Button } from "@/components/ui/button";
 
 function RunStatusLayout({ runId, liveIntervalMs }: { runId: string; liveIntervalMs?: number | undefined }) {
   const { data } = useRunDetail(runId);
@@ -52,7 +53,24 @@ function RunStatusLayout({ runId, liveIntervalMs }: { runId: string; liveInterva
 
 export function RunDetailContent({ runId, liveIntervalMs }: { runId: string; liveIntervalMs?: number | undefined }) {
   const { data, isLoading, error } = useRunDetail(runId);
-  if (isLoading) return <div className="flex items-center justify-center min-h-[400px] text-xs font-mono text-[var(--bs-text-tertiary)]">Loading run details and execution trace...</div>;
-  if (error || !data) return <div className="p-6 border border-[var(--bs-fail-border)] bg-[var(--bs-fail-tint)] rounded-lg text-xs text-[var(--bs-fail)]">Failed to load run details. Please check connection or run ID.</div>;
-  return <RunStatusLayout runId={runId} liveIntervalMs={liveIntervalMs} />;
+  const [revealed, setRevealed] = useState(false);
+  if (isLoading) return <div className="flex items-center justify-center min-h-[400px] text-xs font-mono text-fg-tertiary">Loading run details and execution trace...</div>;
+  if (error || !data) return <div className="p-6 border border-fail-border bg-fail-tint rounded-lg text-xs text-fail">Failed to load run details. Please check connection or run ID.</div>;
+  return (
+    <div className="relative">
+      <div className={revealed ? "" : "pointer-events-none select-none blur-sm"}>
+        <RunStatusLayout runId={runId} liveIntervalMs={liveIntervalMs} />
+      </div>
+      {!revealed && (
+        <div className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-3">
+          <span className="px-4 py-2 rounded-md border border-border bg-panel text-sm font-semibold text-fg shadow-overlay">
+            Work in progress
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setRevealed(true)}>
+            See page anyways
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }

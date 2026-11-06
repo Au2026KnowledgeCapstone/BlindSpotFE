@@ -17,12 +17,7 @@ export const CostChip: React.FC<CostChipProps> = ({
 }) => {
   return (
     <div
-      style={{
-        backgroundColor: "var(--bs-bg-panel)",
-        borderColor: "var(--bs-border-default)",
-        color: "var(--bs-text-tertiary)",
-      }}
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border font-mono text-[11px] tabular-nums ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-panel font-mono text-[11px] tabular-nums text-fg-tertiary ${className}`}
     >
       <span>⏱ {durationSeconds.toFixed(1)}s</span>
       <span>·</span>
@@ -30,9 +25,7 @@ export const CostChip: React.FC<CostChipProps> = ({
       <span>·</span>
       <span>~${estimatedCostUsd.toFixed(2)}</span>
       <span>·</span>
-      <span className="font-sans text-[var(--bs-text-secondary)] font-medium">
-        {mode}
-      </span>
+      <span className="font-sans font-medium text-fg-secondary">{mode}</span>
     </div>
   );
 };

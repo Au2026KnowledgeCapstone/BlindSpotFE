@@ -4,19 +4,20 @@ import React from "react";
 import Link from "next/link";
 import { useRuns } from "@/features/runs";
 import type { Run } from "@/features/runs";
+import { StatusBadge } from "@/shared/ui/StatusBadge";
+import { PageHeader } from "@/shared/ui/PageHeader";
+import { environmentLabel } from "@/shared/lib/labels";
 
 function RunRow({ run, projectId }: { run: Run; projectId: string }) {
   return (
     <tr className="hover:bg-hover">
-      <td className="p-3 font-mono font-medium text-primary">#{run.runNumber}</td>
-      <td className="p-3 font-medium text-secondary">{run.flowName}</td>
-      <td className="p-3 text-tertiary">{run.environment}</td>
+      <td className="p-3 font-mono font-medium text-fg">#{run.runNumber}</td>
+      <td className="p-3 font-medium text-fg-secondary">{run.flowName}</td>
+      <td className="p-3 text-fg-secondary">{environmentLabel(run.environment)}</td>
       <td className="p-3">
-        <span className="font-mono text-[11px] px-2 py-0.5 rounded border border-border bg-panel">
-          {run.status}
-        </span>
+        <StatusBadge status={run.status} />
       </td>
-      <td className="p-3 font-mono text-tertiary">{run.durationSeconds}s</td>
+      <td className="p-3 font-mono text-fg-tertiary">{run.durationSeconds}s</td>
       <td className="p-3">
         <Link
           href={`/projects/${projectId}/runs/${run.id}`}
@@ -32,14 +33,17 @@ function RunRow({ run, projectId }: { run: Run; projectId: string }) {
 export function RunsContent({ projectId }: { projectId: string }) {
   const { data: runs, isLoading } = useRuns(projectId);
 
-  if (isLoading) return <div className="text-xs text-tertiary">Loading runs...</div>;
+  if (isLoading) return <div className="text-xs text-fg-tertiary">Loading runs…</div>;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-primary">Runs — {projectId}</h1>
-      <div className="border border-border rounded bg-raised overflow-hidden text-xs">
+    <div className="space-y-6">
+      <PageHeader
+        title="Runs"
+        description="Every execution the agent has made, with its evidence and cost."
+      />
+      <div className="border border-border rounded bg-raised overflow-hidden text-xs shadow-ambient">
         <table className="w-full text-left">
-          <thead className="bg-panel border-b border-border text-tertiary font-mono uppercase text-[10px]">
+          <thead className="border-b border-border bg-panel text-[11px] font-semibold uppercase tracking-[0.06em] text-fg-tertiary">
             <tr>
               <th className="p-3">Run</th>
               <th className="p-3">Flow</th>

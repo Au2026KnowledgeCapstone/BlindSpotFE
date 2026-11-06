@@ -11,6 +11,9 @@ function renderEditor() {
       <FlowEditorContent projectId="acme-corp" />
     </QueryClientProvider>,
   );
+  // The composer is gated behind "New flow" so an empty form doesn't occupy
+  // the page above the flows it adds to; open it for the editing tests.
+  fireEvent.click(screen.getByRole("button", { name: /New flow/i }));
 }
 
 function fillGoalAndGenerate(name: string, goal: string) {
@@ -20,6 +23,21 @@ function fillGoalAndGenerate(name: string, goal: string) {
 }
 
 describe("FlowEditorContent", () => {
+  it("keeps the composer closed until New flow is pressed", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <FlowEditorContent projectId="acme-corp" />
+      </QueryClientProvider>,
+    );
+    await screen.findByTestId("flows-list");
+
+    expect(screen.queryByLabelText(/Flow name/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /New flow/i }));
+    expect(screen.getByLabelText(/Flow name/i)).toBeInTheDocument();
+  });
+
   it("creates a flow, edits its generated plan, saves it and lists it", async () => {
     renderEditor();
     await screen.findByTestId("flows-list");

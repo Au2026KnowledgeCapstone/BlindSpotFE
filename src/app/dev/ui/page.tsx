@@ -15,6 +15,7 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useThemeStore } from "@/shared/ui/theme-store";
 import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ALL_STATUSES: RunStatus[] = [
   "passed",
@@ -43,17 +44,17 @@ const ALL_ACTIONS: ActionType[] = [
 
 const StatusSection = () => (
   <section className="space-y-3">
-    <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+    <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
       1. Status Badges
     </h2>
-    <div className="p-4 rounded-lg border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] space-y-4">
+    <div className="p-4 rounded-lg border border-border bg-panel space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         {ALL_STATUSES.map((st) => (
           <StatusBadge key={st} status={st} />
         ))}
       </div>
-      <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[var(--bs-border-subtle)]">
-        <span className="text-xs text-[var(--bs-text-tertiary)] font-mono">Compact:</span>
+      <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-subtle">
+        <span className="text-xs text-fg-tertiary font-mono">Compact:</span>
         {ALL_STATUSES.map((st) => (
           <StatusBadge key={st} status={st} compact />
         ))}
@@ -64,10 +65,10 @@ const StatusSection = () => (
 
 const ActionSection = () => (
   <section className="space-y-3">
-    <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+    <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
       2. Action Badges
     </h2>
-    <div className="p-4 rounded-lg border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] flex flex-wrap gap-2">
+    <div className="p-4 rounded-lg border border-border bg-panel flex flex-wrap gap-2">
       {ALL_ACTIONS.map((act) => (
         <ActionBadge key={act} action={act} />
       ))}
@@ -78,7 +79,7 @@ const ActionSection = () => (
 const InferenceAndExpectedSection = () => (
   <>
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+      <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
         3. Inference (AI Output Only)
       </h2>
       <Inference
@@ -94,7 +95,7 @@ const InferenceAndExpectedSection = () => (
     </section>
 
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+      <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
         4. Expected vs Observed
       </h2>
       <ExpectedObserved
@@ -108,7 +109,7 @@ const InferenceAndExpectedSection = () => (
 const EvidenceAndAsyncSection = () => (
   <>
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+      <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
         5. Evidence Panel & Cost Chip
       </h2>
       <div className="space-y-3">
@@ -128,7 +129,7 @@ const EvidenceAndAsyncSection = () => (
     </section>
 
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-[var(--bs-text-secondary)] uppercase tracking-wider">
+      <h2 className="text-sm font-semibold text-fg-secondary uppercase tracking-wider">
         6. Screenshot & Error States
       </h2>
       <ScreenshotFrame url="https://app.acme.com/checkout" clickPoint={{ x: 65, y: 40 }} />
@@ -136,7 +137,7 @@ const EvidenceAndAsyncSection = () => (
         <InlineError title="Failed to fetch timeline" message="Connection error." />
         <EmptyState title="No test runs recorded" />
       </div>
-      <div className="p-3 rounded-lg border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] space-y-2">
+      <div className="p-3 rounded-lg border border-border bg-panel space-y-2">
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-4 w-3/4" />
       </div>
@@ -149,21 +150,17 @@ export default function DevUiPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 min-h-screen">
-      <div className="flex items-center justify-between pb-4 border-b border-[var(--bs-border-default)]">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--bs-text-primary)]">
+          <h1 className="text-2xl font-bold text-fg">
             BlindSpot Design System Primitives
           </h1>
-          <p className="text-xs text-[var(--bs-text-tertiary)] mt-1">Component showcase (§3.8)</p>
+          <p className="text-xs text-fg-tertiary mt-1">Component showcase (§3.8)</p>
         </div>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[var(--bs-border-default)] bg-[var(--bs-bg-panel)] hover:bg-[var(--bs-bg-raised)] text-xs text-[var(--bs-text-primary)] font-medium"
-        >
-          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+        <Button variant="outline" size="sm" onClick={toggleTheme}>
+          {theme === "dark" ? <Sun className="text-fg-tertiary" /> : <Moon className="text-fg-tertiary" />}
           Toggle Theme ({theme})
-        </button>
+        </Button>
       </div>
       <StatusSection />
       <ActionSection />
