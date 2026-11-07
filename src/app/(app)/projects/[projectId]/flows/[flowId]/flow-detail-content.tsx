@@ -1,30 +1,21 @@
 "use client";
 
 import React from "react";
-import { useRunDetail } from "@/features/runs";
+import Link from "next/link";
 
 export function FlowDetailContent({ projectId, flowId }: { projectId: string; flowId: string }) {
-  const { data, isLoading } = useRunDetail("run-4821");
-
-  if (isLoading) return <div className="text-xs text-fg-tertiary">Loading flow detail...</div>;
-
   return (
-    <div className="space-y-4">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-fg">Flow: {flowId}</h1>
         <span className="text-xs font-mono text-fg-tertiary">Project: {projectId}</span>
       </div>
-      <div className="border border-border rounded p-4 bg-raised shadow-ambient space-y-3">
-        <h2 className="text-sm font-semibold text-fg">Configured Steps</h2>
-        <div className="space-y-2">
-          {data?.steps.map((s) => (
-            <div key={s.id} className="p-2 border border-border rounded bg-panel text-xs flex justify-between">
-              <span>{s.stepNumber}. {s.title}</span>
-              <span className="text-fg-tertiary">{s.actions.length} actions</span>
-            </div>
-          ))}
-        </div>
+      <div role="status" className="rounded-lg border border-border bg-panel p-4 text-sm text-fg-secondary">
+        Flow execution is unavailable. No steps or results are being reported.
       </div>
-    </div>
+      <Link className="text-sm text-accent underline-offset-4 hover:underline" href={`/projects/${projectId}/flows`}>
+        Back to flows
+      </Link>
+    </section>
   );
 }

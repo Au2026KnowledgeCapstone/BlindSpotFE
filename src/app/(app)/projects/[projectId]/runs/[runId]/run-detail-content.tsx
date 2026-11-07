@@ -10,9 +10,9 @@ import { EvidencePane } from "./evidence-pane";
 import { DetailsTabs } from "./details-tabs";
 import { Button } from "@/components/ui/button";
 
-function RunStatusLayout({ runId, liveIntervalMs }: { runId: string; liveIntervalMs?: number | undefined }) {
+function RunStatusLayout({ runId }: { runId: string }) {
   const { data } = useRunDetail(runId);
-  const { events, streamState } = useLiveRunEvents(runId, liveIntervalMs !== undefined ? { intervalMs: liveIntervalMs } : {});
+  const { events, streamState } = useLiveRunEvents(runId);
   const [collapsedIds, setCollapsedIds] = useState<string[]>([]);
   const [isPresentationMode, setIsPresentationMode] = useState(false);
   const steps = data?.steps ?? [];
@@ -51,15 +51,15 @@ function RunStatusLayout({ runId, liveIntervalMs }: { runId: string; liveInterva
   );
 }
 
-export function RunDetailContent({ runId, liveIntervalMs }: { runId: string; liveIntervalMs?: number | undefined }) {
+export function RunDetailContent({ runId }: { runId: string }) {
   const { data, isLoading, error } = useRunDetail(runId);
   const [revealed, setRevealed] = useState(false);
   if (isLoading) return <div className="flex items-center justify-center min-h-[400px] text-xs font-mono text-fg-tertiary">Loading run details and execution trace...</div>;
-  if (error || !data) return <div className="p-6 border border-fail-border bg-fail-tint rounded-lg text-xs text-fail">Failed to load run details. Please check connection or run ID.</div>;
+  if (error || !data) return <div role="status" className="p-6 border border-border bg-panel rounded-lg text-sm text-fg-secondary">Run details are unavailable until the project execution service is integrated.</div>;
   return (
     <div className="relative">
       <div className={revealed ? "" : "pointer-events-none select-none blur-sm"}>
-        <RunStatusLayout runId={runId} liveIntervalMs={liveIntervalMs} />
+        <RunStatusLayout runId={runId} />
       </div>
       {!revealed && (
         <div className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-3">

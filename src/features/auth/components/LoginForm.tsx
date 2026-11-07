@@ -39,7 +39,8 @@ export function LoginForm() {
       const { authenticated, user } = await authService.signIn(values);
 
       if (authenticated && user) {
-        router.replace("/projects/acme-corp");
+        if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
+        router.replace("/onboarding");
         router.refresh();
       } else {
         setAuthError(

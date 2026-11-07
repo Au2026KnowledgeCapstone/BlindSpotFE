@@ -147,8 +147,21 @@ describe("backend cookie auth integration", () => {
     expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({ credentials: "include", method: "POST", body: "{}" });
   });
 
+  it("allows explicitly configured localhost in production mode but rejects remote HTTP", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    fetchMock.mockResolvedValue(json(RESULT));
+    const { backendAuth } = await import("./backend-auth");
+    await expect(backendAuth.signIn(credentials)).resolves.toEqual(RESULT);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://api.example.test");
+    await expect(backendAuth.signIn(credentials)).rejects.toThrow("backend URL is invalid");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it("rejects malformed sessions, network errors and missing API configuration safely", async () => {
     const { backendAuth } = await import("./backend-auth");
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    vi.stubEnv("NODE_ENV", "test");
     fetchMock.mockResolvedValue(json({ session: { access_token: "private" } }));
     await expect(backendAuth.signIn(credentials)).rejects.toMatchObject({ status: 502 });
     fetchMock.mockRejectedValue(new TypeError("private connection detail"));
@@ -182,7 +195,7 @@ describe("login, reload guard and logout UI", () => {
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: USER.email } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: credentials.password } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/projects/acme-corp"));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/onboarding"));
     expect(mocks.refresh).toHaveBeenCalled();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });

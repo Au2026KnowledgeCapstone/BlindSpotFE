@@ -1,6 +1,6 @@
-import React from "react";
-import { EnvironmentsContent } from "./environments-content";
+import { redirect } from "next/navigation";
 
-export default function EnvironmentsPage() {
-  return <EnvironmentsContent />;
+export default async function EnvironmentsPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params;
+  redirect(`/projects/${projectId}/setup`);
 }

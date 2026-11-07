@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "@base-ui/react/menu";
 import { ArrowLeftRight, ChevronDown, ChevronRight, FolderKanban } from "lucide-react";
+import { useProjectsDirectory } from "@/features/workspace";
 
 const menuItemClassName = "flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-fg-secondary outline-none data-[highlighted]:bg-hover data-[highlighted]:text-fg";
 
@@ -36,14 +37,18 @@ function ProjectMenu({ projectId, projectName }: { projectId: string; projectNam
 const SECTION_LABELS: Record<string, string> = {
   flows: "Flows",
   runs: "Runs",
-  environments: "Environments",
+  setup: "Project setup",
+  members: "Members",
+  settings: "Settings",
 };
 
+// eslint-disable-next-line complexity -- Breadcrumb rendering depends on the active route depth and section.
 export function HeaderContext({ projectId }: { projectId: string }) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
-  const activeProjectId = segments[0] === "projects" ? segments[1] ?? projectId : projectId;
-  const projectName = activeProjectId === "acme-corp" ? "Acme Corp" : activeProjectId.replace(/[-_]/g, " ");
+  const activeProjectId = segments[0] === "projects" && segments[1] ? segments[1] : projectId;
+  const { projects } = useProjectsDirectory();
+  const projectName = projects.data?.find((project) => project.id === activeProjectId)?.name ?? (activeProjectId ? "Project" : "Projects");
   const section = segments[2];
   const sectionLabel = section ? SECTION_LABELS[section] ?? "Overview" : "Overview";
 
