@@ -162,12 +162,21 @@ describe("backend cookie auth integration", () => {
     const { backendAuth } = await import("./backend-auth");
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
     vi.stubEnv("NODE_ENV", "test");
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
     fetchMock.mockResolvedValue(json({ session: { access_token: "private" } }));
     await expect(backendAuth.signIn(credentials)).rejects.toMatchObject({ status: 502 });
     fetchMock.mockRejectedValue(new TypeError("private connection detail"));
     await expect(backendAuth.signIn(credentials)).rejects.toThrow("Unable to reach");
+    expect(log).toHaveBeenCalledWith("[auth] Request did not receive a response", expect.objectContaining({
+      method: "POST", url: "https://api.example.test/auth/login", reason: "TypeError",
+    }));
+    expect(JSON.stringify(log.mock.calls)).not.toContain("private connection detail");
+    expect(JSON.stringify(log.mock.calls)).not.toContain(credentials.password);
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "=http://localhost:8000");
+    await expect(backendAuth.signIn(credentials)).rejects.toThrow("backend URL is invalid");
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
     await expect(backendAuth.signIn(credentials)).rejects.toThrow("not configured");
+    log.mockRestore();
   });
 
   it("routes signup, reset requests and password updates through the backend, never the SDK", async () => {

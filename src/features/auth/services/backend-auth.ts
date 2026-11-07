@@ -19,7 +19,12 @@ export class AuthRequestError extends Error {
 function baseUrl() {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!value) throw new AuthRequestError(0, "The authentication backend URL is not configured.");
-  const url = new URL(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
+  }
   const localDevelopment = url.protocol === "http:" && url.hostname === "localhost";
   if (url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
       (url.protocol !== "https:" && !localDevelopment)) {
@@ -40,9 +45,10 @@ function failureMessage(status: number, path: string) {
 }
 
 async function request(path: string, method: "GET" | "POST", body?: unknown) {
+  const url = `${baseUrl()}/auth/${path}`;
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}/auth/${path}`, {
+    response = await fetch(url, {
       method,
       credentials: "include",
       cache: "no-store",
@@ -54,10 +60,22 @@ async function request(path: string, method: "GET" | "POST", body?: unknown) {
       signal: AbortSignal.timeout(15000),
     });
   } catch (error) {
-    if (error instanceof AuthRequestError) throw error;
+    if (process.env.NODE_ENV !== "production") {
+      // Browser fetch hides CORS response details. Log only request metadata,
+      // never credentials, cookies, upstream bodies, or the raw error object.
+      console.error("[auth] Request did not receive a response", {
+        method, url,
+        frontendOrigin: typeof window !== "undefined" ? window.location.origin : undefined,
+        reason: error instanceof Error ? error.name : "Unknown error",
+        hint: "Check that the backend is reachable and allows this frontend origin (CORS).",
+      });
+    }
     throw new AuthRequestError(0, "Unable to reach the authentication service. Please try again.");
   }
   if (!response.ok) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[auth] Request rejected", { method, url, status: response.status });
+    }
     // Do not expose or log raw upstream error bodies.
     throw new AuthRequestError(response.status, failureMessage(response.status, path));
   }
