@@ -31,9 +31,9 @@ function RunRow({ run, projectId }: { run: Run; projectId: string }) {
 }
 
 export function RunsContent({ projectId }: { projectId: string }) {
-  const { data: runs, isLoading } = useRuns(projectId);
+  const { data: runs, isLoading, error } = useRuns(projectId);
 
-  if (isLoading) return <div className="text-xs text-fg-tertiary">Loading runs…</div>;
+  if (isLoading) return <div role="status" className="text-xs text-fg-tertiary">Loading runs…</div>;
 
   return (
     <div className="space-y-6">
@@ -41,7 +41,7 @@ export function RunsContent({ projectId }: { projectId: string }) {
         title="Runs"
         description="Every execution the agent has made, with its evidence and cost."
       />
-      <div className="border border-border rounded bg-raised overflow-hidden text-xs shadow-ambient">
+      {error ? <p role="status" className="rounded-lg border border-border bg-panel p-4 text-sm text-fg-secondary">Run history unavailable until the project execution service is integrated.</p> : <div className="border border-border rounded bg-raised overflow-hidden text-xs shadow-ambient">
         <table className="w-full text-left">
           <thead className="border-b border-border bg-panel text-[11px] font-semibold uppercase tracking-[0.06em] text-fg-tertiary">
             <tr>
@@ -59,7 +59,7 @@ export function RunsContent({ projectId }: { projectId: string }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }

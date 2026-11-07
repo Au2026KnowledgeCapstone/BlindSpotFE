@@ -20,8 +20,9 @@ function baseUrl() {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!value) throw new AuthRequestError(0, "The authentication backend URL is not configured.");
   const url = new URL(value);
+  const localDevelopment = url.protocol === "http:" && url.hostname === "localhost";
   if (url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
-      (url.protocol !== "https:" && !(url.protocol === "http:" && url.hostname === "localhost"))) {
+      (url.protocol !== "https:" && !localDevelopment)) {
     throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
   }
   return url.origin;

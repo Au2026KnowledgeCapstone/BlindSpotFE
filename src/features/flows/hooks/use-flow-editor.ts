@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { flowCreateSchema, type FlowFormValues } from "../api/flow-form.schema";
-import { flowsQueryKey, useFlows } from "../api/use-flows";
+import { useFlows } from "../api/use-flows";
 import { draftPlanForGoal } from "../lib/draft-plan-for-goal";
-import type { Flow } from "../types";
 
-type SaveState = "idle" | "pending" | "error" | "success";
+type SaveState = "idle" | "pending" | "error" | "success" | "unavailable";
 
 export function useFlowEditor(projectId: string) {
-  const queryClient = useQueryClient();
   const flowsQuery = useFlows(projectId);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -40,29 +37,8 @@ export function useFlowEditor(projectId: string) {
       setSaveState("error");
       return;
     }
-    queryClient.setQueryData<Flow[]>(flowsQueryKey(projectId), (prev) => [
-      ...(prev ?? []),
-      toSavedFlow(values, projectId, prev?.length ?? 0),
-    ]);
-    setSaveState("success");
+    setSaveState("unavailable");
   });
 
   return { flowsQuery, form, submit, generatePlan, isGenerating, saveState };
-}
-
-function toSavedFlow(values: FlowFormValues, projectId: string, existingCount: number): Flow {
-  return {
-    id: `flow-${existingCount + 1}`,
-    projectId,
-    name: values.name,
-    description: values.goal,
-    goal: values.goal,
-    status: "active",
-    featureArea: "Uncategorised",
-    steps: values.steps,
-    settings: values.settings,
-    history: [],
-    lastStatus: "Queued",
-    lastRunAt: "not yet run",
-  };
 }

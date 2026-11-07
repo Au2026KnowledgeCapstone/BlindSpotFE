@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +12,7 @@ import { authService } from "../services/auth-service";
 import { FIELD } from "@/shared/ui/field";
 
 export function SignupForm() {
+  const router = useRouter();
   const [successMessage, setSuccessMessage] = useState("");
   const [authError, setAuthError] = useState("");
 
@@ -40,9 +42,10 @@ export function SignupForm() {
       const { authenticated, confirmation_required } = await authService.signUp(values);
 
       if (authenticated && !confirmation_required) {
-        setSuccessMessage(
-          "Account created successfully! You are signed in."
-        );
+        if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
+        router.replace("/onboarding");
+        router.refresh();
+        return;
       } else {
         setSuccessMessage(
           "Signup request submitted! Check your email to confirm your account."
