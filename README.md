@@ -6,9 +6,13 @@ routes live in `src/app`. Fonts are Inter and JetBrains Mono, loaded through
 
 ## Local setup
 
-Use Node.js 22 (see `.nvmrc`) and install dependencies:
+Use Node.js 22 (see `.nvmrc`). If `nvm` is unavailable in your terminal,
+load it first. Then select the project's version before installing dependencies
+or starting the app:
 
 ```bash
+source "$HOME/.nvm/nvm.sh" # only needed when the nvm command is unavailable
+nvm use
 npm ci
 ```
 
