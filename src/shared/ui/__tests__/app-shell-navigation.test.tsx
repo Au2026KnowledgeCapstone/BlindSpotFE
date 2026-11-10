@@ -15,7 +15,7 @@ afterEach(() => { cleanup(); });
 describe("AppShell project navigation", () => {
   it("uses the route project ID when the parent layout provides an empty ID", () => {
     render(<AppShell projectId=""><div>Project page</div></AppShell>);
-    for (const [section, label] of [["", "Overview"], ["/flows", "Flows"], ["/runs", "Runs"], ["/setup", "Project setup"], ["/members", "Members"]] as const) {
+    for (const [section, label] of [["", "Overview"], ["/requirements", "Requirements"], ["/runs", "Runs"], ["/setup", "Project setup"], ["/members", "Members"]] as const) {
       expect(screen.getByRole("link", { name: label })).toHaveAttribute("href", `/projects/${mocks.params.projectId}${section}`);
     }
   });

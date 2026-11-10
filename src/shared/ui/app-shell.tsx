@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, FileCheck2, Zap, Play, Globe, Users, Sun, Moon } from "lucide-react";
+import { PanelLeftClose, PanelLeft, ArrowLeft, LayoutDashboard, FileCheck2, Play, Globe, Users, Sun, Moon } from "lucide-react";
 import { useThemeStore } from "./theme-store";
 import { Button } from "@/components/ui/button";
 import { NotificationsPanel } from "@/features/workspace/notifications-panel";
@@ -15,11 +15,12 @@ export interface AppShellProps {
   projectId: string;
 }
 
+/** Leaves the current project entirely — the one item here that isn't a tab within it. */
+const ESCAPE_ITEM = { label: "Projects", href: "/projects", icon: ArrowLeft };
+
 const NAV_ITEMS = [
-  { label: "Projects", href: "/projects", icon: LayoutDashboard },
   { label: "Overview", suffix: "", icon: LayoutDashboard },
   { label: "Requirements", suffix: "/requirements", icon: FileCheck2 },
-  { label: "Flows", suffix: "/flows", icon: Zap },
   { label: "Runs", suffix: "/runs", icon: Play },
   { label: "Project setup", suffix: "/setup", icon: Globe },
   { label: "Members", suffix: "/members", icon: Users },
@@ -27,7 +28,7 @@ const NAV_ITEMS = [
 
 function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="mb-3 flex shrink-0 items-center gap-2">
       <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
       {!collapsed && (
         <div className="min-w-0 flex-1">
@@ -48,32 +49,49 @@ function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
   );
 }
 
+function navItemClass(isActive: boolean) {
+  return `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
+    isActive
+      ? "border border-border bg-panel font-semibold text-fg shadow-ambient"
+      : "border border-transparent text-fg-secondary hover:text-fg hover:bg-hover"
+  }`;
+}
+
 function NavList({ projectId, collapsed }: { projectId: string; collapsed: boolean }) {
   const pathname = usePathname();
   const params = useParams<{ projectId?: string }>();
   const activeProjectId = params.projectId || projectId;
+  const EscapeIcon = ESCAPE_ITEM.icon;
 
   return (
-    <nav aria-label="Project navigation" className="flex-1 space-y-1 text-xs font-medium">
-      {NAV_ITEMS.filter((item) => "href" in item || !!activeProjectId).map((item) => {
-        const href = "href" in item ? item.href : `/projects/${activeProjectId}${item.suffix}`;
-        const Icon = item.icon;
-        const isActive = pathname === href;
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
-              isActive
-                ? "border border-border bg-panel font-semibold text-fg shadow-ambient"
-                : "border border-transparent text-fg-secondary hover:text-fg hover:bg-hover"
-            }`}
-          >
-            <Icon className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </Link>
-        );
-      })}
+    <nav aria-label="Project navigation" className="flex flex-1 flex-col text-xs font-medium">
+      <Link href={ESCAPE_ITEM.href} className={navItemClass(pathname === ESCAPE_ITEM.href)}>
+        <EscapeIcon className="w-4 h-4 shrink-0" />
+        {!collapsed && <span>{ESCAPE_ITEM.label}</span>}
+      </Link>
+      {!!activeProjectId && (
+        /* border-t and (when expanded) border-l live on the same box, so they
+           meet at its top-left corner instead of reading as two disconnected
+           lines. flex-1 stretches the box (and its border-l) down to the
+           sidebar's bottom edge, where NotificationsPanel's own border-t
+           picks the line back up. */
+        <div
+          className={`mt-2 flex-1 space-y-1 border-t border-border pt-2 ${
+            collapsed ? "" : "border-l pl-3"
+          }`}
+        >
+          {NAV_ITEMS.map((item) => {
+            const href = `/projects/${activeProjectId}${item.suffix}`;
+            const Icon = item.icon;
+            return (
+              <Link key={href} href={href} className={navItemClass(pathname === href)}>
+                <Icon className="w-4 h-4 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }
@@ -131,7 +149,7 @@ export function AppShell({ children, projectId }: AppShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-canvas text-fg">
       <aside
-        className={`m-3 flex flex-col gap-3 rounded-xl border border-border bg-panel p-3 shadow-ambient transition-all duration-180 ${
+        className={`m-3 flex flex-col rounded-xl border border-border bg-panel p-3 shadow-ambient transition-all duration-180 ${
           collapsed ? "w-20" : "w-[240px]"
         }`}
       >

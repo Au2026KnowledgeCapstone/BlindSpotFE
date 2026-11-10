@@ -48,7 +48,7 @@ export function ProjectsDirectory() {
   if (identity.isPending) return <p role="status" className="text-xs text-fg-tertiary">Checking your account…</p>;
 
   return <div className="space-y-8">
-    <PageHeader title="Projects" description="Select a project or create one. Access is scoped to your account. Lists show up to 20 pages of records." actions={<Link className="text-xs text-accent underline-offset-4 hover:underline" href="/onboarding">Organization setup</Link>} />
+    <PageHeader title="Projects" actions={<Link className="text-xs text-accent underline-offset-4 hover:underline" href="/onboarding">Organization setup</Link>} />
     {error && <p role="alert" className="rounded-md border border-fail-border bg-fail-tint p-3 text-sm text-fail">{error}</p>}
     <section aria-labelledby="project-list-heading" className="space-y-3">
       <h2 id="project-list-heading" className="text-sm font-semibold text-fg">Your projects</h2>
