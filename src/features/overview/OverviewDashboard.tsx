@@ -1,6 +1,5 @@
 import React from "react";
 import type { Run } from "@/features/runs";
-import { PageHeader } from "@/shared/ui/PageHeader";
 import { RegressionsFirst } from "./RegressionsFirst";
 import { OverviewCounters } from "./OverviewCounters";
 import { RecentRunsTable } from "./RecentRunsTable";
@@ -13,11 +12,7 @@ export function OverviewDashboard({
   projectId?: string | undefined;
 }) {
   return (
-    <div className="space-y-8" data-testid="overview-dashboard">
-      <PageHeader
-        title="Overview"
-        description="Regressions first, then the rest of the week's runs."
-      />
+    <div className="mt-6 space-y-8" data-testid="overview-dashboard">
       <RegressionsFirst runs={runs} projectId={projectId} />
       <OverviewCounters runs={runs} />
       <RecentRunsTable runs={runs} />

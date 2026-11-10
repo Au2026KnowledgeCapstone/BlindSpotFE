@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe, Sun, Moon, Users } from "lucide-react";
+import { PanelLeftClose, PanelLeft, LayoutDashboard, FileCheck2, Zap, Play, Globe, Users, Sun, Moon } from "lucide-react";
 import { useThemeStore } from "./theme-store";
 import { Button } from "@/components/ui/button";
 import { NotificationsPanel } from "@/features/workspace/notifications-panel";
@@ -18,25 +18,29 @@ export interface AppShellProps {
 const NAV_ITEMS = [
   { label: "Projects", href: "/projects", icon: LayoutDashboard },
   { label: "Overview", suffix: "", icon: LayoutDashboard },
+  { label: "Requirements", suffix: "/requirements", icon: FileCheck2 },
   { label: "Flows", suffix: "/flows", icon: Zap },
   { label: "Runs", suffix: "/runs", icon: Play },
   { label: "Project setup", suffix: "/setup", icon: Globe },
   { label: "Members", suffix: "/members", icon: Users },
 ];
 
-function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
-    <div className="flex h-12 items-center justify-between px-4 border-b border-border">
+    <div className="flex shrink-0 items-center gap-2">
+      <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
       {!collapsed && (
-        <span className="font-bold text-sm tracking-tight text-fg">
-          Blind<span className="text-accent">Spot</span>
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold tracking-tight text-fg">BlindSpot</p>
+          <p className="truncate text-[11px] text-fg-tertiary">Product validation</p>
+        </div>
       )}
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={onToggle}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="shrink-0"
       >
         {collapsed ? <PanelLeft /> : <PanelLeftClose />}
       </Button>
@@ -50,7 +54,7 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
   const activeProjectId = params.projectId || projectId;
 
   return (
-    <nav aria-label="Project navigation" className="flex-1 p-2 space-y-1 text-xs font-medium">
+    <nav aria-label="Project navigation" className="flex-1 space-y-1 text-xs font-medium">
       {NAV_ITEMS.filter((item) => "href" in item || !!activeProjectId).map((item) => {
         const href = "href" in item ? item.href : `/projects/${activeProjectId}${item.suffix}`;
         const Icon = item.icon;
@@ -59,10 +63,10 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${
               isActive
-                ? "bg-selected text-fg font-semibold"
-                : "text-fg-secondary hover:text-fg hover:bg-hover"
+                ? "border border-border bg-panel font-semibold text-fg shadow-ambient"
+                : "border border-transparent text-fg-secondary hover:text-fg hover:bg-hover"
             }`}
           >
             <Icon className="w-4 h-4 shrink-0" />
@@ -76,7 +80,7 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
 
 function TopHeader({ projectId }: { projectId: string }) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-panel px-4 text-xs sm:px-6">
+    <header className="mt-3 mr-3 mb-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-xl border border-border bg-panel px-4 text-xs shadow-ambient sm:px-6">
       <HeaderContext projectId={projectId} />
       <div className="flex shrink-0 items-center gap-3">
         <ThemeToggle />
@@ -97,7 +101,15 @@ function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const next = theme === "dark" ? "light" : "dark";
+  /**
+   * Until mounted, render as if the SSR default theme (light — see
+   * app/layout.tsx) is active, even if localStorage disagrees. Reading the
+   * real `theme` before mount produces a label/icon that matches the client
+   * but not the server-rendered markup, which React flags as a hydration
+   * mismatch.
+   */
+  const displayTheme = mounted ? theme : "light";
+  const next = displayTheme === "dark" ? "light" : "dark";
   const label = `Switch to ${next} theme`;
 
   return (
@@ -108,7 +120,7 @@ function ThemeToggle() {
       aria-label={label}
       title={label}
     >
-      {mounted && theme === "dark" ? <Sun /> : <Moon />}
+      {displayTheme === "dark" ? <Sun /> : <Moon />}
     </Button>
   );
 }
@@ -119,11 +131,11 @@ export function AppShell({ children, projectId }: AppShellProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-canvas text-fg">
       <aside
-        className={`flex flex-col border-r border-border bg-panel transition-all duration-180 ${
-          collapsed ? "w-16" : "w-[240px]"
+        className={`m-3 flex flex-col gap-3 rounded-xl border border-border bg-panel p-3 shadow-ambient transition-all duration-180 ${
+          collapsed ? "w-20" : "w-[240px]"
         }`}
       >
-        <SidebarHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+        <SidebarLogo collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
         <NavList projectId={projectId} collapsed={collapsed} />
         {!collapsed && <NotificationsPanel />}
       </aside>

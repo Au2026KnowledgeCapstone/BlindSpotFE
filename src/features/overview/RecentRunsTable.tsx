@@ -58,7 +58,7 @@ export function RecentRunsTable({ runs }: { runs: Run[] }) {
         Recent runs
       </SectionHeading>
 
-      <div className="overflow-x-auto rounded-md border border-border bg-panel shadow-ambient">
+      <div className="overflow-x-auto rounded-xl border border-border bg-panel shadow-ambient">
         <table className="w-full text-left text-xs">
           <TableHead />
           <tbody className="divide-y divide-subtle">

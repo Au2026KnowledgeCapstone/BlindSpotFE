@@ -29,6 +29,18 @@ const environmentPage = page(environment);
 const scanPage = page(scan); const testResultPage = page(testResult);
 const workspaceReply = z.object({ applications: applicationPage.optional(), environments: environmentPage.optional(), scans: scanPage.optional(), results: testResultPage.optional() }); const nameSchema = z.string().trim().min(1).max(120); const urlSchema = z.url().max(2048); const environmentKind = z.enum(["development", "staging", "production"]); const credentialReference = z.string().max(256).optional();
 
+// Mirrors BlindSpotBE app/schemas/requirements.py. Fields stay snake_case here
+// (the raw wire shape); map-requirement.ts converts to the camelCase domain type.
+const acceptanceCriterion = z.object({ id: z.string().nullable().optional(), text: z.string().min(1).max(2000), position: z.number().int().default(0) });
+const requirementCategory = z.enum(["functional", "ux", "data", "performance", "security"]);
+const requirementPriority = z.enum(["critical", "high", "medium", "low"]);
+const approvalStatus = z.enum(["draft", "needs_clarification", "approved"]);
+const requirementSource = z.object({ kind: z.enum(["manual", "imported"]).default("manual"), document_name: z.string().nullable().optional(), document_role: z.enum(["brd", "srs", "design_spec"]).nullable().optional(), excerpt: z.string().nullable().optional(), char_start: z.number().nullable().optional(), char_end: z.number().nullable().optional(), warnings: z.array(z.string()).default([]) });
+const latestResult = z.object({ run_id: uuid, verdict: z.enum(["pass", "fail", "inconclusive"]), completed_at: z.string() }).nullable();
+const requirement = z.object({ id: uuid, project_id: uuid, title: z.string(), description: z.string(), category: requirementCategory, priority: requirementPriority, approval_status: approvalStatus, acceptance_criteria: z.array(acceptanceCriterion), source: requirementSource, latest_result: latestResult.optional(), created_at: z.string(), updated_at: z.string() });
+const requirementPage = page(requirement);
+const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
+
 function workspacePath(projectId: string) { return `/projects/${uuid.parse(projectId)}`; }
 
 export class WorkspaceApiError extends Error {
@@ -132,5 +144,8 @@ export const workspaceApi = {
   invite: (projectId: string, email: string, role: "admin" | "member") => request(`/projects/${uuid.parse(projectId)}/invitations`, "POST", memberInvite, { email, role }),
   acceptInvitation: async (invitationId: string) => { await request(`/invitations/${uuid.parse(invitationId)}/accept`, "POST", member, {}); return { error: null }; },
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
+  requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
+  createRequirement: (projectId: string, args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) => request(requirementsPath(projectId), "POST", requirement, { title: args.title, description: args.description ?? "", category: args.category ?? "functional", priority: args.priority ?? "medium", acceptance_criteria: (args.acceptanceCriteria ?? []).map((text, position) => ({ text, position })) }),
+  approveRequirement: (projectId: string, requirementId: string, approved = true) => request(`${requirementsPath(projectId, requirementId)}/approval`, "POST", requirement, { approved }),
 };
-export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Organization: z.infer<typeof org> };
+export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Organization: z.infer<typeof org>; Requirement: z.infer<typeof requirement> };

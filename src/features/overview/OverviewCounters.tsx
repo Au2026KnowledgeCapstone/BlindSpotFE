@@ -15,7 +15,7 @@ interface CounterProps {
 function Counter({ label, value, note, alarm = false }: CounterProps) {
   return (
     <div
-      className={`rounded-md border p-4 shadow-ambient ${
+      className={`rounded-xl border p-4 shadow-ambient ${
         alarm ? "border-fail-border bg-fail-tint" : "border-border bg-panel"
       }`}
     >
