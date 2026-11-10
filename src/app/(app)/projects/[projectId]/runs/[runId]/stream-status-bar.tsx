@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { StreamState, AnalysisState } from "@/features/runs";
-import { Radio, LoaderCircle, Sparkles, Monitor } from "lucide-react";
+import { Sparkles, Monitor } from "lucide-react";
 
 export interface StreamStatusBarProps {
   streamState: StreamState;
@@ -11,54 +11,12 @@ export interface StreamStatusBarProps {
   onTogglePresentationMode: () => void;
 }
 
-function ConnectingBadge() {
-  return (
-    <span
-      data-testid="stream-state-badge"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-tint text-fg-secondary border border-neutral-border"
-    >
-      <LoaderCircle className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-      <span>Connecting stream...</span>
-    </span>
-  );
-}
-
-function LiveBadge() {
-  return (
-    <span
-      data-testid="stream-state-badge"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-pass-tint text-pass border border-pass-border"
-    >
-      <span className="w-2 h-2 rounded-full bg-pass animate-pulse" aria-hidden="true" />
-      <span>LIVE</span>
-    </span>
-  );
-}
-
-function ReconnectingBadge() {
-  return (
-    <span
-      data-testid="stream-state-badge"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-warn-tint text-warn border border-warn-border"
-    >
-      <Radio className="w-3.5 h-3.5 animate-pulse" aria-hidden="true" />
-      <span>Reconnecting stream...</span>
-    </span>
-  );
-}
-
 function StreamStateBadge({ streamState }: { streamState: StreamState }) {
-  if (streamState === "connecting") return <ConnectingBadge />;
-  if (streamState === "live") return <LiveBadge />;
-  if (streamState === "reconnecting") return <ReconnectingBadge />;
-  return (
-    <span
-      data-testid="stream-state-badge"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-raised text-fg-tertiary border border-subtle"
-    >
-      <span>Stream Ended</span>
-    </span>
-  );
+  if (streamState === "unavailable") return <span data-testid="stream-state-badge" className="text-xs text-fg-tertiary">Live updates unavailable</span>;
+  if (streamState === "connecting") return <span data-testid="stream-state-badge" className="text-xs text-fg-tertiary">Connecting stream…</span>;
+  if (streamState === "live") return <span data-testid="stream-state-badge" className="text-xs text-pass">LIVE</span>;
+  if (streamState === "reconnecting") return <span data-testid="stream-state-badge" className="text-xs text-warn">Reconnecting stream…</span>;
+  return <span data-testid="stream-state-badge" className="text-xs text-fg-tertiary">Stream ended</span>;
 }
 
 function AnalysisBanner({ analysisState }: { analysisState: AnalysisState }) {

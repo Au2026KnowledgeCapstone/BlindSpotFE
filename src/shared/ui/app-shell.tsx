@@ -2,12 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe, Sun, Moon } from "lucide-react";
+import { PanelLeftClose, PanelLeft, LayoutDashboard, Zap, Play, Globe, Sun, Moon, Users } from "lucide-react";
 import { useThemeStore } from "./theme-store";
 import { Button } from "@/components/ui/button";
+import { NotificationsPanel } from "@/features/workspace/notifications-panel";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -15,10 +16,12 @@ export interface AppShellProps {
 }
 
 const NAV_ITEMS = [
+  { label: "Projects", href: "/projects", icon: LayoutDashboard },
   { label: "Overview", suffix: "", icon: LayoutDashboard },
   { label: "Flows", suffix: "/flows", icon: Zap },
   { label: "Runs", suffix: "/runs", icon: Play },
-  { label: "Environments", suffix: "/environments", icon: Globe },
+  { label: "Project setup", suffix: "/setup", icon: Globe },
+  { label: "Members", suffix: "/members", icon: Users },
 ];
 
 function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
@@ -43,11 +46,13 @@ function SidebarHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
 
 function NavList({ projectId, collapsed }: { projectId: string; collapsed: boolean }) {
   const pathname = usePathname();
+  const params = useParams<{ projectId?: string }>();
+  const activeProjectId = params.projectId || projectId;
 
   return (
-    <nav className="flex-1 p-2 space-y-1 text-xs font-medium">
-      {NAV_ITEMS.map((item) => {
-        const href = `/projects/${projectId}${item.suffix}`;
+    <nav aria-label="Project navigation" className="flex-1 p-2 space-y-1 text-xs font-medium">
+      {NAV_ITEMS.filter((item) => "href" in item || !!activeProjectId).map((item) => {
+        const href = "href" in item ? item.href : `/projects/${activeProjectId}${item.suffix}`;
         const Icon = item.icon;
         const isActive = pathname === href;
         return (
@@ -120,6 +125,7 @@ export function AppShell({ children, projectId }: AppShellProps) {
       >
         <SidebarHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
         <NavList projectId={projectId} collapsed={collapsed} />
+        {!collapsed && <NotificationsPanel />}
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">

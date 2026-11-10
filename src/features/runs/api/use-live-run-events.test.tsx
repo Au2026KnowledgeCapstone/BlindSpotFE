@@ -1,83 +1,29 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { describe, it, expect } from "vitest";
+import { renderHook } from "@testing-library/react";
 import { useLiveRunEvents } from "./use-live-run-events";
 import { fixtureLiveTimeline } from "@/test/fixtures/live-timeline";
 
-function wrapperFor(client: QueryClient) {
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  };
-}
-
-describe("useLiveRunEvents stream state", () => {
-  let client: QueryClient;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+describe("useLiveRunEvents", () => {
+  it("reports unavailable without inventing production events or completion", () => {
+    const { result } = renderHook(() => useLiveRunEvents("run-4821"));
+    expect(result.current.streamState).toBe("unavailable");
+    expect(result.current.events).toEqual([]);
+    expect(result.current.runStatus).toBeNull();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-    client.clear();
-  });
-
-  it("starts in connecting with no events", () => {
-    const { result } = renderHook(() => useLiveRunEvents("run-4821"), { wrapper: wrapperFor(client) });
-    expect(result.current.streamState).toBe("connecting");
-    expect(result.current.events).toHaveLength(0);
-  });
-
-  it("delivers events incrementally and goes live", () => {
-    const { result } = renderHook(() => useLiveRunEvents("run-4821", { intervalMs: 10 }), {
-      wrapper: wrapperFor(client),
-    });
-
-    act(() => void vi.advanceTimersByTime(10));
-    expect(result.current.streamState).toBe("live");
-    expect(result.current.events).toHaveLength(1);
-    expect(result.current.events[0]?.eventType).toBe("run.started");
-
-    act(() => void vi.advanceTimersByTime(20));
-    expect(result.current.events).toHaveLength(3);
-  });
-
-  it("ends after run.completed and keeps the whole timeline", () => {
-    const { result } = renderHook(() => useLiveRunEvents("run-4821", { intervalMs: 10 }), {
-      wrapper: wrapperFor(client),
-    });
-
-    act(() => void vi.advanceTimersByTime(10 * fixtureLiveTimeline.length));
-
-    expect(result.current.streamState).toBe("ended");
-    expect(result.current.events).toHaveLength(fixtureLiveTimeline.length);
-    expect(result.current.events.at(-1)?.eventType).toBe("run.completed");
-  });
-});
-
-describe("useLiveRunEvents cache integration", () => {
-  let client: QueryClient;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    client.clear();
-  });
-
-  it("writes events into the query cache only", () => {
-    const { result } = renderHook(() => useLiveRunEvents("run-4821", { intervalMs: 10 }), {
-      wrapper: wrapperFor(client),
-    });
-    act(() => void vi.advanceTimersByTime(20));
-
-    expect(result.current.events.length).toBeGreaterThan(0);
-    const cached = client.getQueryData(["live-run-events", "run-4821"]);
-    expect(Array.isArray(cached)).toBe(true);
+  it("derives state from explicitly injected test events", () => {
+    const events = fixtureLiveTimeline.map((raw) => ({
+      runId: raw.run_id,
+      eventType: raw.event_type,
+      emittedAt: raw.emitted_at,
+      offsetMs: raw.offset_ms,
+      ...(raw.step_number !== undefined && { stepNumber: raw.step_number }),
+      ...(raw.run_status !== undefined && { runStatus: raw.run_status }),
+    }));
+    const { result } = renderHook(() => useLiveRunEvents("run-4821", { events }));
+    expect(result.current.events).toHaveLength(events.length);
+    expect(result.current.runStatus).toBe("failed");
+    expect(result.current.streamState).toBe("unavailable");
   });
 });

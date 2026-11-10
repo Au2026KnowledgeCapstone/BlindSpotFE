@@ -60,7 +60,7 @@ function Composer({
       <FlowPlanSteps
         control={control}
         register={register}
-        isSaved={saveState === "success"}
+        isSaved={saveState === "success" || saveState === "unavailable"}
       />
       <FlowSettingsFields register={register} />
       <FlowSaveRow saveState={saveState} />
@@ -109,14 +109,15 @@ export function FlowEditorContent({ projectId }: { projectId: string }) {
         />
       )}
 
-      <AsyncBoundary<Flow[]>
+      {flowsQuery.error && <p role="status" className="rounded-lg border border-border bg-panel p-4 text-sm text-fg-secondary">Saved flows are unavailable until the project flow API is integrated. No sample flows are shown.</p>}
+      {!flowsQuery.error && <AsyncBoundary<Flow[]>
         isLoading={flowsQuery.isLoading}
         error={flowsQuery.error}
         data={flowsQuery.data ?? null}
         onRetry={() => void flowsQuery.refetch()}
       >
         {(flows) => <FlowsList flows={flows} />}
-      </AsyncBoundary>
+      </AsyncBoundary>}
     </div>
   );
 }

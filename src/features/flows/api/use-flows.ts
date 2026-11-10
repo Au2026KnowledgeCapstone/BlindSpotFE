@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fixtureSeedFlows } from "@/test/fixtures";
-import { flowSchema } from "./flow.schema";
-import { mapFlow } from "./map-flow";
+import { WorkspaceApiError } from "@/features/workspace/workspace-api";
 import type { Flow } from "../types";
 
 export const flowsQueryKey = (projectId: string) => ["flows", projectId] as const;
@@ -9,6 +7,7 @@ export const flowsQueryKey = (projectId: string) => ["flows", projectId] as cons
 export function useFlows(projectId: string) {
   return useQuery<Flow[]>({
     queryKey: flowsQueryKey(projectId),
-    queryFn: async () => fixtureSeedFlows.map((f) => mapFlow(flowSchema.parse(f))),
+    queryFn: async () => { throw new WorkspaceApiError(501, "flows_unavailable", "Flows are unavailable until the project flow API is integrated."); },
+    retry: false,
   });
 }

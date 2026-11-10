@@ -11,7 +11,7 @@ export default async function AppLayout({
   params: Promise<{ projectId?: string }>;
 }) {
   const resolvedParams = await params;
-  const projectId = resolvedParams.projectId ?? "acme-corp";
+  const projectId = resolvedParams.projectId ?? "";
 
   return (
     <Providers>

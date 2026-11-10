@@ -6,23 +6,28 @@ routes live in `src/app`. Fonts are Inter and JetBrains Mono, loaded through
 
 ## Local setup
 
-Use Node.js 22 (see `.nvmrc`) and install dependencies:
+Use Node.js 22 (see `.nvmrc`). If `nvm` is unavailable in your terminal,
+load it first. Then select the project's version before installing dependencies
+or starting the app:
 
 ```bash
+source "$HOME/.nvm/nvm.sh" # only needed when the nvm command is unavailable
+nvm use
 npm ci
 ```
 
 Use `.env.example` as a configuration reference. Add missing variables to your
 existing local environment file without overwriting its other settings:
 
-- `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`: FastAPI authentication backend.
+- `NEXT_PUBLIC_API_BASE_URL=https://api.example.com`: HTTPS FastAPI backend origin. Explicit `http://localhost` is accepted for isolated previews and local development; deployed environments must use HTTPS.
 - `NEXT_PUBLIC_SUPABASE_URL`: existing Supabase project's URL.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: that project's publishable key.
 
-The Supabase variables remain necessary for the SDK-backed workspace. Signup
-and password recovery now use the FastAPI backend. Use the same Supabase project in both repositories. Keep
-real environment values out of version control; `.env.example` contains only
-placeholders. Restart Next.js after changing public environment variables.
+The Supabase variables remain necessary for existing SDK-backed features. Signup,
+password recovery and project tenancy use the FastAPI backend. Use the same
+Supabase project in both repositories. Keep real environment values out of
+version control; `.env.example` contains placeholders. Restart Next.js after
+changing public environment variables.
 
 Start the configured backend in a separate terminal:
 
@@ -61,10 +66,16 @@ in [the authentication guide](docs/backend-authentication.md). The backend excha
 authorization codes and stores tokens only in HttpOnly cookies. Password resets
 require a server-issued recovery permission bound to the recovered session.
 
-The `/workspace` page still uses Supabase SDK authentication/data access; backend
-cookie login does not establish that SDK session. Helpers and packages remain
-for those consumers, with no fallback from backend session checks to SDK identity.
-Feature-level authorization and workspace/data migration remain separate work.
+The `/workspace` route redirects to the authenticated, backend-cookie project
+directory. Project setup reads applications, environments, saved scan requests,
+and recorded results through `GET /projects/{pid}/workspace`; scan creation
+records a queued request only. The team flow API and execution/engine endpoints
+remain unavailable, so flows/runs/details show explicit unavailable states and
+never treat fixtures as customer results. Fixtures remain test-only. The run
+trace detail UI components remain intact for use when real execution data is
+available. Server
+endpoints remain authoritative for project, invitation and membership authorization;
+project setup and member writes are shown only to owners/admins.
 
 ## Checks
 
