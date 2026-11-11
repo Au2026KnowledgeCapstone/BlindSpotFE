@@ -28,13 +28,18 @@ const NAV_ITEMS = [
 function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
     <div className="mb-3 flex shrink-0 items-center gap-2">
-      <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
-      {!collapsed && (
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold tracking-tight text-fg">BlindSpot</p>
-          <p className="truncate text-[11px] text-fg-tertiary">Product validation</p>
-        </div>
-      )}
+      <Link
+        href="/projects"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"
+      >
+        <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold tracking-tight text-fg">BlindSpot</p>
+            <p className="truncate text-[11px] text-fg-tertiary">Product validation</p>
+          </div>
+        )}
+      </Link>
       <Button
         variant="ghost"
         size="icon-sm"

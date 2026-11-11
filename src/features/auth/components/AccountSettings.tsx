@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authService } from "../services/auth-service";
 import { useThemeStore, type Theme } from "@/shared/ui/theme-store";
@@ -100,16 +101,21 @@ function AppearanceSettings() {
 }
 
 export function AccountSettings() {
+  const router = useRouter();
   const { email, loading, error } = useAccountEmail();
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold">Account settings</h1>
-        <p className="text-sm text-fg-secondary">Manage your BlindSpot account and security.</p>
-      </div>
-      <div className="space-y-5 rounded-lg border border-border bg-panel p-6">
+    <div className="mx-auto max-w-xl">
+      <div className="space-y-6 rounded-lg border border-subtle bg-panel p-8 shadow-ambient">
+        <Button variant="ghost" size="sm" className="-ml-2 gap-1.5" onClick={() => router.back()}>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Back
+        </Button>
         <div className="space-y-2">
+          <h1 className="text-xl font-semibold">Account settings</h1>
+          <p className="text-sm text-fg-secondary">Manage your BlindSpot account and security.</p>
+        </div>
+        <div className="space-y-2 border-t border-border pt-5">
           <h2 className="text-sm font-semibold">Email address</h2>
           {loading ? <p role="status" className="text-sm text-fg-secondary">Loading account...</p> : email && <p className="break-words text-sm text-fg-secondary">{email}</p>}
           {error && <p role="alert" className="text-sm text-fail">{error}</p>}
