@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BlindSpot — AI Agent QA",
+  title: "BlindSpot",
   description: "Trustworthy, explicit AI QA test monitoring and evidence.",
 };
 

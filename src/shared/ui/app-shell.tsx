@@ -8,6 +8,7 @@ import { HeaderContext } from "./header-context";
 import { PanelLeftClose, PanelLeft, ArrowLeft, LayoutDashboard, FileCheck2, Play, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/features/workspace/notifications-bell";
+import { BlindSpotMark } from "./BlindSpotMark";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
         href="/projects"
         className="flex min-w-0 flex-1 items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"
       >
-        <img src="/blindspot-icon.svg" alt="" width={24} height={24} className="shrink-0" />
+        <BlindSpotMark size={24} className="shrink-0 text-fg" />
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold tracking-tight text-fg">BlindSpot</p>
