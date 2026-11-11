@@ -5,10 +5,9 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { AccountMenu } from "@/features/auth";
 import { HeaderContext } from "./header-context";
-import { PanelLeftClose, PanelLeft, ArrowLeft, LayoutDashboard, FileCheck2, Play, Globe, Users, Sun, Moon } from "lucide-react";
-import { useThemeStore } from "./theme-store";
+import { PanelLeftClose, PanelLeft, ArrowLeft, LayoutDashboard, FileCheck2, Play, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NotificationsPanel } from "@/features/workspace/notifications-panel";
+import { NotificationsBell } from "@/features/workspace/notifications-bell";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -70,16 +69,22 @@ function NavList({ projectId, collapsed }: { projectId: string; collapsed: boole
         {!collapsed && <span>{ESCAPE_ITEM.label}</span>}
       </Link>
       {!!activeProjectId && (
-        /* border-t and (when expanded) border-l live on the same box, so they
-           meet at its top-left corner instead of reading as two disconnected
-           lines. flex-1 stretches the box (and its border-l) down to the
-           sidebar's bottom edge, where NotificationsPanel's own border-t
-           picks the line back up. */
-        <div
-          className={`mt-2 flex-1 space-y-1 border-t border-border pt-2 ${
-            collapsed ? "" : "border-l pl-3"
-          }`}
-        >
+        /* The top and (when expanded) left guide lines are gradient fades
+           rather than solid borders, so they meet at the box's top-left
+           corner and taper off instead of reading as hard, disconnected
+           lines — the left one fades out as it runs down to the sidebar's
+           bottom edge. */
+        <div className={`relative mt-2 flex-1 space-y-1 pt-2 ${collapsed ? "" : "pl-3"}`}>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-border to-transparent"
+          />
+          {!collapsed && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b from-border to-transparent"
+            />
+          )}
           {NAV_ITEMS.map((item) => {
             const href = `/projects/${activeProjectId}${item.suffix}`;
             const Icon = item.icon;
@@ -101,45 +106,10 @@ function TopHeader({ projectId }: { projectId: string }) {
     <header className="mt-3 mr-3 mb-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-xl border border-border bg-panel px-4 text-xs shadow-ambient sm:px-6">
       <HeaderContext projectId={projectId} />
       <div className="flex shrink-0 items-center gap-3">
-        <ThemeToggle />
+        <NotificationsBell />
         <AccountMenu />
       </div>
     </header>
-  );
-}
-
-/**
- * Reads the shared theme store rather than poking the DOM directly, and names
- * the theme it switches to — the old control just said "Theme", which told you
- * neither the current state nor what pressing it would do.
- */
-function ThemeToggle() {
-  const theme = useThemeStore((s) => s.theme);
-  const toggleTheme = useThemeStore((s) => s.toggleTheme);
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-
-  /**
-   * Until mounted, render as if the SSR default theme (light — see
-   * app/layout.tsx) is active, even if localStorage disagrees. Reading the
-   * real `theme` before mount produces a label/icon that matches the client
-   * but not the server-rendered markup, which React flags as a hydration
-   * mismatch.
-   */
-  const displayTheme = mounted ? theme : "light";
-  const next = displayTheme === "dark" ? "light" : "dark";
-  const label = `Switch to ${next} theme`;
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      onClick={toggleTheme}
-      aria-label={label}
-      title={label}
-    >
-      {displayTheme === "dark" ? <Sun /> : <Moon />}
-    </Button>
   );
 }
 
@@ -155,7 +125,6 @@ export function AppShell({ children, projectId }: AppShellProps) {
       >
         <SidebarLogo collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
         <NavList projectId={projectId} collapsed={collapsed} />
-        {!collapsed && <NotificationsPanel />}
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
