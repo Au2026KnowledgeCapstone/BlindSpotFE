@@ -135,7 +135,7 @@ export const workspaceApi = {
   projects: () => collection("/projects", projectPage.shape.items.element),
   project: (projectId: string) => request(`/projects/${uuid.parse(projectId)}`, "GET", project),
   myInvitations: () => collection("/invitations?limit=50", invitationPage.shape.items.element),
-  notifications: () => collection("/notifications", noticePage.shape.items.element),
+  notifications: () => collection("/notifications?unread=true", noticePage.shape.items.element),
   members: (projectId: string) => collection(`/projects/${uuid.parse(projectId)}/members`, memberPage.shape.items.element),
   invitations: (projectId: string) => collection(`/projects/${uuid.parse(projectId)}/invitations`, memberInvitationPage.shape.items.element),
   onboarding: (args: { organizationName: string; projectName: string; requestId: string }) => request("/onboarding", "POST", onboardingReply, { organization_name: args.organizationName, project_name: args.projectName, request_id: args.requestId }),

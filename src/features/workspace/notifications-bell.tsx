@@ -67,13 +67,7 @@ function NotificationBadge({ count }: { count: number }) {
 
 function NotificationRow({ notice }: { notice: Notice }) {
   return (
-    <li
-      className={`rounded-md border p-2 text-xs ${
-        notice.read_at
-          ? "border-border bg-panel text-fg-tertiary"
-          : "border-border bg-raised text-fg"
-      }`}
-    >
+    <li className="rounded-md border border-border bg-raised p-2 text-xs text-fg">
       {notice.message}
     </li>
   );
@@ -100,37 +94,35 @@ function NotificationsBody({
 }
 
 /**
- * Closing the dropdown — by clicking away, Escape, or the trigger — marks
- * every currently-unread notice read in one go. There's no per-item "Mark as
- * read" control anymore; the badge is cleared by the act of having looked.
+ * The list only ever holds unread notices (fetched with `?unread=true`), so
+ * marking a notice read is equivalent to clearing it — no delete endpoint
+ * needed. Closing the dropdown — by clicking away, Escape, or the trigger —
+ * marks every listed notice read, same as "Clear all" does explicitly.
  */
 export function NotificationsBell() {
   const { identity, notifications, markAllRead } = useNotificationsData();
-  const unreadIds = (notifications.data ?? []).filter((notice) => !notice.read_at).map((notice) => notice.id);
-  const allIds = (notifications.data ?? []).map((notice) => notice.id);
+  const ids = (notifications.data ?? []).map((notice) => notice.id);
 
   return (
-    <Menu.Root onOpenChange={(open) => { if (!open && unreadIds.length) void markAllRead(unreadIds); }}>
+    <Menu.Root onOpenChange={(open) => { if (!open && ids.length) void markAllRead(ids); }}>
       <div className="relative flex items-center">
         <Menu.Trigger
-          aria-label={unreadIds.length ? `Notifications, ${unreadIds.length} unread` : "Notifications"}
+          aria-label={ids.length ? `Notifications, ${ids.length} unread` : "Notifications"}
           className="flex size-8 items-center justify-center rounded-full border border-border bg-raised text-fg-secondary hover:bg-hover hover:text-fg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 data-[popup-open]:bg-hover"
         >
           <Bell aria-hidden="true" className="size-4" strokeWidth={1.5} />
         </Menu.Trigger>
-        <NotificationBadge count={unreadIds.length} />
+        <NotificationBadge count={ids.length} />
       </div>
       <Menu.Portal>
         <Menu.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
           <Menu.Popup className="w-72 rounded-lg border border-border bg-overlay p-2 shadow-overlay outline-none">
             <div className="flex items-center justify-between pb-2">
               <p className="px-1 text-xs font-semibold text-fg">Notifications</p>
-              {allIds.length > 0 && (
-                // No "clear"/delete endpoint exists yet — this marks every
-                // notice read as a stand-in until one does.
+              {ids.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => void markAllRead(allIds)}
+                  onClick={() => void markAllRead(ids)}
                   className="rounded px-1 text-xs text-fg-tertiary hover:text-fg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"
                 >
                   Clear all

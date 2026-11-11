@@ -49,12 +49,12 @@ describe("NotificationsBell", () => {
 
   it("shows no badge and does not mark anything read when there are no unread notices", async () => {
     mocks.getUser.mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111" });
-    mocks.notifications.mockResolvedValue([{ id: "a", message: "Already read", read_at: "2026-01-02T00:00:00Z", created_at: "2026-01-01T00:00:00Z" }]);
+    mocks.notifications.mockResolvedValue([]);
     renderBell();
 
     const trigger = await screen.findByRole("button", { name: "Notifications" });
     fireEvent.click(trigger);
-    expect(await screen.findByText("Already read")).toBeInTheDocument();
+    expect(await screen.findByText("No notifications.")).toBeInTheDocument();
     fireEvent.keyDown(document.body, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
     expect(workspaceApi.markNotificationRead).not.toHaveBeenCalled();
