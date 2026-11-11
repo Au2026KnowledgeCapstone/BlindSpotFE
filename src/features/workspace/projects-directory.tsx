@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectsDirectory } from "./use-projects-directory";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 
 const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
 
@@ -45,7 +46,7 @@ export function ProjectsDirectory() {
   }
 
   if (identity.error) return <main className="space-y-3"><p role="alert" className="text-sm text-fail">{identity.error.message}</p><Button variant="outline" size="sm" onClick={() => void identity.refetch()}>Retry identity check</Button></main>;
-  if (identity.isPending) return <p role="status" className="text-xs text-fg-tertiary">Checking your account…</p>;
+  if (identity.isPending) return <LoadingScreen label="Checking your account" />;
 
   return <div className="space-y-8">
     <PageHeader title="Projects" actions={<Link className="text-xs text-accent underline-offset-4 hover:underline" href="/onboarding">Organization setup</Link>} />

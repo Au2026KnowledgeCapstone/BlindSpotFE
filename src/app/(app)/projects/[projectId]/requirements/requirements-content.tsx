@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { StatTile } from "@/shared/ui/StatTile";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { categoryLabel, priorityLabel, approvalLabel } from "@/shared/lib/labels";
 import { useRequirements, type Requirement } from "@/features/requirements";
 
@@ -165,7 +166,7 @@ export function RequirementsContent({ projectId }: { projectId: string }) {
 
   const error = identity.error || project.error;
   if (error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{error.message}</p></div>;
-  if (identity.isPending || project.isPending) return <p role="status" className="text-xs text-fg-tertiary">Loading requirements…</p>;
+  if (identity.isPending || project.isPending) return <LoadingScreen label="Loading requirements" />;
 
   const items = data.data ?? [];
   return (

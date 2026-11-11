@@ -8,6 +8,7 @@ import { workspaceApi } from "@/features/workspace/workspace-api";
 import { Button } from "@/components/ui/button";
 import { FIELD } from "@/shared/ui/field";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { LoadingMark } from "@/shared/ui/LoadingMark";
 const name = z.string().trim().min(1).max(120);
 const projectId = z.uuid();
 const timeout = <T,>(promise: PromiseLike<T>) => Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Request timed out")), 8000))]);
@@ -28,8 +29,9 @@ async function createRequestedProject(request: PendingRequest) { if(request.kind
 function WorkspaceLoadingCard({ onRetry }: { onRetry: () => void }) {
  return (
   <main className="mx-auto flex min-h-screen max-w-xl items-center p-8">
-   <div className="w-full space-y-4 rounded-lg border border-subtle bg-panel p-8 text-center shadow-ambient">
-    <p role="status" aria-busy="true" className="text-sm text-fg-secondary">Loading your account…</p>
+   <div role="status" className="w-full space-y-4 rounded-lg border border-subtle bg-panel p-8 text-center shadow-ambient">
+    <LoadingMark size={40} className="mx-auto text-fg-tertiary" />
+    <span className="sr-only">Loading your account</span>
     <Button type="button" variant="outline" onClick={onRetry}>Retry</Button>
    </div>
   </main>

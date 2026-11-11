@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "../services/auth-service";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 
 /** UI guard only. Backend feature endpoints still require their own authorization. */
 export function RequireSession({ children }: { children: ReactNode }) {
@@ -52,5 +53,5 @@ export function RequireSession({ children }: { children: ReactNode }) {
 
   if (result?.path === pathname && result.ready) return children;
   if (result?.path === pathname && result.error) return <p role="alert" className="p-6 text-fail">{result.error}</p>;
-  return <p role="status" className="p-6 text-secondary">Checking session...</p>;
+  return <LoadingScreen label="Checking session" className="min-h-screen" />;
 }

@@ -1,4 +1,5 @@
-import React from "react";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
+
 export default function Loading() {
-  return <div className="p-6 text-xs text-fg-tertiary animate-pulse">Loading runs list...</div>;
+  return <LoadingScreen label="Loading runs list" />;
 }

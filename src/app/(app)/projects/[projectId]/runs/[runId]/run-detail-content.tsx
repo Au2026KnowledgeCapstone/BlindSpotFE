@@ -9,6 +9,7 @@ import { StepsPane } from "./steps-pane";
 import { EvidencePane } from "./evidence-pane";
 import { DetailsTabs } from "./details-tabs";
 import { Button } from "@/components/ui/button";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 
 function RunStatusLayout({ runId }: { runId: string }) {
   const { data } = useRunDetail(runId);
@@ -54,7 +55,7 @@ function RunStatusLayout({ runId }: { runId: string }) {
 export function RunDetailContent({ runId }: { runId: string }) {
   const { data, isLoading, error } = useRunDetail(runId);
   const [revealed, setRevealed] = useState(false);
-  if (isLoading) return <div className="flex items-center justify-center min-h-[400px] text-xs font-mono text-fg-tertiary">Loading run details and execution trace...</div>;
+  if (isLoading) return <LoadingScreen label="Loading run details and execution trace" className="min-h-[400px]" />;
   if (error || !data) return <div role="status" className="p-6 border border-border bg-panel rounded-lg text-sm text-fg-secondary">Run details are unavailable until the project execution service is integrated.</div>;
   return (
     <div className="relative">

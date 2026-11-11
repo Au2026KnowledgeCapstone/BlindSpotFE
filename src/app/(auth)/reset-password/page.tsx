@@ -6,6 +6,7 @@ import Link from "next/link";
 import { authService } from "@/features/auth";
 import { FIELD } from "@/shared/ui/field";
 import { Button } from "@/components/ui/button";
+import { LoadingMark } from "@/shared/ui/LoadingMark";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -81,9 +82,10 @@ export default function ResetPasswordPage() {
         </div>
 
         {checking ? (
-          <p className="text-fg-secondary">
-            Verifying your reset link...
-          </p>
+          <div role="status" className="flex justify-center py-4">
+            <LoadingMark size={40} className="text-fg-tertiary" />
+            <span className="sr-only">Verifying your reset link</span>
+          </div>
         ) : success ? (
           <div className="space-y-4">
             <p role="status" className="text-pass">

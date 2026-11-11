@@ -8,6 +8,7 @@ import type { Run } from "@/features/runs";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { environmentLabel } from "@/shared/lib/labels";
 
 function RunRow({ run, projectId }: { run: Run; projectId: string }) {
@@ -35,7 +36,7 @@ function RunRow({ run, projectId }: { run: Run; projectId: string }) {
 export function RunsContent({ projectId }: { projectId: string }) {
   const { data: runs, isLoading, error } = useRuns(projectId);
 
-  if (isLoading) return <div role="status" className="text-xs text-fg-tertiary">Loading runs…</div>;
+  if (isLoading) return <LoadingScreen label="Loading runs" />;
 
   return (
     <div className="space-y-6">

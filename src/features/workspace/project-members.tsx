@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { workspaceApi } from "./workspace-api";
 
 const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
@@ -45,7 +46,7 @@ export function ProjectMembers({ projectId }: { projectId: string }) {
 
   const error = identity.error || project.error || members.error || invitations.error;
   if (error) return <div role="alert" className="space-y-3 rounded-md border border-fail-border bg-fail-tint p-3 text-sm text-fail"><p>{error.message}</p><Button variant="outline" size="sm" onClick={() => { void identity.refetch(); void project.refetch(); void members.refetch(); if (canManage) void invitations.refetch(); }}>Retry</Button></div>;
-  if (identity.isPending || project.isPending || members.isPending || (canManage && invitations.isPending)) return <p role="status" className="text-xs text-fg-tertiary">Loading project access…</p>;
+  if (identity.isPending || project.isPending || members.isPending || (canManage && invitations.isPending)) return <LoadingScreen label="Loading project access" />;
   return <div className="space-y-6">
     <PageHeader title="Members" description="Project membership and invitations. Only project owners and admins can invite teammates." />
     {message && <p role={message.endsWith("created.") ? "status" : "alert"} className="text-sm text-fg-secondary">{message}</p>}
