@@ -5,8 +5,6 @@ const projectId = "d7787aee-aef2-4d5d-b29c-96aafdf59e0d";
 const userId = "11111111-1111-4111-8111-111111111111";
 const invitationId = "22222222-2222-4222-8222-222222222222";
 const project = { id: projectId, name: "Project", description: "", owner_id: userId, role: "owner", organization_id: null, created_at: "2026-01-01T00:00:00Z" };
-const org = { id: invitationId, name: "Org", owner_id: userId, created_at: "2026-01-01T00:00:00Z" };
-const listedOrg = { ...org, role: "owner" };
 const page = (items: unknown[]) => ({ items, next_cursor: null });
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -20,13 +18,12 @@ describe("canonical workspace API adapter", () => {
     expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ credentials: "include", cache: "no-store" }));
   });
 
-  it("sends CSRF-protected onboarding and parses its canonical response", async () => {
+  it("sends CSRF-protected project creation and parses its canonical response", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
-    const response = { organization: org, project };
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response), { status: 201 }));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(project), { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
-    await expect(workspaceApi.onboarding({ organizationName: "Org", projectName: "Project", requestId: invitationId })).resolves.toEqual(response);
-    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/onboarding", expect.objectContaining({ method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify({ organization_name: "Org", project_name: "Project", request_id: invitationId }) }));
+    await expect(workspaceApi.createProject({ name: "Project" })).resolves.toEqual(project);
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify({ name: "Project" }) }));
   });
 
   it("loads authenticated pending invites and accepts via canonical endpoint", async () => {
@@ -64,11 +61,12 @@ describe("canonical workspace API adapter", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [second], next_cursor: "repeat" }), { status: 200 }));
     await expect(workspaceApi.projects()).rejects.toMatchObject({ code: "pagination_cursor_repeated" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    const invite = { id: invitationId, project_id: projectId, email: "member@example.test", role: "member", invited_by: userId, expires_at: "2026-02-01T00:00:00Z", created_at: "2026-01-01T00:00:00Z" };
     fetchMock.mockReset()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [listedOrg], next_cursor: "org-page-2" }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ ...listedOrg, id: "33333333-3333-4333-8333-333333333333", name: "Second org" }], next_cursor: null }), { status: 200 }));
-    await expect(workspaceApi.onboardingOrganizations()).resolves.toHaveLength(2);
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["https://api.example.test/organizations", "https://api.example.test/organizations?cursor=org-page-2"]);
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [invite], next_cursor: "invite-page-2" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [{ ...invite, id: "33333333-3333-4333-8333-333333333333" }], next_cursor: null }), { status: 200 }));
+    await expect(workspaceApi.myInvitations()).resolves.toHaveLength(2);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["https://api.example.test/invitations?limit=50", "https://api.example.test/invitations?limit=50&cursor=invite-page-2"]);
   });
 
   it("enforces deadline through body parsing and caller cancellation", async () => {

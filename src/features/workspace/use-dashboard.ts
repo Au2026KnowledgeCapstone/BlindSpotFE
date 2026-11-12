@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { backendAuth } from "@/features/auth";
 import { workspaceApi } from "./workspace-api";
 
-export function useProjectsDirectory() {
+export function useDashboard() {
   const cache = useQueryClient();
   const [identityVersion, setIdentityVersion] = useState(0);
   useEffect(() => {
@@ -24,7 +24,7 @@ export function useProjectsDirectory() {
 
   const identity = useQuery({ queryKey: ["workspace", "identity", identityVersion], queryFn: async () => {
     const user = await backendAuth.getUser();
-    if (!user) throw new Error("Sign in to open your projects.");
+    if (!user) throw new Error("Sign in to open your dashboard.");
     return user;
   }, retry: false, staleTime: 0, gcTime: 0 });
   const userId = identity.data?.id;
@@ -34,10 +34,5 @@ export function useProjectsDirectory() {
     await workspaceApi.acceptInvitation(id);
     await cache.invalidateQueries({ queryKey: ["workspace"] });
   }
-  async function createProject(args: { name: string }) {
-    const project = await workspaceApi.createProject(args);
-    await cache.invalidateQueries({ queryKey: ["workspace"] });
-    return project;
-  }
-  return { identity, projects, invitations, createProject, acceptInvitation };
+  return { identity, projects, invitations, acceptInvitation };
 }

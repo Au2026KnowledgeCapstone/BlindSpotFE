@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, FolderKanban } from "lucide-react";
-import { useProjectsDirectory } from "@/features/workspace";
+import { useDashboard } from "@/features/workspace";
 
 /**
  * Plain label, not a control. It used to be a dropdown offering "Project
@@ -35,8 +35,8 @@ export function HeaderContext({ projectId }: { projectId: string }) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   const activeProjectId = segments[0] === "projects" && segments[1] ? segments[1] : projectId;
-  const { projects } = useProjectsDirectory();
-  const projectName = projects.data?.find((project) => project.id === activeProjectId)?.name ?? (activeProjectId ? "Project" : "Projects");
+  const { projects } = useDashboard();
+  const projectName = projects.data?.find((project) => project.id === activeProjectId)?.name ?? (activeProjectId ? "Project" : "Dashboard");
   const section = segments[2];
   const sectionLabel = section ? SECTION_LABELS[section] ?? "Overview" : "Overview";
 

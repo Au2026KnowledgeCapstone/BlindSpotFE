@@ -20,10 +20,10 @@ describe("AppShell project navigation", () => {
   });
 
   it("keeps only directory navigation when no project route is active", () => {
-    mocks.pathname = "/projects";
+    mocks.pathname = "/dashboard";
     mocks.params = { projectId: undefined as unknown as string };
     render(<AppShell projectId=""><div>Project directory</div></AppShell>);
-    expect(screen.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects");
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
     expect(screen.queryByRole("link", { name: "Overview" })).not.toBeInTheDocument();
   });
 });

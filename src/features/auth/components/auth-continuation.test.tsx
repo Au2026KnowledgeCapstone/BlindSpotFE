@@ -26,14 +26,14 @@ describe("auth continuation", () => {
     expect(await screen.findByText(/Check your email to confirm/)).toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
   });
-  it("routes a returning user with existing projects to the projects directory", async () => {
+  it("routes a returning user with existing projects to the dashboard", async () => {
     mocks.signIn.mockResolvedValue({ authenticated: true, confirmation_required: false, user: { id: "synthetic-user", email: "new@example.com" } });
     mocks.projects.mockResolvedValue([{ id: "p1" }]);
     render(<LoginForm />);
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.invalid" } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "Pass" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/projects"));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/dashboard"));
   });
   it("routes a first-time login with no projects yet to onboarding", async () => {
     mocks.signIn.mockResolvedValue({ authenticated: true, confirmation_required: false, user: { id: "synthetic-user", email: "new@example.com" } });

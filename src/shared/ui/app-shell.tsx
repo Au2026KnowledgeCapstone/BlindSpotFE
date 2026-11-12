@@ -16,7 +16,7 @@ export interface AppShellProps {
 }
 
 /** Leaves the current project entirely — the one item here that isn't a tab within it. */
-const ESCAPE_ITEM = { label: "Projects", href: "/projects", icon: ArrowLeft };
+const ESCAPE_ITEM = { label: "Dashboard", href: "/dashboard", icon: ArrowLeft };
 
 const NAV_ITEMS = [
   { label: "Overview", suffix: "", icon: LayoutDashboard },
@@ -30,7 +30,7 @@ function SidebarLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
   return (
     <div className="mb-3 flex shrink-0 items-center gap-2">
       <Link
-        href="/projects"
+        href="/dashboard"
         className="flex min-w-0 flex-1 items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"
       >
         <BlindSpotMark size={24} className="shrink-0 text-fg" />

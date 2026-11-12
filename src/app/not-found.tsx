@@ -9,7 +9,7 @@ export default function NotFound() {
         icon={Compass}
         title="404: Page not found"
         description="The page you're looking for doesn't exist or may have moved."
-        action={<Link href="/projects" className="text-xs text-accent underline-offset-4 hover:underline">Back to projects</Link>}
+        action={<Link href="/dashboard" className="text-xs text-accent underline-offset-4 hover:underline">Back to dashboard</Link>}
         className="max-w-sm"
       />
     </main>

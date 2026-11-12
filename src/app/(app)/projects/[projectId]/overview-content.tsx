@@ -23,7 +23,7 @@ export function OverviewContent({ projectId }: { projectId: string }) {
   if (identity.isPending) return <LoadingScreen label="Checking your account" />;
   if (identity.error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{identity.error.message}</p><Link href="/login" className="text-sm text-accent underline">Sign in</Link></div>;
   if (project.isPending) return <LoadingScreen label="Loading project" />;
-  if (project.error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{project.error.message}</p><Link href="/projects" className="text-sm text-accent underline">Back to projects</Link></div>;
+  if (project.error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{project.error.message}</p><Link href="/dashboard" className="text-sm text-accent underline">Back to dashboard</Link></div>;
   if (isLoading) return <LoadingScreen label="Loading overview" />;
   const actions = <div className="flex items-center gap-4"><Link href={`/projects/${projectId}/setup`} className="text-sm text-accent underline">Project setup</Link><Link href={`/projects/${projectId}/members`} className="text-sm text-accent underline">Members</Link></div>;
   if (isError && error && !runUnavailable) return <><PageHeader title={project.data.name} description={project.data.description || "Project overview"} actions={actions} /><div role="alert" className="mt-6 space-y-4"><p className="text-sm text-fail">Failed to load overview data</p><Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button></div></>;

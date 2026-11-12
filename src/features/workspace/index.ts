@@ -1,5 +1,5 @@
-export { ProjectsDirectory } from "./projects-directory";
+export { DashboardContent } from "./dashboard-content";
 export { ProjectMembers } from "./project-members";
 export { ProjectInfrastructure } from "./project-infrastructure";
-export { useProjectsDirectory } from "./use-projects-directory";
+export { useDashboard } from "./use-dashboard";
 export { workspaceApi, WorkspaceApiError, type WorkspaceApiTypes } from "./workspace-api";

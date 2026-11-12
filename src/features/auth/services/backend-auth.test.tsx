@@ -207,7 +207,7 @@ describe("login, reload guard and logout UI", () => {
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: USER.email } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: credentials.password } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/projects"));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/dashboard"));
     expect(mocks.refresh).toHaveBeenCalled();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });

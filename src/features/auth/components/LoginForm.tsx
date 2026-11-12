@@ -38,7 +38,7 @@ export function LoginForm() {
       if (authenticated && user) {
         if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
         const hasProjects = await workspaceApi.projects().then((projects) => projects.length > 0).catch(() => false);
-        router.replace(hasProjects ? "/projects" : "/onboarding");
+        router.replace(hasProjects ? "/dashboard" : "/onboarding");
         router.refresh();
       } else {
         setAuthError(
