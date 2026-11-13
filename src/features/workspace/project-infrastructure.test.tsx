@@ -6,12 +6,12 @@ import { ProjectInfrastructure } from "./project-infrastructure";
 import { workspaceApi } from "./workspace-api";
 
 const ids = { user: "11111111-1111-4111-8111-111111111111", project: "22222222-2222-4222-8222-222222222222" };
-const mocks = vi.hoisted(() => ({ role: "admin" as "owner" | "admin" | "member", app: vi.fn(), env: vi.fn(), scan: vi.fn() }));
+const mocks = vi.hoisted(() => ({ role: "admin" as "owner" | "admin" | "member", app: vi.fn(), env: vi.fn() }));
 vi.mock("./workspace-api", () => ({ workspaceApi: {
   identity: vi.fn(async () => ({ id: ids.user, email: "user@example.test" })),
   project: vi.fn(async () => ({ id: ids.project, name: "Project", owner_id: ids.user, role: mocks.role, description: "", created_at: "2026-01-01T00:00:00Z" })),
-  projectWorkspace: vi.fn(async () => ({ applications: [], environments: [], scans: [], results: [] })),
-  createApplication: mocks.app, createEnvironment: mocks.env, createScan: mocks.scan,
+  projectWorkspace: vi.fn(async () => ({ applications: [], environments: [] })),
+  createApplication: mocks.app, createEnvironment: mocks.env,
 } }));
 
 function renderSetup() {
@@ -23,7 +23,7 @@ afterEach(() => { vi.clearAllMocks(); mocks.role = "admin"; });
 
 describe("ProjectInfrastructure role controls", () => {
   it("clicking manager form buttons submits valid application and environment data", async () => {
-    vi.mocked(workspaceApi.projectWorkspace).mockResolvedValue({ applications: [{ id: ids.project, project_id: ids.project, name: "Web" }], environments: [], scans: [], results: [] });
+    vi.mocked(workspaceApi.projectWorkspace).mockResolvedValue({ applications: [{ id: ids.project, project_id: ids.project, name: "Web" }], environments: [] });
     mocks.app.mockResolvedValue({});
     mocks.env.mockResolvedValue({});
     renderSetup();
@@ -40,24 +40,11 @@ describe("ProjectInfrastructure role controls", () => {
     await waitFor(() => expect(workspaceApi.projectWorkspace).toHaveBeenCalledTimes(3));
   });
 
-  it("clicking the member scan button queues and refreshes saved requests", async () => {
-    vi.mocked(workspaceApi.projectWorkspace).mockResolvedValueOnce({ applications: [], environments: [{ id: ids.project, project_id: ids.project, application_id: ids.project, name: "Staging", kind: "staging", base_url: "https://app.example.test", has_credentials: false, revision: 1, verified_at: null }], scans: [], results: [] });
-    mocks.role = "member";
-    mocks.scan.mockResolvedValue({});
-    renderSetup();
-    await screen.findByRole("heading", { name: "Project setup" });
-    fireEvent.change(screen.getByLabelText("Environment", { selector: "select" }), { target: { value: ids.project } });
-    fireEvent.click(screen.getByRole("button", { name: "Save scan request" }));
-    await waitFor(() => expect(workspaceApi.createScan).toHaveBeenCalledWith(ids.project, ids.project));
-    await waitFor(() => expect(workspaceApi.projectWorkspace).toHaveBeenCalledTimes(2));
-  });
-
-  it("shows admin setup writes and queued scan controls", async () => {
+  it("shows admin setup writes", async () => {
     mocks.role = "admin";
     renderSetup();
     await screen.findByRole("heading", { name: "Project setup" });
     expect(screen.getByLabelText("Application name")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save scan request" })).toBeInTheDocument();
     expect(workspaceApi.projectWorkspace).toHaveBeenCalledWith(ids.project, expect.any(AbortSignal));
   });
 

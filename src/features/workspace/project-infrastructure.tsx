@@ -9,7 +9,6 @@ import { workspaceApi } from "./workspace-api";
 
 const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
 const key = (userId: string | undefined, projectId: string) => ["workspace", userId, projectId, "infrastructure"] as const;
-const viewLabel = (segment: string) => segment.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 // eslint-disable-next-line complexity -- Keep the small project setup forms in the existing shell and scope.
 export function ProjectInfrastructure({ projectId }: { projectId: string }) {
@@ -21,7 +20,6 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
   const [kind, setKind] = useState("staging");
   const [baseUrl, setBaseUrl] = useState("");
   const [credentialReference, setCredentialReference] = useState("");
-  const [environmentId, setEnvironmentId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const identity = useQuery({ queryKey: ["workspace", "identity", identityVersion], queryFn: () => workspaceApi.identity(), retry: false, staleTime: 0, gcTime: 0 });
@@ -50,7 +48,7 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
   if (identity.isPending || project.isPending || data.isPending) return <LoadingScreen label="Loading project setup" />;
   const workspace = data.data!;
   return <div className="space-y-6">
-    <PageHeader title="Project setup" description="Applications, environments, and saved scan requests for this project. Lists show up to 20 pages of records." />
+    <PageHeader title="Project setup" description="Applications and environments for this project. Lists show up to 20 pages of records. Start runs from the Runs tab once an environment is verified." />
     {message && <p role={message === "Saved." ? "status" : "alert"} className="text-sm text-fg-secondary">{message}</p>}
     <section className="grid gap-4 lg:grid-cols-2">
       <div className="space-y-3 rounded-lg border border-border bg-panel p-4">
@@ -72,16 +70,6 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
           <Button type="submit" disabled={busy || !workspace.applications.length}>Add environment</Button>
         </form> : <p className="text-xs text-fg-tertiary">Only project owners and admins can add environments.</p>}
       </div>
-      <section className="space-y-3 rounded-lg border border-border bg-panel p-4 lg:col-span-2">
-        <h2 className="text-sm font-semibold">Saved scan requests</h2>
-        <p className="text-xs text-fg-tertiary">Requests are queued only. Execution and results are not available until the team engine is integrated.</p>
-        {project.data.role ? <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); void mutate(() => workspaceApi.createScan(projectId, environmentId), () => setEnvironmentId("")); }}>
-          <label className="sr-only" htmlFor="scan-environment">Environment</label><select id="scan-environment" className={field} required value={environmentId} onChange={(event) => setEnvironmentId(event.target.value)}><option value="">Choose environment</option>{workspace.environments.map((env) => <option key={env.id} value={env.id}>{env.name}</option>)}</select><Button type="submit" disabled={busy || !workspace.environments.length}>Save scan request</Button>
-        </form> : <p className="text-xs text-fg-tertiary">Scan requests are available to project members.</p>}
-        {workspace.scans.length ? <ul className="divide-y divide-subtle text-sm">{workspace.scans.map((scan) => <li key={scan.id} className="py-2">{viewLabel(scan.status)} · {new Date(scan.created_at).toLocaleString()}</li>)}</ul> : <p className="text-xs text-fg-tertiary">No scan requests.</p>}
-        <h3 className="text-sm font-medium">Recorded results</h3>
-        {workspace.results.length ? <ul className="space-y-2 text-sm">{workspace.results.map((result) => <li key={result.id}>{result.name} · {result.status}<p className="text-xs text-fg-tertiary">{result.summary}</p></li>)}</ul> : <p className="text-xs text-fg-tertiary">No results recorded.</p>}
-      </section>
     </section>
   </div>;
 }

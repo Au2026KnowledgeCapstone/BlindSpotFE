@@ -107,18 +107,61 @@ describe("canonical workspace API adapter", () => {
 
   it("uses canonical workspace paths and collection envelopes", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
-    const workspace = { applications: page([]), environments: page([]), scans: page([]), results: page([]) };
+    const workspace = { applications: page([]), environments: page([]) };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(workspace), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: invitationId, name: "App", project_id: projectId }), { status: 201 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ id: invitationId, name: "Staging", kind: "staging", base_url: "https://app.example.test", has_credentials: false, revision: 1, verified_at: null }), { status: 201 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ id: invitationId, status: "queued", created_at: "2026-01-01T00:00:00Z" }), { status: 202 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: invitationId, name: "Staging", kind: "staging", base_url: "https://app.example.test", has_credentials: false, revision: 1, verified_at: null }), { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
-    await expect(workspaceApi.projectWorkspace(projectId)).resolves.toEqual({ applications: [], environments: [], scans: [], results: [] });
+    await expect(workspaceApi.projectWorkspace(projectId)).resolves.toEqual({ applications: [], environments: [] });
     await workspaceApi.createApplication(projectId, "App");
     await expect(workspaceApi.createEnvironment(projectId, { application_id: invitationId, name: "Staging", kind: "staging", base_url: "https://app.example.test" })).resolves.toMatchObject({ application_id: invitationId, project_id: projectId });
-    await workspaceApi.createScan(projectId, invitationId);
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([`https://api.example.test/projects/${projectId}/workspace`, `https://api.example.test/projects/${projectId}/applications`, `https://api.example.test/projects/${projectId}/environments`, `https://api.example.test/projects/${projectId}/scans`]);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([`https://api.example.test/projects/${projectId}/workspace`, `https://api.example.test/projects/${projectId}/applications`, `https://api.example.test/projects/${projectId}/environments`]);
     expect(fetchMock.mock.calls.slice(1).every(([, init]) => (init as RequestInit).headers && (init as RequestInit).headers && ((init as RequestInit).headers as Record<string, string>)["X-CSRF-Protection"] === "1")).toBe(true);
+  });
+});
+
+describe("analysis runs", () => {
+  const environmentId = "44444444-4444-4444-8444-444444444444";
+  const runId = "55555555-5555-4555-8555-555555555555";
+  const requirementId = "66666666-6666-4666-8666-666666666666";
+  const run = { id: runId, run_number: 1, project_id: projectId, environment_id: environmentId, status: "queued", engine: null, requirement_snapshots: [{ id: requirementId, title: "Sign up", description: "", criteria: [] }], requested_by: userId, queued_at: "2026-01-01T00:00:00Z", started_at: null, completed_at: null, action_count: 0, estimated_cost_usd: null, error: null };
+  const result = { id: runId, run_id: runId, requirement_id: requirementId, requirement_title: "Sign up", verdict: "inconclusive", classification: "locator_failure", observed_behavior: "Could not find the submit button.", criterion_assessments: [], actions: [], evidence: [], duration_ms: 1200 };
+
+  it("rejects an empty or over-length requirement selection before making a request", () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    expect(() => workspaceApi.createRun(projectId, environmentId, [])).toThrow();
+    expect(() => workspaceApi.createRun(projectId, environmentId, Array.from({ length: 11 }, () => requirementId))).toThrow();
+  });
+
+  it("queues a run against the environment-scoped endpoint", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(run), { status: 202 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(workspaceApi.createRun(projectId, environmentId, [requirementId])).resolves.toMatchObject({ id: runId, status: "queued" });
+    expect(fetchMock).toHaveBeenCalledWith(`https://api.example.test/projects/${projectId}/environments/${environmentId}/runs`, expect.objectContaining({ method: "POST", body: JSON.stringify({ requirement_ids: [requirementId] }) }));
+  });
+
+  it("lists runs, fetches one, lists and fetches its results, and cancels it", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(page([run])), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(run), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(page([result])), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(result), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "cancelled" }), { status: 202 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(workspaceApi.listRuns(projectId, environmentId)).resolves.toEqual([run]);
+    await expect(workspaceApi.getRun(projectId, environmentId, runId)).resolves.toEqual(run);
+    await expect(workspaceApi.listResults(projectId, environmentId, runId)).resolves.toEqual([result]);
+    await expect(workspaceApi.getResult(projectId, environmentId, runId, runId)).resolves.toEqual(result);
+    await expect(workspaceApi.cancelRun(projectId, environmentId, runId)).resolves.toEqual({ status: "cancelled" });
+    const base = `https://api.example.test/projects/${projectId}/environments/${environmentId}/runs`;
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([base, `${base}/${runId}`, `${base}/${runId}/results`, `${base}/${runId}/results/${runId}`, `${base}/${runId}/cancel`]);
+  });
+
+  it("builds an evidence URL without fetching it", () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    expect(workspaceApi.evidenceUrl("evidence-1")).toBe("https://api.example.test/evidence/evidence-1");
   });
 });
