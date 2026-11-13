@@ -10,7 +10,7 @@ describe("RunDetailContent execution boundary", () => {
   it("keeps the run UI shell and never fabricates streamed execution", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={client}><NuqsAdapter><RunDetailContent runId="run-4821" /></NuqsAdapter></QueryClientProvider>);
-    expect(await screen.findByRole("status")).toHaveTextContent("Run details are unavailable until the project execution service is integrated.");
+    expect(await screen.findByText("Run details are unavailable until the project execution service is integrated.")).toBeInTheDocument();
     expect(screen.queryByTestId("stream-state-badge")).toBeNull();
   });
 });

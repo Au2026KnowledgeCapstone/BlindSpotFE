@@ -2,10 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
+import { Clock } from "lucide-react";
 import { useRuns } from "@/features/runs";
 import type { Run } from "@/features/runs";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { environmentLabel } from "@/shared/lib/labels";
 
 function RunRow({ run, projectId }: { run: Run; projectId: string }) {
@@ -33,7 +36,7 @@ function RunRow({ run, projectId }: { run: Run; projectId: string }) {
 export function RunsContent({ projectId }: { projectId: string }) {
   const { data: runs, isLoading, error } = useRuns(projectId);
 
-  if (isLoading) return <div role="status" className="text-xs text-fg-tertiary">Loading runs…</div>;
+  if (isLoading) return <LoadingScreen label="Loading runs" />;
 
   return (
     <div className="space-y-6">
@@ -41,7 +44,15 @@ export function RunsContent({ projectId }: { projectId: string }) {
         title="Runs"
         description="Every execution the agent has made, with its evidence and cost."
       />
-      {error ? <p role="status" className="rounded-lg border border-border bg-panel p-4 text-sm text-fg-secondary">Run history unavailable until the project execution service is integrated.</p> : <div className="border border-border rounded bg-raised overflow-hidden text-xs shadow-ambient">
+      {error ? (
+        <div role="status">
+          <EmptyState
+            icon={Clock}
+            title="Run history unavailable"
+            description="Run history is unavailable until the project execution service is integrated."
+          />
+        </div>
+      ) : <div className="overflow-hidden rounded-xl border border-border bg-raised text-xs shadow-ambient">
         <table className="w-full text-left">
           <thead className="border-b border-border bg-panel text-[11px] font-semibold uppercase tracking-[0.06em] text-fg-tertiary">
             <tr>

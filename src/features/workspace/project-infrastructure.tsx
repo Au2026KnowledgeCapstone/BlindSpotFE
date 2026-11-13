@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { workspaceApi } from "./workspace-api";
 
 const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
@@ -46,7 +47,7 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
 
   const error = identity.error || project.error || data.error;
   if (error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{error.message}</p><Button variant="outline" size="sm" onClick={() => { void identity.refetch(); void project.refetch(); void data.refetch(); }}>Retry</Button></div>;
-  if (identity.isPending || project.isPending || data.isPending) return <p role="status" className="text-xs text-fg-tertiary">Loading project setup…</p>;
+  if (identity.isPending || project.isPending || data.isPending) return <LoadingScreen label="Loading project setup" />;
   const workspace = data.data!;
   return <div className="space-y-6">
     <PageHeader title="Project setup" description="Applications, environments, and saved scan requests for this project. Lists show up to 20 pages of records." />

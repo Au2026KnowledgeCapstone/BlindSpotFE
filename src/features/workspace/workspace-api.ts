@@ -7,15 +7,12 @@ const member = z.object({ user_id: uuid, display_name: z.string(), role: z.enum(
 const invitation = z.object({ id: uuid, project_id: uuid, email: z.email(), role: z.enum(["admin", "member"]), invited_by: uuid, expires_at: z.string(), created_at: z.string() });
 const memberInvite = invitation;
 const notice = z.object({ id: uuid, message: z.string(), read_at: z.string().nullable(), created_at: z.string() });
-const org = z.object({ id: uuid, name: z.string(), owner_id: uuid, created_at: z.string() });
 const page = <T extends z.ZodType>(item: T) => z.object({ items: z.array(item), next_cursor: z.string().nullable().optional() });
-const organizationPage = page(org.extend({ role: z.enum(["owner", "admin", "member"]).optional() }));
 const projectPage = page(project);
 const memberPage = page(member);
 const invitationPage = page(invitation);
 const memberInvitationPage = page(memberInvite);
 const noticePage = page(notice);
-const onboardingReply = z.object({ organization: org, project });
 const application = z.object({ id: uuid, project_id: uuid, name: z.string() });
 const environment = z.object({ id: uuid, project_id: uuid, application_id: uuid.optional(), name: z.string(), kind: z.string(), base_url: z.string(), has_credentials: z.boolean(), revision: z.number(), verified_at: z.string().nullable() });
 const scan = z.object({ id: uuid, project_id: uuid, environment_id: uuid, status: z.literal("queued"), created_at: z.string() });
@@ -28,6 +25,18 @@ const applicationPage = page(application);
 const environmentPage = page(environment);
 const scanPage = page(scan); const testResultPage = page(testResult);
 const workspaceReply = z.object({ applications: applicationPage.optional(), environments: environmentPage.optional(), scans: scanPage.optional(), results: testResultPage.optional() }); const nameSchema = z.string().trim().min(1).max(120); const urlSchema = z.url().max(2048); const environmentKind = z.enum(["development", "staging", "production"]); const credentialReference = z.string().max(256).optional();
+
+// Mirrors BlindSpotBE app/schemas/requirements.py. Fields stay snake_case here
+// (the raw wire shape); map-requirement.ts converts to the camelCase domain type.
+const acceptanceCriterion = z.object({ id: z.string().nullable().optional(), text: z.string().min(1).max(2000), position: z.number().int().default(0) });
+const requirementCategory = z.enum(["functional", "ux", "data", "performance", "security"]);
+const requirementPriority = z.enum(["critical", "high", "medium", "low"]);
+const approvalStatus = z.enum(["draft", "needs_clarification", "approved"]);
+const requirementSource = z.object({ kind: z.enum(["manual", "imported"]).default("manual"), document_name: z.string().nullable().optional(), document_role: z.enum(["brd", "srs", "design_spec"]).nullable().optional(), excerpt: z.string().nullable().optional(), char_start: z.number().nullable().optional(), char_end: z.number().nullable().optional(), warnings: z.array(z.string()).default([]) });
+const latestResult = z.object({ run_id: uuid, verdict: z.enum(["pass", "fail", "inconclusive"]), completed_at: z.string() }).nullable();
+const requirement = z.object({ id: uuid, project_id: uuid, title: z.string(), description: z.string(), category: requirementCategory, priority: requirementPriority, approval_status: approvalStatus, acceptance_criteria: z.array(acceptanceCriterion), source: requirementSource, latest_result: latestResult.optional(), created_at: z.string(), updated_at: z.string() });
+const requirementPage = page(requirement);
+const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
 
 function workspacePath(projectId: string) { return `/projects/${uuid.parse(projectId)}`; }
 
@@ -118,19 +127,18 @@ export const workspaceApi = {
   createApplication: (projectId: string, name: string) => request(`${workspacePath(projectId)}/applications`, "POST", applicationReply, { name: nameSchema.parse(name) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId) })),
   createEnvironment: (projectId: string, args: { application_id: string; name: string; kind: string; base_url: string; credential_reference?: string }) => request(`${workspacePath(projectId)}/environments`, "POST", environmentReply, { application_id: uuid.parse(args.application_id), name: nameSchema.parse(args.name), kind: environmentKind.parse(args.kind), base_url: urlSchema.parse(args.base_url), ...(args.credential_reference ? { credential_reference: credentialReference.parse(args.credential_reference) } : {}) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), application_id: result.application_id ?? uuid.parse(args.application_id) })),
   createScan: (projectId: string, environmentId: string) => request(`${workspacePath(projectId)}/scans`, "POST", scanReply, { environment_id: uuid.parse(environmentId) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), environment_id: result.environment_id ?? uuid.parse(environmentId) })),
-  organizations: () => collection("/organizations", organizationPage.shape.items.element),
-  onboardingOrganizations: () => collection("/organizations", organizationPage.shape.items.element, 5),
   projects: () => collection("/projects", projectPage.shape.items.element),
   project: (projectId: string) => request(`/projects/${uuid.parse(projectId)}`, "GET", project),
   myInvitations: () => collection("/invitations?limit=50", invitationPage.shape.items.element),
-  notifications: () => collection("/notifications", noticePage.shape.items.element),
+  notifications: () => collection("/notifications?unread=true", noticePage.shape.items.element),
   members: (projectId: string) => collection(`/projects/${uuid.parse(projectId)}/members`, memberPage.shape.items.element),
   invitations: (projectId: string) => collection(`/projects/${uuid.parse(projectId)}/invitations`, memberInvitationPage.shape.items.element),
-  onboarding: (args: { organizationName: string; projectName: string; requestId: string }) => request("/onboarding", "POST", onboardingReply, { organization_name: args.organizationName, project_name: args.projectName, request_id: args.requestId }),
-  addOrganizationProject: (args: { organizationId: string; name: string; description: string; requestId: string }) => request(`/organizations/${uuid.parse(args.organizationId)}/projects`, "POST", project, { name: args.name, description: args.description, request_id: args.requestId }),
   createProject: (args: { name: string; description?: string }) => request("/projects", "POST", project, args),
   invite: (projectId: string, email: string, role: "admin" | "member") => request(`/projects/${uuid.parse(projectId)}/invitations`, "POST", memberInvite, { email, role }),
   acceptInvitation: async (invitationId: string) => { await request(`/invitations/${uuid.parse(invitationId)}/accept`, "POST", member, {}); return { error: null }; },
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
+  requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
+  createRequirement: (projectId: string, args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) => request(requirementsPath(projectId), "POST", requirement, { title: args.title, description: args.description ?? "", category: args.category ?? "functional", priority: args.priority ?? "medium", acceptance_criteria: (args.acceptanceCriteria ?? []).map((text, position) => ({ text, position })) }),
+  approveRequirement: (projectId: string, requirementId: string, approved = true) => request(`${requirementsPath(projectId, requirementId)}/approval`, "POST", requirement, { approved }),
 };
-export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Organization: z.infer<typeof org> };
+export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement> };

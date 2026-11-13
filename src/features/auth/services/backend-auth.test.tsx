@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(), refresh: vi.fn(),
   signup: vi.fn(), recovery: vi.fn(), update: vi.fn(), createClient: vi.fn(),
+  projects: vi.fn(),
 }));
 const router = { replace: mocks.replace, refresh: mocks.refresh };
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/projects/acme-corp" }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: mocks.createClient }));
+vi.mock("@/features/workspace/workspace-api", () => ({ workspaceApi: { projects: mocks.projects } }));
 
 const USER = { id: "11111111-1111-4111-8111-111111111111", email: "test@example.com" };
 const RESULT = { user: USER, authenticated: true, confirmation_required: false };
@@ -36,6 +38,7 @@ beforeEach(() => {
   fetchMock = vi.fn<typeof fetch>();
   vi.stubGlobal("fetch", fetchMock);
   installLocks();
+  mocks.projects.mockResolvedValue([{ id: "p1" }]);
   mocks.createClient.mockReturnValue({ auth: {
     signUp: mocks.signup, resetPasswordForEmail: mocks.recovery, updateUser: mocks.update,
   } });
@@ -204,7 +207,7 @@ describe("login, reload guard and logout UI", () => {
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: USER.email } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: credentials.password } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/onboarding"));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/dashboard"));
     expect(mocks.refresh).toHaveBeenCalled();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });

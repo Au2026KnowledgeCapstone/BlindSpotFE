@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginFormValues } from "../schemas";
 import { AuthRequestError } from "../services/backend-auth";
 import { authService } from "../services/auth-service";
+import { workspaceApi } from "@/features/workspace/workspace-api";
 import { FIELD } from "@/shared/ui/field";
 
 export function LoginForm() {
@@ -28,10 +29,6 @@ export function LoginForm() {
     },
   });
 
-  /**
-   * Authenticates an existing user through the backend cookie session.
-   * Redirects to the dashboard after successful login.
-   */
   const onSubmit = async (values: LoginFormValues) => {
     setAuthError("");
 
@@ -40,7 +37,8 @@ export function LoginForm() {
 
       if (authenticated && user) {
         if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
-        router.replace("/onboarding");
+        const hasProjects = await workspaceApi.projects().then((projects) => projects.length > 0).catch(() => false);
+        router.replace(hasProjects ? "/dashboard" : "/onboarding");
         router.refresh();
       } else {
         setAuthError(

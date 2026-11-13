@@ -7,7 +7,7 @@ import { SectionHeading } from "@/shared/ui/SectionHeading";
 import { environmentLabel, triggerLabel } from "@/shared/lib/labels";
 
 const ROW =
-  "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border border-fail-border bg-fail-tint p-3";
+  "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-fail-border bg-fail-tint p-3";
 
 function Dot() {
   return (
@@ -57,7 +57,7 @@ function RegressionRow({ run, projectId }: { run: Run; projectId?: string | unde
 
 function NoRegressions() {
   return (
-    <div className="flex items-center gap-2 rounded-md border border-subtle bg-panel p-3 text-xs text-fg-secondary shadow-ambient">
+    <div className="flex items-center gap-2 rounded-xl border border-subtle bg-panel p-3 text-xs text-fg-secondary shadow-ambient">
       <CircleCheck aria-hidden className="w-3.5 h-3.5 shrink-0 text-pass" />
       No active regressions.
     </div>

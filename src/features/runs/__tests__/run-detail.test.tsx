@@ -14,7 +14,7 @@ function renderRunDetail() {
 describe("RunDetailContent", () => {
   it("does not fabricate execution detail when the project engine is unavailable", async () => {
     renderRunDetail();
-    expect(await screen.findByRole("status")).toHaveTextContent("Run details are unavailable until the project execution service is integrated.");
+    expect(await screen.findByText("Run details are unavailable until the project execution service is integrated.")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /steps and actions/i })).toBeNull();
     expect(screen.queryByText("Application defect")).toBeNull();
   });

@@ -29,6 +29,20 @@ const SCHEDULE_LABELS: Record<string, string> = {
   manual: "Manual only",
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  functional: "Functional",
+  ux: "UX",
+  data: "Data",
+  performance: "Performance",
+  security: "Security",
+};
+
+const APPROVAL_LABELS: Record<string, string> = {
+  draft: "Draft",
+  needs_clarification: "Needs clarification",
+  approved: "Approved",
+};
+
 /** Sentence-cases an unknown enum value: `agent_error` → `Agent error`. */
 export function humanizeEnum(value: string): string {
   const spaced = value.replace(/[_-]+/g, " ").trim();
@@ -47,3 +61,12 @@ export const triggerLabel = (value: string): string =>
 
 export const scheduleLabel = (value: string): string =>
   lookup(SCHEDULE_LABELS, value);
+
+export const categoryLabel = (value: string): string =>
+  lookup(CATEGORY_LABELS, value);
+
+/** Priority values (critical/high/medium/low) are already plain English. */
+export const priorityLabel = (value: string): string => humanizeEnum(value);
+
+export const approvalLabel = (value: string): string =>
+  lookup(APPROVAL_LABELS, value);

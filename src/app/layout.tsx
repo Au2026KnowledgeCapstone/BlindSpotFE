@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BlindSpot — AI Agent QA",
+  title: "BlindSpot",
   description: "Trustworthy, explicit AI QA test monitoring and evidence.",
 };
 
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -35,10 +35,10 @@ export default function RootLayout({
                 if (theme === 'light' || theme === 'dark') {
                   document.documentElement.setAttribute('data-theme', theme);
                 } else {
-                  document.documentElement.setAttribute('data-theme', 'dark');
+                  document.documentElement.setAttribute('data-theme', 'light');
                 }
               } catch (e) {
-                document.documentElement.setAttribute('data-theme', 'dark');
+                document.documentElement.setAttribute('data-theme', 'light');
               }
             `,
           }}

@@ -7,6 +7,8 @@
   --color-raised: var(--bs-bg-raised);
   --color-overlay: var(--bs-bg-overlay);
   --color-inset: var(--bs-bg-inset);
+  --color-contrast: var(--bs-bg-contrast);
+  --color-on-contrast: var(--bs-text-on-contrast);
 
   --color-fg: var(--bs-text-primary);
   --color-fg-secondary: var(--bs-text-secondary);

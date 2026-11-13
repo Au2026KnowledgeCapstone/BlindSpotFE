@@ -1,9 +1,5 @@
-import React from "react";
+import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 
 export default function Loading() {
-  return (
-    <div className="p-6 text-xs text-fg-tertiary animate-pulse">
-      Loading project data...
-    </div>
-  );
+  return <LoadingScreen label="Loading project data" />;
 }

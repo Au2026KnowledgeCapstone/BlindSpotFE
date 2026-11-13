@@ -2,8 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountSettings } from "./AccountSettings";
 
-const mocks = vi.hoisted(() => ({ getUser: vi.fn(), requestPasswordReset: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getUser: vi.fn(), requestPasswordReset: vi.fn(), back: vi.fn() }));
 vi.mock("../services/auth-service", () => ({ authService: mocks }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ back: mocks.back }) }));
 
 afterEach(cleanup);
 beforeEach(() => vi.resetAllMocks());
@@ -24,6 +25,14 @@ describe("AccountSettings", () => {
     render(<AccountSettings />);
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load your account");
     expect(screen.getByRole("button", { name: "Send password reset email" })).toBeDisabled();
+  });
+
+  it("navigates back to the previous page when Back is clicked", async () => {
+    mocks.getUser.mockResolvedValue({ email: "stevie@example.com" });
+    render(<AccountSettings />);
+    await screen.findByText("stevie@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(mocks.back).toHaveBeenCalledTimes(1);
   });
 
   it("shows reset failures without reporting success", async () => {

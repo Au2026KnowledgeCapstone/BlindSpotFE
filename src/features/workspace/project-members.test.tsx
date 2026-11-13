@@ -31,7 +31,7 @@ describe("ProjectMembers access and account isolation", () => {
     const invalidate = vi.spyOn(client, "invalidateQueries");
     await screen.findByRole("heading", { name: "Members" });
     fireEvent.change(screen.getByLabelText("Verified email"), { target: { value: "person@example.test" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create pending invitation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Invite" }));
     await screen.findByText("Pending invitation created.");
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: key }));
   });
