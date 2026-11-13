@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRunDetail, type Run, type Result } from "@/features/analysis";
+import { useRunEvents } from "@/features/analysis";
 import { workspaceApi } from "@/features/workspace";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { CostChip } from "@/shared/ui/CostChip";
@@ -28,8 +29,9 @@ function BackToRuns({ projectId, message }: { projectId: string; message: string
   );
 }
 
-function RunHeader({ run, onCancel, cancelling }: { run: Run; onCancel: () => void; cancelling: boolean }) {
-  const cancellable = run.status === "queued" || run.status === "running";
+// eslint-disable-next-line complexity -- Status, cancellation state and action belong in one run summary header.
+function RunHeader({ run, onCancel, cancelling, requestPending }: { run: Run; onCancel: () => void; cancelling: boolean; requestPending: boolean }) {
+  const cancellable = (run.status === "queued" || run.status === "running") && !run.cancelRequested && !requestPending;
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-panel p-4 md:flex-row md:items-center md:justify-between">
       <div className="space-y-1.5">
@@ -43,6 +45,7 @@ function RunHeader({ run, onCancel, cancelling }: { run: Run; onCancel: () => vo
           {run.status === "queued" && <> · waiting for an analysis worker</>}
         </p>
         {run.error && <p className="text-xs text-fail">{run.error}</p>}
+        {(run.cancelRequested || requestPending) && (run.status === "queued" || run.status === "running") && <p role="status" className="text-xs text-warn">Cancellation requested. Waiting for the worker to stop.</p>}
       </div>
       <div className="flex items-center gap-3">
         <CostChip durationSeconds={durationSeconds(run)} actionsCount={run.actionCount} estimatedCostUsd={run.estimatedCostUsd ?? 0} mode="Agentic" />
@@ -73,20 +76,28 @@ function ResultsSection({ results, runStatus }: { results: RunDetailResult["resu
 function useCancel(projectId: string, environmentId: string | undefined, runId: string, onDone: () => Promise<unknown>) {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [requestPending, setRequestPending] = useState(false);
   async function cancel() {
     if (cancelling || !environmentId) return;
     setCancelling(true);
     setCancelError("");
-    try { await workspaceApi.cancelRun(projectId, environmentId, runId); await onDone(); }
+    try {
+      const response = await workspaceApi.cancelRun(projectId, environmentId, runId);
+      setRequestPending(response.status === "cancellation_requested");
+      await onDone();
+    }
     catch (cause) { setCancelError(cause instanceof Error ? cause.message : "Could not cancel the run."); }
     finally { setCancelling(false); }
   }
-  return { cancelling, cancelError, cancel };
+  return { cancelling, cancelError, requestPending, cancel };
 }
 
+// eslint-disable-next-line complexity -- Keep the run, SSE, cancellation and result states coordinated.
 export function RunDetailContent({ projectId, runId, environmentId }: { projectId: string; runId: string; environmentId: string | undefined }) {
   const { run, results } = useRunDetail(projectId, environmentId, runId);
-  const { cancelling, cancelError, cancel } = useCancel(projectId, environmentId, runId, () => run.refetch());
+  const { cancelling, cancelError, requestPending, cancel } = useCancel(projectId, environmentId, runId, () => run.refetch());
+  const active = run.data?.status === "queued" || run.data?.status === "running";
+  const streamState = useRunEvents(projectId, environmentId, runId, active);
 
   if (!environmentId) return <BackToRuns projectId={projectId} message="This run's environment is missing from the link." />;
   if (run.isPending) return <LoadingScreen label="Loading run detail" />;
@@ -95,7 +106,8 @@ export function RunDetailContent({ projectId, runId, environmentId }: { projectI
   return (
     <div className="space-y-6 pb-12">
       <PageHeader title="Run detail" description="One result per requirement, with the evidence behind each verdict." />
-      <RunHeader run={run.data} onCancel={() => void cancel()} cancelling={cancelling} />
+      <RunHeader run={run.data} onCancel={() => void cancel()} cancelling={cancelling} requestPending={requestPending} />
+      {active && <p role="status" className="text-xs text-fg-tertiary">{streamState === "live" ? "Live run updates connected" : streamState === "reconnecting" ? "Reconnecting run updates…" : streamState === "connecting" ? "Connecting run updates…" : "Live updates unavailable"}</p>}
       {cancelError && <p role="alert" className="text-xs text-fail">{cancelError}</p>}
       <ResultsSection results={results} runStatus={run.data.status} />
     </div>

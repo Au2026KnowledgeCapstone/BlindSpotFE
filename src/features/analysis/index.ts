@@ -17,3 +17,5 @@ export { mapRun } from "./api/map-run";
 export { mapResult } from "./api/map-result";
 export { useRuns } from "./api/use-runs";
 export { useRunDetail } from "./api/use-run-detail";
+export { useProjectRuns } from "./api/use-project-runs";
+export { useRunEvents } from "./api/use-run-events";

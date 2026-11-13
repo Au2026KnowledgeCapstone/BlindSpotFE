@@ -19,6 +19,7 @@ export interface Run {
   projectId: string;
   environmentId: string;
   status: RunExecutionStatus;
+  cancelRequested: boolean;
   engine?: Engine | undefined;
   requirementSnapshots: RequirementSnapshot[];
   requestedBy: string;

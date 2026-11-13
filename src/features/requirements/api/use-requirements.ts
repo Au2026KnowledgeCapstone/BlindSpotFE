@@ -20,12 +20,7 @@ function useIdentityVersion() {
   return version;
 }
 
-/**
- * Backend routes for requirements are declared and typed (see
- * BlindSpotBE backend-B4-requirements.md) but not implemented yet — every
- * request 501s until B4 ships. `unavailable` surfaces that distinctly from a
- * genuine error, same as useRuns/OverviewContent do for the execution API.
- */
+/** Requirement queries and mutations backed by BE's project API. */
 export function useRequirements(projectId: string) {
   const cache = useQueryClient();
   const identityVersion = useIdentityVersion();
@@ -41,8 +36,12 @@ export function useRequirements(projectId: string) {
   async function refresh() {
     await cache.invalidateQueries({ queryKey: key(identity.data?.id, projectId) });
   }
-  async function create(args: { title: string; description?: string; category?: string; priority?: string }) {
+  async function create(args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) {
     await workspaceApi.createRequirement(projectId, args);
+    await refresh();
+  }
+  async function update(requirementId: string, args: { title: string; description: string; acceptanceCriteria: { id?: string; text: string }[] }) {
+    await workspaceApi.updateRequirement(projectId, requirementId, args);
     await refresh();
   }
   async function approve(requirementId: string) {
@@ -52,5 +51,5 @@ export function useRequirements(projectId: string) {
 
   const canManage = project.data?.role === "owner" || project.data?.role === "admin";
   const unavailable = data.isError && data.error instanceof WorkspaceApiError && data.error.status === 501;
-  return { identity, project, data, canManage, unavailable, create, approve };
+  return { identity, project, data, canManage, unavailable, create, update, approve };
 }

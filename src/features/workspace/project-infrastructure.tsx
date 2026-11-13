@@ -10,6 +10,43 @@ import { workspaceApi } from "./workspace-api";
 const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
 const key = (userId: string | undefined, projectId: string) => ["workspace", userId, projectId, "infrastructure"] as const;
 
+function EnvironmentLoginControls({ projectId, environmentId, hasCredentials, onChanged }: { projectId: string; environmentId: string; hasCredentials: boolean; onChanged: () => Promise<void> }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [successSelector, setSuccessSelector] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  async function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true); setMessage("");
+    try {
+      await workspaceApi.updateEnvironmentCredentials(projectId, environmentId, { username, password, success_selector: successSelector });
+      setUsername(""); setPassword(""); setSuccessSelector("");
+      setMessage("Login saved."); await onChanged();
+    } catch (cause) { setMessage(cause instanceof Error ? cause.message : "Could not save login."); }
+    finally { setBusy(false); }
+  }
+  async function verify() {
+    setBusy(true); setMessage("");
+    try {
+      const result = await workspaceApi.verifyEnvironment(projectId, environmentId);
+      setMessage(result.status === "verified" ? "Login verified." : "Verification: " + result.status);
+      await onChanged();
+    } catch (cause) { setMessage(cause instanceof Error ? cause.message : "Could not verify login."); }
+    finally { setBusy(false); }
+  }
+  return <div className="mt-2 space-y-2">
+    <form className="grid gap-2 sm:grid-cols-3" onSubmit={(event) => void save(event)}>
+      <label className="text-xs text-fg-secondary">Login email or username<input className={field} autoComplete="off" required value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+      <label className="text-xs text-fg-secondary">Password<input className={field} type="password" autoComplete="new-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+      <label className="text-xs text-fg-secondary">Success selector<input className={field} required value={successSelector} onChange={(event) => setSuccessSelector(event.target.value)} placeholder="#signed-in" /></label>
+      <Button type="submit" size="sm" disabled={busy}>Save login</Button>
+    </form>
+    {hasCredentials && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void verify()}>Verify saved login</Button>}
+    {message && <p role="status" className="text-xs text-fg-secondary">{message}</p>}
+  </div>;
+}
+
 // eslint-disable-next-line complexity -- Keep the small project setup forms in the existing shell and scope.
 export function ProjectInfrastructure({ projectId }: { projectId: string }) {
   const cache = useQueryClient();
@@ -19,7 +56,9 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
   const [environmentName, setEnvironmentName] = useState("");
   const [kind, setKind] = useState("staging");
   const [baseUrl, setBaseUrl] = useState("");
-  const [credentialReference, setCredentialReference] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [successSelector, setSuccessSelector] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const identity = useQuery({ queryKey: ["workspace", "identity", identityVersion], queryFn: () => workspaceApi.identity(), retry: false, staleTime: 0, gcTime: 0 });
@@ -60,13 +99,15 @@ export function ProjectInfrastructure({ projectId }: { projectId: string }) {
       </div>
       <div className="space-y-3 rounded-lg border border-border bg-panel p-4">
         <h2 className="text-sm font-semibold">Environments</h2>
-        {workspace.environments.length ? <ul className="space-y-2 text-sm">{workspace.environments.map((env) => <li key={env.id}><strong>{env.name}</strong> · {env.kind}<p className="break-all text-xs text-fg-tertiary">{env.base_url} · {env.has_credentials ? "Credentials configured" : "No credentials"}</p></li>)}</ul> : <p className="text-xs text-fg-tertiary">No environments yet.</p>}
-        {canManage ? <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); void mutate(() => workspaceApi.createEnvironment(projectId, { application_id: applicationId, name: environmentName, kind, base_url: baseUrl, ...(credentialReference.trim() ? { credential_reference: credentialReference.trim() } : {}) }), () => { setEnvironmentName(""); setBaseUrl(""); setCredentialReference(""); }); }}>
+        {workspace.environments.length ? <ul className="space-y-2 text-sm">{workspace.environments.map((env) => <li key={env.id}><strong>{env.name}</strong> · {env.kind}<p className="break-all text-xs text-fg-tertiary">{env.base_url} · {env.has_credentials ? "Credentials configured" : "No credentials"} · {env.verified_at ? "Verified" : "Not verified"}</p>{canManage && <EnvironmentLoginControls projectId={projectId} environmentId={env.id} hasCredentials={env.has_credentials} onChanged={() => cache.invalidateQueries({ queryKey: key(identity.data?.id, projectId) }).then(() => undefined)} />}</li>)}</ul> : <p className="text-xs text-fg-tertiary">No environments yet.</p>}
+        {canManage ? <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); void mutate(() => workspaceApi.createEnvironment(projectId, { application_id: applicationId, name: environmentName, kind, base_url: baseUrl, ...(loginUsername && loginPassword && successSelector ? { credentials: { username: loginUsername, password: loginPassword, success_selector: successSelector } } : {}) }), () => { setEnvironmentName(""); setBaseUrl(""); setLoginUsername(""); setLoginPassword(""); setSuccessSelector(""); }); }}>
           <label className="block space-y-1 text-xs text-fg-secondary">Application<select className={field} required value={applicationId} onChange={(event) => setApplicationId(event.target.value)}><option value="">Choose application</option>{workspace.applications.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}</select></label>
           <label className="block space-y-1 text-xs text-fg-secondary">Environment name<input className={field} required maxLength={120} value={environmentName} onChange={(event) => setEnvironmentName(event.target.value)} /></label>
           <label className="block space-y-1 text-xs text-fg-secondary">Kind<select className={field} value={kind} onChange={(event) => setKind(event.target.value)}><option value="development">Development</option><option value="staging">Staging</option><option value="production">Production</option></select></label>
           <label className="block space-y-1 text-xs text-fg-secondary">Base URL<input className={field} type="url" required maxLength={2048} value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://app.example.com" /></label>
-          <label className="block space-y-1 text-xs text-fg-secondary">Credential reference (optional)<input className={field} maxLength={256} value={credentialReference} onChange={(event) => setCredentialReference(event.target.value)} /></label>
+          <label className="block space-y-1 text-xs text-fg-secondary">Login email or username (optional)<input className={field} autoComplete="off" required={!!loginPassword || !!successSelector} value={loginUsername} onChange={(event) => setLoginUsername(event.target.value)} /></label>
+          <label className="block space-y-1 text-xs text-fg-secondary">Login password<input className={field} type="password" autoComplete="new-password" required={!!loginUsername || !!successSelector} value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} /></label>
+          <label className="block space-y-1 text-xs text-fg-secondary">Login success selector<input className={field} required={!!loginUsername || !!loginPassword} value={successSelector} onChange={(event) => setSuccessSelector(event.target.value)} placeholder="#signed-in" /></label>
           <Button type="submit" disabled={busy || !workspace.applications.length}>Add environment</Button>
         </form> : <p className="text-xs text-fg-tertiary">Only project owners and admins can add environments.</p>}
       </div>

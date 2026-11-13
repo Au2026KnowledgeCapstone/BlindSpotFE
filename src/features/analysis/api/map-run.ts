@@ -8,6 +8,7 @@ export function mapRun(data: WorkspaceApiTypes["Run"]): Run {
     projectId: data.project_id,
     environmentId: data.environment_id,
     status: data.status,
+    cancelRequested: data.cancel_requested,
     ...(data.engine != null && { engine: data.engine }),
     requirementSnapshots: data.requirement_snapshots.map((snapshot) => ({
       id: snapshot.id,

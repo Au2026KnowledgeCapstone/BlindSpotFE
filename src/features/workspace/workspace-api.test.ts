@@ -125,7 +125,7 @@ describe("analysis runs", () => {
   const environmentId = "44444444-4444-4444-8444-444444444444";
   const runId = "55555555-5555-4555-8555-555555555555";
   const requirementId = "66666666-6666-4666-8666-666666666666";
-  const run = { id: runId, run_number: 1, project_id: projectId, environment_id: environmentId, status: "queued", engine: null, requirement_snapshots: [{ id: requirementId, title: "Sign up", description: "", criteria: [] }], requested_by: userId, queued_at: "2026-01-01T00:00:00Z", started_at: null, completed_at: null, action_count: 0, estimated_cost_usd: null, error: null };
+  const run = { id: runId, run_number: 1, project_id: projectId, environment_id: environmentId, status: "queued", cancel_requested: false, engine: null, requirement_snapshots: [{ id: requirementId, title: "Sign up", description: "", criteria: [] }], requested_by: userId, queued_at: "2026-01-01T00:00:00Z", started_at: null, completed_at: null, action_count: 0, estimated_cost_usd: null, error: null };
   const result = { id: runId, run_id: runId, requirement_id: requirementId, requirement_title: "Sign up", verdict: "inconclusive", classification: "locator_failure", observed_behavior: "Could not find the submit button.", criterion_assessments: [], actions: [], evidence: [], duration_ms: 1200 };
 
   it("rejects an empty or over-length requirement selection before making a request", () => {
@@ -163,5 +163,46 @@ describe("analysis runs", () => {
   it("builds an evidence URL without fetching it", () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
     expect(workspaceApi.evidenceUrl("evidence-1")).toBe("https://api.example.test/evidence/evidence-1");
+  });
+});
+
+describe("runnable requirements and environment login", () => {
+  const environmentId = "44444444-4444-4444-8444-444444444444";
+  const requirementId = "66666666-6666-4666-8666-666666666666";
+  const criterionId = "77777777-7777-4777-8777-777777777777";
+  const requirement = {
+    id: requirementId, project_id: projectId, title: "Checkout", description: "Complete a purchase",
+    category: "functional", priority: "medium", approval_status: "draft",
+    acceptance_criteria: [{ id: criterionId, text: "Confirmation is visible", position: 0 }],
+    source: { kind: "manual", warnings: [] }, latest_result: null,
+    created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z",
+  };
+
+  it("creates and edits requirements with criterion IDs and text", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(requirement), { status: 200 })));
+    vi.stubGlobal("fetch", fetchMock);
+    await workspaceApi.createRequirement(projectId, { title: "Checkout", acceptanceCriteria: ["Confirmation is visible"] });
+    await workspaceApi.updateRequirement(projectId, requirementId, { title: "Checkout", description: "Complete a purchase", acceptanceCriteria: [{ id: criterionId, text: "Confirmation is visible" }] });
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).acceptance_criteria).toEqual([{ text: "Confirmation is visible", position: 0 }]);
+    expect(fetchMock.mock.calls[1]?.[1]?.method).toBe("PATCH");
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).acceptance_criteria).toEqual([{ id: criterionId, text: "Confirmation is visible", position: 0 }]);
+  });
+
+  it("sends write-only login data and invokes BE verification", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const environment = { id: environmentId, project_id: projectId, name: "Staging", kind: "staging", base_url: "https://app.example.test", has_credentials: true, revision: 1, verified_at: null };
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(environment), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(environment), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "verified" }), { status: 202 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const credentials = { username: "demo", password: "test-secret", success_selector: "#signed-in" };
+    const created = await workspaceApi.createEnvironment(projectId, { application_id: environmentId, name: "Staging", kind: "staging", base_url: "https://app.example.test", credentials });
+    expect(created).not.toHaveProperty("credentials");
+    await workspaceApi.updateEnvironmentCredentials(projectId, environmentId, credentials);
+    await expect(workspaceApi.verifyEnvironment(projectId, environmentId)).resolves.toEqual({ status: "verified" });
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).credentials).toEqual(credentials);
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).credentials).toEqual(credentials);
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(`https://api.example.test/projects/${projectId}/environments/${environmentId}/verify`);
   });
 });
