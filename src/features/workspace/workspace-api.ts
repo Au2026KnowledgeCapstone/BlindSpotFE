@@ -15,16 +15,12 @@ const memberInvitationPage = page(memberInvite);
 const noticePage = page(notice);
 const application = z.object({ id: uuid, project_id: uuid, name: z.string() });
 const environment = z.object({ id: uuid, project_id: uuid, application_id: uuid.optional(), name: z.string(), kind: z.string(), base_url: z.string(), has_credentials: z.boolean(), revision: z.number(), verified_at: z.string().nullable() });
-const scan = z.object({ id: uuid, project_id: uuid, environment_id: uuid, status: z.literal("queued"), created_at: z.string() });
-const testResult = z.object({ id: uuid, name: z.string(), status: z.string(), summary: z.string() });
-const workspace = z.object({ applications: page(application), environments: page(environment), scans: page(scan), results: page(testResult) });
+const workspace = z.object({ applications: page(application), environments: page(environment) });
 const applicationReply = application.extend({ project_id: uuid.optional() });
 const environmentReply = environment.extend({ project_id: uuid.optional(), application_id: uuid.optional() });
-const scanReply = scan.extend({ project_id: uuid.optional(), environment_id: uuid.optional(), status: z.string() });
 const applicationPage = page(application);
 const environmentPage = page(environment);
-const scanPage = page(scan); const testResultPage = page(testResult);
-const workspaceReply = z.object({ applications: applicationPage.optional(), environments: environmentPage.optional(), scans: scanPage.optional(), results: testResultPage.optional() }); const nameSchema = z.string().trim().min(1).max(120); const urlSchema = z.url().max(2048); const environmentKind = z.enum(["development", "staging", "production"]); const credentialReference = z.string().max(256).optional();
+const workspaceReply = z.object({ applications: applicationPage.optional(), environments: environmentPage.optional() }); const nameSchema = z.string().trim().min(1).max(120); const urlSchema = z.url().max(2048); const environmentKind = z.enum(["development", "staging", "production"]); const credentialReference = z.string().max(200).optional();
 
 // Mirrors BlindSpotBE app/schemas/requirements.py. Fields stay snake_case here
 // (the raw wire shape); map-requirement.ts converts to the camelCase domain type.
@@ -37,6 +33,25 @@ const latestResult = z.object({ run_id: uuid, verdict: z.enum(["pass", "fail", "
 const requirement = z.object({ id: uuid, project_id: uuid, title: z.string(), description: z.string(), category: requirementCategory, priority: requirementPriority, approval_status: approvalStatus, acceptance_criteria: z.array(acceptanceCriterion), source: requirementSource, latest_result: latestResult.optional(), created_at: z.string(), updated_at: z.string() });
 const requirementPage = page(requirement);
 const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
+
+// Mirrors BlindSpotBE docs/openapi.json Run/Result/CriterionAssessment/Evidence/Action.
+const runStatus = z.enum(["queued", "running", "completed", "failed", "cancelled"]);
+const runEngine = z.enum(["mvp", "graph", "stub"]);
+const verdict = z.enum(["pass", "fail", "inconclusive"]);
+const classification = z.enum(["criteria_satisfied", "criteria_violated", "locator_failure", "environment_failure", "execution_error"]);
+const criterionSource = z.enum(["ai", "objective", "engine"]);
+const evidenceType = z.enum(["screenshot", "page_text", "log"]);
+const actionOutcome = z.enum(["completed", "stopped"]);
+const requirementSnapshot = z.object({ id: z.string(), title: z.string(), description: z.string().default(""), criteria: z.array(z.record(z.string(), z.string())).default([]) });
+const run = z.object({ id: uuid, run_number: z.number().int(), project_id: uuid, environment_id: uuid, status: runStatus, cancel_requested: z.boolean().default(false), engine: runEngine.nullable().optional(), requirement_snapshots: z.array(requirementSnapshot), requested_by: uuid, queued_at: z.string(), started_at: z.string().nullable().optional(), completed_at: z.string().nullable().optional(), action_count: z.number().int().default(0), estimated_cost_usd: z.number().nullable().optional(), error: z.string().nullable().optional() });
+const criterionAssessment = z.object({ criterion_id: z.string(), criterion_text: z.string(), verdict, rationale: z.string(), source: criterionSource, cited_evidence_ids: z.array(z.string()).default([]) });
+const evidence = z.object({ id: z.string(), type: evidenceType, media_type: z.string().nullable().optional(), observation_id: z.string().nullable().optional(), sha256: z.string().nullable().optional(), captured_at: z.string().nullable().optional() });
+const resultAction = z.object({ index: z.number().int(), kind: z.string(), description: z.string(), outcome: actionOutcome, evidence_id: z.string().nullable().optional() });
+const result = z.object({ id: uuid, run_id: uuid, requirement_id: uuid, requirement_title: z.string(), verdict, classification, observed_behavior: z.string(), criterion_assessments: z.array(criterionAssessment), actions: z.array(resultAction), evidence: z.array(evidence), duration_ms: z.number().nullable().optional() });
+const requirementIds = z.array(uuid).min(1, "Select at least one requirement.").max(10, "Select at most ten requirements.");
+const runsPath = (projectId: string, environmentId: string, runId?: string) => `${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}/runs${runId ? `/${uuid.parse(runId)}` : ""}`;
+export type LoginCredentials = { username: string; password: string; success_selector: string; username_selector?: string; password_selector?: string; submit_selector?: string };
+type EnvironmentInput = { application_id: string; name: string; kind: string; base_url: string; credential_reference?: string; credentials?: LoginCredentials };
 
 function workspacePath(projectId: string) { return `/projects/${uuid.parse(projectId)}`; }
 
@@ -123,10 +138,13 @@ async function collection<T extends z.ZodType>(path: string, schema: T, maxPages
 
 export const workspaceApi = {
   async identity() { const user = await backendAuth.getUser(); if (!user) throw new WorkspaceApiError(401, undefined, "Sign in to open your workspace."); return user; },
-  projectWorkspace: async (projectId: string, signal?: AbortSignal) => { const result = await request(`${workspacePath(projectId)}/workspace`, "GET", workspaceReply, undefined, signal); return { applications: result.applications?.items ?? [], environments: result.environments?.items ?? [], scans: result.scans?.items ?? [], results: result.results?.items ?? [] }; },
+  projectWorkspace: async (projectId: string, signal?: AbortSignal) => { const result = await request(`${workspacePath(projectId)}/workspace`, "GET", workspaceReply, undefined, signal); return { applications: result.applications?.items ?? [], environments: result.environments?.items ?? [] }; },
+  listEnvironments: (projectId: string) => collection(`${workspacePath(projectId)}/environments`, environmentPage.shape.items.element),
   createApplication: (projectId: string, name: string) => request(`${workspacePath(projectId)}/applications`, "POST", applicationReply, { name: nameSchema.parse(name) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId) })),
-  createEnvironment: (projectId: string, args: { application_id: string; name: string; kind: string; base_url: string; credential_reference?: string }) => request(`${workspacePath(projectId)}/environments`, "POST", environmentReply, { application_id: uuid.parse(args.application_id), name: nameSchema.parse(args.name), kind: environmentKind.parse(args.kind), base_url: urlSchema.parse(args.base_url), ...(args.credential_reference ? { credential_reference: credentialReference.parse(args.credential_reference) } : {}) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), application_id: result.application_id ?? uuid.parse(args.application_id) })),
-  createScan: (projectId: string, environmentId: string) => request(`${workspacePath(projectId)}/scans`, "POST", scanReply, { environment_id: uuid.parse(environmentId) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), environment_id: result.environment_id ?? uuid.parse(environmentId) })),
+  createEnvironment: (projectId: string, args: EnvironmentInput) => request(`${workspacePath(projectId)}/environments`, "POST", environmentReply, { application_id: uuid.parse(args.application_id), name: nameSchema.parse(args.name), kind: environmentKind.parse(args.kind), base_url: urlSchema.parse(args.base_url), ...(args.credential_reference ? { credential_reference: credentialReference.parse(args.credential_reference) } : {}), ...(args.credentials ? { credentials: args.credentials } : {}) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), application_id: result.application_id ?? uuid.parse(args.application_id) })),
+  updateEnvironmentCredentials: (projectId: string, environmentId: string, credentials: LoginCredentials) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}`, "PATCH", environmentReply, { credentials }),
+  verifyEnvironment: (projectId: string, environmentId: string) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}/verify`, "POST", z.object({ status: z.string() }), {}),
+  runEventsUrl: (projectId: string, environmentId: string, runId: string) => `${baseUrl()}${runsPath(projectId, environmentId, runId)}/events`,
   projects: () => collection("/projects", projectPage.shape.items.element),
   project: (projectId: string) => request(`/projects/${uuid.parse(projectId)}`, "GET", project),
   myInvitations: () => collection("/invitations?limit=50", invitationPage.shape.items.element),
@@ -139,6 +157,14 @@ export const workspaceApi = {
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
   requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
   createRequirement: (projectId: string, args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) => request(requirementsPath(projectId), "POST", requirement, { title: args.title, description: args.description ?? "", category: args.category ?? "functional", priority: args.priority ?? "medium", acceptance_criteria: (args.acceptanceCriteria ?? []).map((text, position) => ({ text, position })) }),
+  updateRequirement: (projectId: string, requirementId: string, args: { title: string; description: string; acceptanceCriteria: { id?: string; text: string }[] }) => request(requirementsPath(projectId, requirementId), "PATCH", requirement, { title: args.title, description: args.description, acceptance_criteria: args.acceptanceCriteria.map((criterion, position) => ({ ...criterion, position })) }),
   approveRequirement: (projectId: string, requirementId: string, approved = true) => request(`${requirementsPath(projectId, requirementId)}/approval`, "POST", requirement, { approved }),
+  createRun: (projectId: string, environmentId: string, requirementIdList: string[]) => request(runsPath(projectId, environmentId), "POST", run, { requirement_ids: requirementIds.parse(requirementIdList) }),
+  listRuns: (projectId: string, environmentId: string) => collection(runsPath(projectId, environmentId), run),
+  getRun: (projectId: string, environmentId: string, runId: string) => request(runsPath(projectId, environmentId, runId), "GET", run),
+  cancelRun: (projectId: string, environmentId: string, runId: string) => request(`${runsPath(projectId, environmentId, runId)}/cancel`, "POST", z.object({ status: z.enum(["cancelled", "cancellation_requested"]) })),
+  listResults: (projectId: string, environmentId: string, runId: string) => collection(`${runsPath(projectId, environmentId, runId)}/results`, result),
+  getResult: (projectId: string, environmentId: string, runId: string, resultId: string) => request(`${runsPath(projectId, environmentId, runId)}/results/${uuid.parse(resultId)}`, "GET", result),
+  evidenceUrl: (evidenceId: string) => `${baseUrl()}/evidence/${encodeURIComponent(z.string().min(1).parse(evidenceId))}`,
 };
-export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement> };
+export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };

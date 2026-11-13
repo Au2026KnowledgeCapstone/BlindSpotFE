@@ -43,6 +43,15 @@ const APPROVAL_LABELS: Record<string, string> = {
   approved: "Approved",
 };
 
+/** "Could not find the element" and "criteria violated" are different things, and a PM needs to see which. */
+const CLASSIFICATION_LABELS: Record<string, string> = {
+  criteria_satisfied: "Criteria satisfied",
+  criteria_violated: "Criteria violated",
+  locator_failure: "Could not find the element",
+  environment_failure: "Environment failure",
+  execution_error: "Execution error",
+};
+
 /** Sentence-cases an unknown enum value: `agent_error` → `Agent error`. */
 export function humanizeEnum(value: string): string {
   const spaced = value.replace(/[_-]+/g, " ").trim();
@@ -70,3 +79,6 @@ export const priorityLabel = (value: string): string => humanizeEnum(value);
 
 export const approvalLabel = (value: string): string =>
   lookup(APPROVAL_LABELS, value);
+
+export const classificationLabel = (value: string): string =>
+  lookup(CLASSIFICATION_LABELS, value);

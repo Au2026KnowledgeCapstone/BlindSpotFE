@@ -3,9 +3,12 @@ import { RunDetailContent } from "./run-detail-content";
 
 export default async function RunDetailPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ runId: string }>;
+  params: Promise<{ projectId: string; runId: string }>;
+  searchParams: Promise<{ environmentId?: string }>;
 }) {
-  const { runId } = await params;
-  return <RunDetailContent runId={runId} />;
+  const { projectId, runId } = await params;
+  const { environmentId } = await searchParams;
+  return <RunDetailContent projectId={projectId} runId={runId} environmentId={environmentId} />;
 }
