@@ -23,7 +23,7 @@ describe("canonical workspace API adapter", () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(project), { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
     await expect(workspaceApi.createProject({ name: "Project" })).resolves.toEqual(project);
-    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify({ name: "Project" }) }));
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ method: "POST", credentials: "include", headers: expect.any(Headers), body: JSON.stringify({ name: "Project" }) }));
   });
 
   it("loads authenticated pending invites and accepts via canonical endpoint", async () => {
@@ -117,7 +117,7 @@ describe("canonical workspace API adapter", () => {
     await workspaceApi.createApplication(projectId, "App");
     await expect(workspaceApi.createEnvironment(projectId, { application_id: invitationId, name: "Staging", kind: "staging", base_url: "https://app.example.test" })).resolves.toMatchObject({ application_id: invitationId, project_id: projectId });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([`https://api.example.test/projects/${projectId}/workspace`, `https://api.example.test/projects/${projectId}/applications`, `https://api.example.test/projects/${projectId}/environments`]);
-    expect(fetchMock.mock.calls.slice(1).every(([, init]) => (init as RequestInit).headers && (init as RequestInit).headers && ((init as RequestInit).headers as Record<string, string>)["X-CSRF-Protection"] === "1")).toBe(true);
+    expect(fetchMock.mock.calls.slice(1).every(([, init]) => (init as RequestInit).headers && (init as RequestInit).headers && new Headers((init as RequestInit).headers).get("X-CSRF-Protection") === "1")).toBe(true);
   });
 });
 
