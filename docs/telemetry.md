@@ -7,6 +7,8 @@ their existing cookie, CSRF, validation and cancellation behavior and gain a UUI
 `baggage` headers **only** to the exact configured `NEXT_PUBLIC_API_BASE_URL`
 origin. Lookalike hosts and unrelated destinations are excluded.
 
+The local ignored `.env.local` is configured; `.env.sentry` holds a separate copy for controlled verification.
+
 ## Configuration
 
 Organization: `blindspot-capstone`; frontend project: `javascript-nextjs`.
