@@ -32,7 +32,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
         }
       }
     }
-    const recheck = () => { setResult(null); void check(); };
+    const recheck = () => { void check(); };
     const visible = () => { if (document.visibilityState === "visible") recheck(); };
     const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("blindspot-auth") : null;
     if (channel) channel.onmessage = recheck;
