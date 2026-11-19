@@ -32,26 +32,31 @@ export function RequireSession({ children }: { children: ReactNode }) {
         }
       }
     }
-    const recheck = () => { setResult(null); void check(); };
+    // Focus also fires when a native file picker closes. Keep mounted form state
+    // while checking; a failed check still hides protected content.
+    const recheck = () => { void check(); };
+    const authChanged = () => { setResult(null); void check(); };
     const visible = () => { if (document.visibilityState === "visible") recheck(); };
     const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("blindspot-auth") : null;
-    if (channel) channel.onmessage = recheck;
+    if (channel) channel.onmessage = authChanged;
     window.addEventListener("focus", recheck);
     window.addEventListener("pageshow", recheck);
-    window.addEventListener("blindspot:auth-changed", recheck);
+    window.addEventListener("blindspot:auth-changed", authChanged);
     document.addEventListener("visibilitychange", visible);
     void check();
     return () => {
       active = false;
       window.removeEventListener("focus", recheck);
       window.removeEventListener("pageshow", recheck);
-      window.removeEventListener("blindspot:auth-changed", recheck);
+      window.removeEventListener("blindspot:auth-changed", authChanged);
       document.removeEventListener("visibilitychange", visible);
       channel?.close();
     };
   }, [pathname, router]);
 
-  if (result?.path === pathname && result.ready) return children;
+  // Keep the authenticated layout mounted during navigation rechecks.
+  // Explicit account changes still clear readiness before checking again.
+  if (result?.ready) return children;
   if (result?.path === pathname && result.error) return <p role="alert" className="p-6 text-fail">{result.error}</p>;
   return <LoadingScreen label="Checking session" className="min-h-screen" />;
 }

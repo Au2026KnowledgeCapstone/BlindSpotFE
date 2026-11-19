@@ -206,3 +206,34 @@ describe("runnable requirements and environment login", () => {
     expect(fetchMock.mock.calls[2]?.[0]).toBe(`https://api.example.test/projects/${projectId}/environments/${environmentId}/verify`);
   });
 });
+
+describe("document import API", () => {
+  it("uploads a CSRF-protected multipart document set and validates the import result", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const result = { import_id: "33333333-3333-4333-8333-333333333333", documents: [], requirements: [], warnings: ["No expectations found"] };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const form = new FormData();
+    form.append("brd", new File(["Business requirements"], "BRD.md"));
+    form.append("srs", new File(["Software requirements"], "SRS.md"));
+    await expect(workspaceApi.importRequirements(projectId, form)).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledWith(`https://api.example.test/projects/${projectId}/imports`, expect.objectContaining({ method: "POST", credentials: "include", headers: { "X-CSRF-Protection": "1" }, body: form }));
+    expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty("Content-Type");
+  });
+});
+
+it("allows document extraction beyond the ordinary API deadline and aborts at two minutes", async () => {
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+  vi.useFakeTimers();
+  let signal: AbortSignal | undefined;
+  vi.stubGlobal("fetch", vi.fn((_url: string, init: RequestInit) => {
+    signal = init.signal as AbortSignal;
+    return new Promise<Response>((_resolve, reject) => signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true }));
+  }));
+  const rejected = expect(workspaceApi.importRequirements(projectId, new FormData())).rejects.toMatchObject({ status: 0 });
+  await vi.advanceTimersByTimeAsync(16000);
+  expect(signal?.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(104000);
+  await rejected;
+  expect(signal?.aborted).toBe(true);
+});

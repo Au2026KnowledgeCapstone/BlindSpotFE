@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OverviewContent } from "./overview-content";
 
-const mocks = vi.hoisted(() => ({ project: vi.fn(), listEnvironments: vi.fn(), listRuns: vi.fn(), getUser: vi.fn() }));
+const mocks = vi.hoisted(() => ({ project: vi.fn(), listEnvironments: vi.fn(), listRuns: vi.fn(), requirements: vi.fn(), projectWorkspace: vi.fn(), listResults: vi.fn(), getUser: vi.fn() }));
 vi.mock("@/features/auth", () => ({ backendAuth: { getUser: mocks.getUser } }));
-vi.mock("@/features/workspace/workspace-api", () => ({ workspaceApi: { project: mocks.project, listEnvironments: mocks.listEnvironments, listRuns: mocks.listRuns } }));
+vi.mock("@/features/workspace/workspace-api", () => ({ workspaceApi: { requirements: mocks.requirements, projectWorkspace: mocks.projectWorkspace, project: mocks.project, listEnvironments: mocks.listEnvironments, listRuns: mocks.listRuns, listResults: mocks.listResults } }));
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => <a href={href} {...props}>{children}</a> }));
 
 function renderPage(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
@@ -23,21 +23,23 @@ const run = (id: string, environmentId: string, queuedAt: string) => ({
 describe("project overview API boundary", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mocks.requirements.mockResolvedValue([]);
+    mocks.projectWorkspace.mockResolvedValue({ applications: [], environments: [] });
     mocks.getUser.mockResolvedValue({ id: "user-a", email: "a@example.test" });
     mocks.project.mockResolvedValue({ id: "project-1", name: "Real project", description: "Project summary" });
     mocks.listEnvironments.mockResolvedValue([{ id: "env-a" }, { id: "env-b" }]);
+    mocks.listResults.mockResolvedValue([{ id: "result-a", run_id: "run-b", requirement_id: "r1", requirement_title: "Checkout", verdict: "fail", classification: "criteria_violated", observed_behavior: "Checkout returned an error", criterion_assessments: [], actions: [], evidence: [] }]);
     mocks.listRuns.mockImplementation(async (_projectId: string, environmentId: string) =>
       environmentId === "env-a" ? [run("run-a", "env-a", "2026-01-01T00:00:00Z")] : [run("run-b", "env-b", "2026-01-02T00:00:00Z")]);
   });
 
-  it("shows real run history from every environment, newest first", async () => {
+  it("shows the project summary without reports or analysis history", async () => {
     renderPage();
     expect(await screen.findByRole("heading", { name: "Real project" })).toBeInTheDocument();
-    expect(await screen.findByRole("region", { name: "Recent runs" })).toHaveTextContent("#1");
-    const links = screen.getAllByRole("link", { name: /#1/ });
-    expect(links[0]).toHaveAttribute("href", "/projects/project-1/runs/run-b?environmentId=env-b");
-    expect(links[1]).toHaveAttribute("href", "/projects/project-1/runs/run-a?environmentId=env-a");
-    expect(mocks.listRuns).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("region", { name: "Recent runs" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Analysis history")).not.toBeInTheDocument();
+    expect(mocks.listRuns).not.toHaveBeenCalled();
+    expect(mocks.listResults).not.toHaveBeenCalled();
   });
 
   it("does not reuse a warm project cache before checking current identity", async () => {
@@ -51,10 +53,4 @@ describe("project overview API boundary", () => {
     expect(screen.queryByText("Account A secret")).not.toBeInTheDocument();
   });
 
-  it("shows a retryable error if one environment's history fails", async () => {
-    mocks.listRuns.mockRejectedValue(new Error("History unavailable"));
-    renderPage();
-    expect(await screen.findByRole("alert")).toHaveTextContent("History unavailable");
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
-  });
 });

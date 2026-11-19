@@ -73,7 +73,7 @@ export function LoginForm() {
           placeholder="you@example.com"
           {...register("email")}
           aria-invalid={!!errors.email}
-          className={FIELD}
+          className={`${FIELD} h-11 rounded-full px-4`}
         />
 
         {errors.email && (
@@ -99,7 +99,7 @@ export function LoginForm() {
           placeholder="Enter your password"
           {...register("password")}
           aria-invalid={!!errors.password}
-          className={FIELD}
+          className={`${FIELD} h-11 rounded-full px-4`}
         />
 
         {errors.password && (
@@ -122,8 +122,7 @@ export function LoginForm() {
       {/* Submit button */}
       <Button
         type="submit"
-        variant="outline"
-        className="w-full"
+        className="h-11 w-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Signing in..." : "Sign in"}

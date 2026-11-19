@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardContent } from "./dashboard-content";
@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   acceptInvitation: vi.fn(),
 }));
 vi.mock("./use-dashboard", () => ({ useDashboard: () => mocks }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/shared/ui/Modal", () => ({ Modal: ({ title, children }: { title: string; children: React.ReactNode }) => <div role="dialog" aria-label={title}>{children}</div> }));
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => <a href={href} {...props}>{children}</a> }));
 
 function renderDashboard() {
@@ -36,7 +38,7 @@ describe("DashboardContent identity state", () => {
     expect(screen.queryByText("Loading invitations…")).toBeNull();
   });
 
-  it("links the projects section's add-project action to onboarding", () => {
+  it("opens a project creation dialog from the empty project list", () => {
     mocks.projects.isPending = false;
     mocks.projects.data = [];
     mocks.invitations.isPending = false;
@@ -45,8 +47,11 @@ describe("DashboardContent identity state", () => {
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     expect(screen.queryByText("Organizations")).toBeNull();
     expect(screen.queryByText("Organization setup")).toBeNull();
-    const addProjectLinks = screen.getAllByRole("link", { name: "Add project" });
-    expect(addProjectLinks.length).toBeGreaterThan(0);
-    for (const link of addProjectLinks) expect(link).toHaveAttribute("href", "/onboarding");
+    fireEvent.click(screen.getByRole("button", { name: "Add project" }));
+    expect(screen.getByRole("dialog", { name: "New project" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Project name")).toBeInTheDocument();
+    expect(screen.queryByText("Analysis hub")).not.toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+
   });
 });

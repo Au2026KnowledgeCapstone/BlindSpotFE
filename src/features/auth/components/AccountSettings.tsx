@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProfilePreferences } from "./ProfilePreferences";
 import { authService } from "../services/auth-service";
 import { useThemeStore, type Theme } from "@/shared/ui/theme-store";
 
@@ -49,7 +50,7 @@ function PasswordSettings({ email }: { email: string }) {
   }
 
   return (
-    <section className="space-y-3 border-t border-border pt-5" aria-labelledby="password-heading">
+    <section className="space-y-3" aria-labelledby="password-heading">
       <h2 id="password-heading" className="text-sm font-semibold">Password</h2>
       <p className="text-sm text-fg-secondary">We’ll email you a link to securely change your password.</p>
       <Button variant="outline" onClick={sendResetLink} disabled={!email || sending || sent}>
@@ -76,7 +77,7 @@ function AppearanceSettings() {
   const displayTheme = mounted ? theme : "light";
 
   return (
-    <section className="space-y-3 border-t border-border pt-5" aria-labelledby="appearance-heading">
+    <section className="space-y-3" aria-labelledby="appearance-heading">
       <h2 id="appearance-heading" className="text-sm font-semibold">Appearance</h2>
       <p className="text-sm text-fg-secondary">
         Choose how BlindSpot looks on this device. This preference is stored in your browser only.
@@ -105,24 +106,12 @@ export function AccountSettings() {
   const { email, loading, error } = useAccountEmail();
 
   return (
-    <div className="mx-auto max-w-xl">
-      <div className="space-y-6 rounded-lg border border-subtle bg-panel p-8 shadow-ambient">
-        <Button variant="ghost" size="sm" className="-ml-2 gap-1.5" onClick={() => router.back()}>
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Back
-        </Button>
-        <div className="space-y-2">
-          <h1 className="text-xl font-semibold">Account settings</h1>
-          <p className="text-sm text-fg-secondary">Manage your BlindSpot account and security.</p>
-        </div>
-        <div className="space-y-2 border-t border-border pt-5">
-          <h2 className="text-sm font-semibold">Email address</h2>
-          {loading ? <p role="status" className="text-sm text-fg-secondary">Loading account...</p> : email && <p className="break-words text-sm text-fg-secondary">{email}</p>}
-          {error && <p role="alert" className="text-sm text-fail">{error}</p>}
-        </div>
-        <PasswordSettings email={email} />
-        <AppearanceSettings />
-      </div>
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-semibold tracking-tight">Account Settings</h1><p className="mt-3 max-w-3xl text-sm leading-relaxed text-fg-tertiary">Manage your personal identity, workspace display preferences, and appearance settings.</p></div><Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="size-4" />Back</Button></div>
+      {loading && <p role="status" className="text-sm text-fg-tertiary">Loading account...</p>}
+      {error && <p role="alert" className="text-sm text-fail">{error}</p>}
+      <ProfilePreferences email={email} />
+      <div className="grid gap-6 lg:grid-cols-2"><div className="rounded-[24px] border border-border bg-panel p-7"><PasswordSettings email={email} /></div><div className="rounded-[24px] border border-border bg-panel p-7"><AppearanceSettings /></div></div>
     </div>
   );
 }

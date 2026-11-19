@@ -32,6 +32,7 @@ export function useRuns(projectId: string, environmentId: string | undefined) {
     queryFn: async () => (await workspaceApi.listRuns(projectId, environmentId!)).map(mapRun),
     enabled: !!project.data && !!environmentId,
     retry: false,
+    refetchInterval: (query) => query.state.data?.some((run) => run.status === "queued" || run.status === "running") ? 5000 : false,
   });
 
   async function refresh() {
