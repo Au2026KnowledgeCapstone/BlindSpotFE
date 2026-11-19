@@ -48,7 +48,7 @@ function RunHeader({ run, onCancel, cancelling, requestPending }: { run: Run; on
         {(run.cancelRequested || requestPending) && (run.status === "queued" || run.status === "running") && <p role="status" className="text-xs text-warn">Cancellation requested. Waiting for the worker to stop.</p>}
       </div>
       <div className="flex items-center gap-3">
-        <CostChip durationSeconds={durationSeconds(run)} actionsCount={run.actionCount} estimatedCostUsd={run.estimatedCostUsd ?? 0} mode="Agentic" />
+        <CostChip durationSeconds={durationSeconds(run)} actionsCount={run.actionCount} estimatedCostUsd={run.estimatedCostUsd} mode="Agentic" />
         {cancellable && <Button variant="outline" size="sm" disabled={cancelling} onClick={onCancel}>{cancelling ? "Cancelling…" : "Cancel run"}</Button>}
       </div>
     </div>
