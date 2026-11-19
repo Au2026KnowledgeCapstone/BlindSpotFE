@@ -46,5 +46,12 @@ describe("StabilityStrip & CostChip", () => {
   it("renders CostChip", () => {
     render(<CostChip durationSeconds={14.6} actionsCount={23} estimatedCostUsd={0.12} />);
     expect(screen.getByText("⏱ 14.6s")).toBeInTheDocument();
+    expect(screen.getByText("~$0.12")).toBeInTheDocument();
+  });
+
+  it("renders CostChip as pending instead of $0.00 when cost is unknown", () => {
+    render(<CostChip durationSeconds={14.6} actionsCount={23} estimatedCostUsd={undefined} />);
+    expect(screen.getByText("cost pending")).toBeInTheDocument();
+    expect(screen.queryByText("~$0.00")).not.toBeInTheDocument();
   });
 });
