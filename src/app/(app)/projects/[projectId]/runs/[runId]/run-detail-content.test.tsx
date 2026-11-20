@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { RunDetailContent } from "./run-detail-content";
 
 const mocks = vi.hoisted(() => ({ useRunDetail: vi.fn(), useRunEvents: vi.fn(), cancelRun: vi.fn(), refetch: vi.fn() }));
-vi.mock("@/features/analysis", () => ({ useRunDetail: mocks.useRunDetail }));
+vi.mock("@/features/analysis", () => ({ useRunDetail: mocks.useRunDetail, useRunEvents: mocks.useRunEvents }));
 vi.mock("@/features/analysis/api/use-run-events", () => ({ useRunEvents: mocks.useRunEvents }));
 vi.mock("@/features/workspace", () => ({ workspaceApi: { cancelRun: mocks.cancelRun } }));
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => <a href={href} {...props}>{children}</a> }));

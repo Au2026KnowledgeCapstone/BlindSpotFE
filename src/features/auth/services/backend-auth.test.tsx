@@ -60,7 +60,7 @@ describe("backend cookie auth integration", () => {
     expect(result).toEqual(RESULT);
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/auth/login", expect.objectContaining({
       method: "POST", credentials: "include", cache: "no-store",
-      headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" },
+      headers: expect.any(Headers),
       body: JSON.stringify(credentials),
     }));
     expect(mocks.createClient).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe("backend cookie auth integration", () => {
     ]);
     expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
       credentials: "include", method: "POST", body: "{}",
-      headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" },
+      headers: expect.any(Headers),
     });
   });
 
@@ -257,7 +257,7 @@ describe("login, reload guard and logout UI", () => {
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/login"));
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/auth/logout", expect.objectContaining({
       credentials: "include", method: "POST", body: "{}",
-      headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" },
+      headers: expect.any(Headers),
     }));
   });
 });

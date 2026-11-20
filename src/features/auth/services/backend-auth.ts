@@ -1,3 +1,5 @@
+import { traceTargets } from "@/shared/lib/telemetry";
+import { telemetryFetch } from "@/shared/lib/telemetry-fetch";
 import { z } from "zod";
 import type { LoginFormValues, SignupFormValues } from "../schemas";
 
@@ -19,18 +21,10 @@ export class AuthRequestError extends Error {
 function baseUrl() {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!value) throw new AuthRequestError(0, "The authentication backend URL is not configured.");
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
+  if (!traceTargets(value).length) {
     throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
   }
-  const localDevelopment = url.protocol === "http:" && url.hostname === "localhost";
-  if (url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
-      (url.protocol !== "https:" && !localDevelopment)) {
-    throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
-  }
-  return url.origin;
+  return new URL(value).origin;
 }
 
 function failureMessage(status: number, path: string) {
@@ -48,7 +42,7 @@ async function request(path: string, method: "GET" | "POST", body?: unknown) {
   const url = `${baseUrl()}/auth/${path}`;
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await telemetryFetch(url, {
       method,
       credentials: "include",
       cache: "no-store",

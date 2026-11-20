@@ -1,3 +1,4 @@
+import { telemetryFetch } from "@/shared/lib/telemetry-fetch";
 import { z } from "zod";
 import { backendAuth } from "@/features/auth";
 
@@ -102,7 +103,7 @@ async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema
   else signal?.addEventListener("abort", abort, { once: true });
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(`${base}${path}`, {
+    const response = await telemetryFetch(`${base}${path}`, {
       method, credentials: "include", cache: "no-store", signal: controller.signal,
       ...(method !== "GET" ? { headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify(body ?? {}) } : {}),
     });
