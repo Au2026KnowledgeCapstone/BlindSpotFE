@@ -219,6 +219,30 @@ describe("document import API", () => {
     await expect(workspaceApi.importRequirements(projectId, form)).resolves.toEqual(result);
     expect(fetchMock).toHaveBeenCalledWith(`https://api.example.test/projects/${projectId}/imports`, expect.objectContaining({ method: "POST", credentials: "include", headers: { "X-CSRF-Protection": "1" }, body: form }));
     expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty("Content-Type");
+    expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty("Idempotency-Key");
+  });
+
+  it("forwards a caller's idempotency key so a retried upload replays instead of importing twice", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const result = { import_id: "33333333-3333-4333-8333-333333333333", documents: [], requirements: [], warnings: [] };
+    // A fresh Response per call: a body may only be read once.
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify(result), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await workspaceApi.importRequirements(projectId, new FormData(), "key-abc");
+    await workspaceApi.importRequirements(projectId, new FormData(), "key-abc");
+    expect(fetchMock.mock.calls.map(([, init]) => (init.headers as Record<string, string>))).toEqual([
+      { "X-CSRF-Protection": "1", "Idempotency-Key": "key-abc" },
+      { "X-CSRF-Protection": "1", "Idempotency-Key": "key-abc" },
+    ]);
+  });
+
+  it("rejects an unusable idempotency key before spending an upload on it", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(() => workspaceApi.importRequirements(projectId, new FormData(), "   ")).toThrow();
+    expect(() => workspaceApi.importRequirements(projectId, new FormData(), "k".repeat(129))).toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

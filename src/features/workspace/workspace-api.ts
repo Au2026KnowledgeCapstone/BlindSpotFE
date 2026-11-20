@@ -98,8 +98,21 @@ function baseUrl() {
   return origin;
 }
 
+// A retried write must reuse its caller's key so BE replays the original
+// instead of doing the work twice. BE allows 1 to 128 nonblank characters.
+const idempotencyKeySchema = z.string().trim().min(1).max(128);
+
+// FormData must set its own Content-Type so the browser appends the boundary.
+function writeHeaders(body: unknown, idempotencyKey?: string) {
+  return {
+    ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+    "X-CSRF-Protection": "1",
+    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+  };
+}
+
 // eslint-disable-next-line complexity -- Keep fetch deadline, cancellation, response validation and cleanup atomic.
-async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema: z.ZodType<T>, body?: unknown, signal?: AbortSignal, timeoutMs = 15000): Promise<T> {
+async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema: z.ZodType<T>, body?: unknown, signal?: AbortSignal, timeoutMs = 15000, idempotencyKey?: string): Promise<T> {
   const base = baseUrl();
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -109,7 +122,7 @@ async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema
   try {
     const response = await fetch(`${base}${path}`, {
       method, credentials: "include", cache: "no-store", signal: controller.signal,
-      ...(method !== "GET" ? { headers: body instanceof FormData ? { "X-CSRF-Protection": "1" } : { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: body instanceof FormData ? body : JSON.stringify(body ?? {}) } : {}),
+      ...(method !== "GET" ? { headers: writeHeaders(body, idempotencyKey), body: body instanceof FormData ? body : JSON.stringify(body ?? {}) } : {}),
     });
     if (!response.ok) throw await responseError(response, controller.signal);
     const raw = await withAbort(response.json(), controller.signal);
@@ -162,7 +175,9 @@ export const workspaceApi = {
   acceptInvitation: async (invitationId: string) => { await request(`/invitations/${uuid.parse(invitationId)}/accept`, "POST", member, {}); return { error: null }; },
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
   requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
-  importRequirements: (projectId: string, documents: FormData) => request(`${workspacePath(projectId)}/imports`, "POST", importResult, documents, undefined, 120000),
+  // Pass a key that is stable across retries of the same document set: BE
+  // replays a completed import and never double-inserts drafts for a reused key.
+  importRequirements: (projectId: string, documents: FormData, idempotencyKey?: string) => request(`${workspacePath(projectId)}/imports`, "POST", importResult, documents, undefined, 120000, idempotencyKey === undefined ? undefined : idempotencyKeySchema.parse(idempotencyKey)),
   createRequirement: (projectId: string, args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) => request(requirementsPath(projectId), "POST", requirement, { title: args.title, description: args.description ?? "", category: args.category ?? "functional", priority: args.priority ?? "medium", acceptance_criteria: (args.acceptanceCriteria ?? []).map((text, position) => ({ text, position })) }),
   updateRequirement: (projectId: string, requirementId: string, args: { title: string; description: string; category?: string; priority?: string; acceptanceCriteria: { id?: string; text: string }[] }) => request(requirementsPath(projectId, requirementId), "PATCH", requirement, { title: args.title, description: args.description, ...(args.category ? { category: args.category } : {}), ...(args.priority ? { priority: args.priority } : {}), acceptance_criteria: args.acceptanceCriteria.map((criterion, position) => ({ ...criterion, position })) }),
   approveRequirement: (projectId: string, requirementId: string, approved = true) => request(`${requirementsPath(projectId, requirementId)}/approval`, "POST", requirement, { approved }),
