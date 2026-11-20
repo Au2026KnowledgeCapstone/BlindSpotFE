@@ -13,8 +13,6 @@ import { ScreenshotFrame } from "@/shared/ui/ScreenshotFrame";
 import { InlineError } from "@/shared/ui/InlineError";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { useThemeStore } from "@/shared/ui/theme-store";
-import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ALL_STATUSES: RunStatus[] = [
@@ -146,8 +144,6 @@ const EvidenceAndAsyncSection = () => (
 );
 
 export default function DevUiPage() {
-  const { theme, toggleTheme } = useThemeStore();
-
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 min-h-screen">
       <div className="flex items-center justify-between pb-4 border-b border-border">
@@ -157,10 +153,6 @@ export default function DevUiPage() {
           </h1>
           <p className="text-xs text-fg-tertiary mt-1">Component showcase (§3.8)</p>
         </div>
-        <Button variant="outline" size="sm" onClick={toggleTheme}>
-          {theme === "dark" ? <Sun className="text-fg-tertiary" /> : <Moon className="text-fg-tertiary" />}
-          Toggle Theme ({theme})
-        </Button>
       </div>
       <StatusSection />
       <ActionSection />

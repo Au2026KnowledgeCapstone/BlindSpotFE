@@ -65,14 +65,17 @@ test("actual project overview and runs show the latest test score", async ({ pag
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test("Stitch auth layout remains usable on mobile and in dark mode", async ({ page }) => {
+test("Stitch auth layout remains usable on mobile and stays light-only", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: "/tmp/blindspot-stitch-login-mobile.png", fullPage: true });
+  // There is no dark palette to switch into: forcing the old attribute must not
+  // change a single rendered colour.
+  const canvasBefore = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-  await page.screenshot({ path: "/tmp/blindspot-stitch-login-dark.png", fullPage: true });
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(canvasBefore);
 });

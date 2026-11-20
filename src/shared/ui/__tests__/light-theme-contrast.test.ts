@@ -14,7 +14,8 @@ const TOKENS = readFileSync(
   "utf8",
 );
 
-const lightBlock = TOKENS.split('[data-theme="light"]')[1] ?? "";
+// One `:root` block — the app has a single light theme and no [data-theme] variant.
+const lightBlock = TOKENS.slice(TOKENS.indexOf(":root"));
 
 const token = (name: string): string => {
   const match = lightBlock.match(new RegExp(`${name}:\\s*(#[0-9a-f]{6,8})`, "i"));

@@ -9,7 +9,7 @@ import { cn } from "cn"
  * into @theme, so they compiled to nothing: `default` rendered the *text*
  * colour as its background with no foreground colour at all, `ghost` had no
  * hover, and no variant had a focus ring. The `dark:` modifiers were dead too;
- * this app themes via [data-theme], not the `dark` class.
+ * this app has a single light theme and no dark variant to switch into.
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-focus-ring focus-visible:ring-3 focus-visible:ring-focus-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-fail aria-invalid:ring-3 aria-invalid:ring-fail-border [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
