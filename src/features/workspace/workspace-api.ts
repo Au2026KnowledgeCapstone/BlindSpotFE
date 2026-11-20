@@ -36,10 +36,6 @@ const importResult = z.object({ import_id: uuid, documents: z.array(z.object({ i
 const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
 
 // Mirrors BlindSpotBE docs/openapi.json Run/Result/CriterionAssessment/Evidence/Action.
-const timelineStep = z.object({ index: z.number().int(), action: z.string(), intent: z.string(), target: z.string().default(""), expected_change: z.string().default("") });
-const progressEvent = z.object({ position: z.number().int(), timestamp: z.string(), phase: z.string(), status: z.enum(["running", "passed", "planned", "inconclusive", "failed", "info"]), message: z.string(), requirement_id: z.string().nullable().optional(), step_index: z.number().int().nullable().optional(), action: z.string().nullable().optional(), target: z.string().nullable().optional(), reason: z.string().nullable().optional(), steps: z.array(timelineStep).default([]) });
-const runTimeline = z.object({ job_id: z.string(), events: z.array(progressEvent), next_cursor: z.number().int() });
-const browserPreview = z.object({ job_id: z.string(), status: z.string(), frame: z.object({ captured_at: z.string(), page_url: z.string(), media_type: z.enum(["image/jpeg", "image/png"]), source: z.enum(["live", "checkpoint"]).default("live"), image_base64: z.string().max(1400000) }).nullable() });
 const runStatus = z.enum(["queued", "running", "completed", "failed", "cancelled"]);
 const runEngine = z.enum(["mvp", "graph", "stub"]);
 const verdict = z.enum(["pass", "fail", "inconclusive"]);
@@ -184,12 +180,9 @@ export const workspaceApi = {
   createRun: (projectId: string, environmentId: string, requirementIdList: string[]) => request(runsPath(projectId, environmentId), "POST", run, { requirement_ids: requirementIds.parse(requirementIdList) }),
   listRuns: (projectId: string, environmentId: string) => collection(runsPath(projectId, environmentId), run),
   getRun: (projectId: string, environmentId: string, runId: string) => request(runsPath(projectId, environmentId, runId), "GET", run),
-  runTimeline: (projectId: string, environmentId: string, runId: string, after = 0, signal?: AbortSignal) => request(`${runsPath(projectId, environmentId, runId)}/timeline?after=${after}`, "GET", runTimeline, undefined, signal),
-  browserLiveUrl: (projectId: string, environmentId: string, runId: string) => `${baseUrl().replace(/^http/, "ws")}${runsPath(projectId, environmentId, runId)}/browser-live`,
-  browserPreview: (projectId: string, environmentId: string, runId: string, signal?: AbortSignal) => request(`${runsPath(projectId, environmentId, runId)}/browser-preview`, "GET", browserPreview, undefined, signal),
   cancelRun: (projectId: string, environmentId: string, runId: string) => request(`${runsPath(projectId, environmentId, runId)}/cancel`, "POST", z.object({ status: z.enum(["cancelled", "cancellation_requested"]) })),
   listResults: (projectId: string, environmentId: string, runId: string) => collection(`${runsPath(projectId, environmentId, runId)}/results`, result),
   getResult: (projectId: string, environmentId: string, runId: string, resultId: string) => request(`${runsPath(projectId, environmentId, runId)}/results/${uuid.parse(resultId)}`, "GET", result),
   evidenceUrl: (evidenceId: string) => `${baseUrl()}/evidence/${encodeURIComponent(z.string().min(1).parse(evidenceId))}`,
 };
-export type WorkspaceApiTypes = { ProgressEvent: z.infer<typeof progressEvent>; BrowserPreview: z.infer<typeof browserPreview>; Environment: z.infer<typeof environment>; Application: z.infer<typeof application>; ImportResult: z.infer<typeof importResult>; Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };
+export type WorkspaceApiTypes = { Environment: z.infer<typeof environment>; Application: z.infer<typeof application>; ImportResult: z.infer<typeof importResult>; Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };
