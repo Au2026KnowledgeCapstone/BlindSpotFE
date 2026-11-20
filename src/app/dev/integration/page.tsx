@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { z } from "zod";
 
-const healthSchema = z.object({ status: z.literal("ok"), message: z.string() });
-const projectsSchema = z.object({ items: z.array(z.unknown()), next_cursor: z.string().nullable() });
+// Matches BlindSpotBE main.py `liveness`, which returns {"status": "ok"} alone.
+const healthSchema = z.object({ status: z.literal("ok") });
 const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 
 type CheckResult = { name: string; outcome: string };
+type CheckOptions = { schema?: z.ZodType; expectUnauthorized?: boolean };
 
 export default function IntegrationCheckPage() {
   const [results, setResults] = useState<CheckResult[]>([]);
@@ -19,8 +20,10 @@ export default function IntegrationCheckPage() {
     setResults([]);
     try {
       const checks = await Promise.all([
-        check("Backend health", "/", healthSchema),
-        check("Projects API", "/api/projects", projectsSchema),
+        check("Backend health", "/", { schema: healthSchema }),
+        // Called without credentials on purpose: a 401 is the pass condition,
+        // proving the request reached the backend and access control is live.
+        check("Projects API", "/projects", { expectUnauthorized: true }),
       ]);
       setResults(checks);
     } finally {
@@ -28,22 +31,33 @@ export default function IntegrationCheckPage() {
     }
   }
 
-  async function check(name: string, path: string, schema: z.ZodType): Promise<CheckResult> {
+  // eslint-disable-next-line complexity -- One readable ladder from CORS reachability down to response shape.
+  async function check(name: string, path: string, options: CheckOptions = {}): Promise<CheckResult> {
     try {
       const response = await fetch(`${backendUrl}${path}`, {
         cache: "no-store",
         credentials: "omit",
-        // This header deliberately exercises browser OPTIONS preflight, too.
-        headers: { "Content-Type": "application/json" },
+        // The header the real client sends on writes. Being non-simple it forces
+        // an OPTIONS preflight, so this also proves BE allowlists it.
+        headers: { "X-CSRF-Protection": "1" },
         signal: AbortSignal.timeout(15000),
       });
+      if (options.expectUnauthorized && (response.status === 401 || response.status === 403)) {
+        return { name, outcome: `HTTP ${response.status}: backend reached through CORS and access control is enforced.` };
+      }
       if (response.status === 501) {
         return { name, outcome: "HTTP 501: backend reached; this API is not implemented yet." };
       }
       if (!response.ok) {
         return { name, outcome: `HTTP ${response.status}: check backend logs and access configuration.` };
       }
-      const parsed = schema.safeParse(await response.json());
+      if (options.expectUnauthorized) {
+        return { name, outcome: `HTTP ${response.status}: backend reached, but this endpoint answered without a session.` };
+      }
+      if (!options.schema) {
+        return { name, outcome: `HTTP ${response.status}: backend reached through CORS.` };
+      }
+      const parsed = options.schema.safeParse(await response.json());
       return {
         name,
         outcome: parsed.success
