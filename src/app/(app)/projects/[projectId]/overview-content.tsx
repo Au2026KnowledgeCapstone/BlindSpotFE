@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { LoadingScreen } from "@/shared/ui/LoadingScreen";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
+import { TestResultsChart } from "@/features/analysis";
 
 function RecentRuns({ projectId, runs }: { projectId: string; runs: Run[] }) {
   const recent = runs.slice(0, 10);
@@ -58,6 +59,7 @@ export function OverviewContent({ projectId }: { projectId: string }) {
       {[["Total runs", all.length], ["Active", active], ["Completed", completed], ["Failed", failed]].map(([label, value]) =>
         <div key={label} className="rounded-xl border border-border bg-panel p-4"><div className="text-xs text-fg-tertiary">{label}</div><div className="mt-2 font-mono text-2xl text-fg">{value}</div></div>)}
     </section>
+    <TestResultsChart projectId={projectId} runs={all} />
     <RecentRuns projectId={projectId} runs={all} />
   </>;
 }

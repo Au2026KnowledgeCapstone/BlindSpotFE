@@ -19,3 +19,4 @@ export { useRuns } from "./api/use-runs";
 export { useRunDetail } from "./api/use-run-detail";
 export { useProjectRuns } from "./api/use-project-runs";
 export { useRunEvents } from "./api/use-run-events";
+export { TestResultsChart } from "./components/test-results-chart";
