@@ -30,11 +30,11 @@ function EnvironmentPicker({ environments, environmentId, onChange }: { environm
   );
 }
 
-function RunsSection({ runsQuery, setup }: { runsQuery: UseRunsResult["runsQuery"]; setup: React.ReactNode }) {
+function RunsSection({ projectId, runsQuery, setup }: { projectId: string; runsQuery: UseRunsResult["runsQuery"]; setup: React.ReactNode }) {
   if (runsQuery.isPending) return <div className="grid items-start gap-6 xl:grid-cols-2">{setup}<p role="status" className="text-xs text-fg-tertiary">Loading runs…</p></div>;
   if (runsQuery.isError) return <div role="alert" className="space-y-2 rounded-xl border border-border bg-panel p-4 text-sm"><p>{runsQuery.error.message}</p><Button variant="outline" size="sm" onClick={() => void runsQuery.refetch()}>Retry</Button></div>;
   const runs = [...(runsQuery.data ?? [])].sort((a, b) => new Date(b.queuedAt).getTime() - new Date(a.queuedAt).getTime());
-  return <div className="space-y-7"><div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">{setup}<RunTelemetry runs={runs} /></div><section aria-label="Run history"><RunHistory runs={runs} /></section></div>;
+  return <div className="space-y-7"><div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">{setup}<RunTelemetry projectId={projectId} /></div><section aria-label="Run history"><RunHistory runs={runs} /></section></div>;
 }
 
 function loadingOrErrorGuard({ identity, project, workspace }: Pick<UseRunsResult, "identity" | "project" | "workspace">): React.ReactNode | null {
@@ -75,7 +75,7 @@ export function RunsContent({ projectId }: { projectId: string }) {
         description="Historical suite executions, browser evidence, and requirement validation."
         actions={<EnvironmentPicker environments={environments} environmentId={environmentId} onChange={setEnvironmentId} />}
       />
-      <RunsSection key={environmentId} runsQuery={runsQuery} setup={<section className="min-w-0 rounded-[24px] border border-border bg-panel p-6 shadow-ambient"><h2 className="text-lg font-semibold">Start a new run</h2><div className="mt-5 space-y-5"><RequirementPicker projectId={projectId} environmentId={environmentId} onStart={start} /></div></section>} />
+      <RunsSection key={environmentId} projectId={projectId} runsQuery={runsQuery} setup={<section className="min-w-0 rounded-[24px] border border-border bg-panel p-6 shadow-ambient"><h2 className="text-lg font-semibold">Start a new run</h2><div className="mt-5 space-y-5"><RequirementPicker projectId={projectId} environmentId={environmentId} onStart={start} /></div></section>} />
     </div>
   );
 }

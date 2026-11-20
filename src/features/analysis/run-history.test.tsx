@@ -5,12 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RunHistory } from "./run-history";
 import { RunTelemetry } from "./run-telemetry";
 import { RUN_OUTCOME_LIMIT } from "./use-run-outcomes";
-import { workspaceApi } from "@/features/workspace/workspace-api";
+import { workspaceApi, WorkspaceApiError } from "@/features/workspace/workspace-api";
 import type { Run } from "./types";
 
 const ids = { project: "11111111-1111-4111-8111-111111111111", environment: "22222222-2222-4222-8222-222222222222" };
-vi.mock("@/features/workspace/workspace-api", () => ({ workspaceApi: { listResults: vi.fn() } }));
+vi.mock("@/features/workspace/workspace-api", async (original) => ({
+  ...(await original<typeof import("@/features/workspace/workspace-api")>()),
+  workspaceApi: { listResults: vi.fn(), projectDashboard: vi.fn() },
+}));
 const listResults = () => vi.mocked(workspaceApi.listResults);
+const dashboard = () => vi.mocked(workspaceApi.projectDashboard);
+const emptyRequirements = { total_requirements: 0, approved_requirements: 0, requirements_tested: 0, requirements_passed: 0, requirements_failed: 0, requirements_inconclusive: 0, requirements_untested: 0 };
+// 5 + 4 + 3 = 12 runs, so the pass rate reads 41.7%.
+const dashboardCounts = { requirements: emptyRequirements, runs: { total_runs: 12, runs_passed: 5, runs_failed: 4, runs_inconclusive: 3 } };
 
 // Enough runs that an unbounded fan-out would be obvious in the call count.
 const RUN_COUNT = 200;
@@ -34,7 +41,10 @@ function renderWith(ui: React.ReactElement) {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
-beforeEach(() => { listResults().mockReset().mockResolvedValue(passing as never); });
+beforeEach(() => {
+  listResults().mockReset().mockResolvedValue(passing as never);
+  dashboard().mockReset().mockResolvedValue(dashboardCounts);
+});
 afterEach(() => { vi.clearAllMocks(); });
 
 describe("run outcome request budget", () => {
@@ -65,16 +75,28 @@ describe("run outcome request budget", () => {
     expect(listResults().mock.calls.length).toBeLessThanOrEqual(RUN_OUTCOME_LIMIT);
   });
 
-  it("caps the summary donut and says which runs it covers", async () => {
-    renderWith(<RunTelemetry runs={runs} />);
-    await waitFor(() => expect(screen.getByText(`The ${RUN_OUTCOME_LIMIT} most recent completed runs.`)).toBeVisible());
-    expect(listResults().mock.calls.length).toBeLessThanOrEqual(RUN_OUTCOME_LIMIT);
+  it("counts the summary donut from one backend read instead of per-run results", async () => {
+    renderWith(<RunTelemetry projectId={ids.project} />);
+    await waitFor(() => expect(screen.getByText("41.7%")).toBeVisible());
+    expect(dashboard()).toHaveBeenCalledTimes(1);
+    expect(dashboard()).toHaveBeenCalledWith(ids.project, expect.anything());
+    // The whole point: no results request, however many runs the project has.
+    expect(listResults()).not.toHaveBeenCalled();
+    expect(screen.getByRole("img", { name: "Run outcomes: 5 passed, 4 failed, 3 inconclusive" })).toBeVisible();
   });
 
-  it("reports covering everything when a project has fewer runs than the window", async () => {
-    renderWith(<RunTelemetry runs={runs.slice(0, 3)} />);
-    await waitFor(() => expect(screen.getByText("All completed runs.")).toBeVisible());
-    expect(listResults().mock.calls.length).toBe(3);
+  it("offers a retry rather than presenting a failed count as zero", async () => {
+    dashboard().mockRejectedValue(new WorkspaceApiError(503, undefined, "Workspace service unavailable. Retry."));
+    renderWith(<RunTelemetry projectId={ids.project} />);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Workspace service unavailable. Retry."));
+    expect(screen.queryByText("0%")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  });
+
+  it("shows an empty project as no pass rate rather than zero percent", async () => {
+    dashboard().mockResolvedValue({ requirements: emptyRequirements, runs: { total_runs: 0, runs_passed: 0, runs_failed: 0, runs_inconclusive: 0 } });
+    renderWith(<RunTelemetry projectId={ids.project} />);
+    await waitFor(() => expect(screen.getByText("—")).toBeVisible());
   });
 
   it("never reads results for a run that has not completed", async () => {

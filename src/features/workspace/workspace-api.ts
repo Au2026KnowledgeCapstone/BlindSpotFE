@@ -32,6 +32,15 @@ const requirementSource = z.object({ kind: z.enum(["manual", "imported"]).defaul
 const latestResult = z.object({ run_id: uuid, verdict: z.enum(["pass", "fail", "inconclusive"]), completed_at: z.string() }).nullable();
 const requirement = z.object({ id: uuid, project_id: uuid, title: z.string(), description: z.string(), category: requirementCategory, priority: requirementPriority, approval_status: approvalStatus, acceptance_criteria: z.array(acceptanceCriterion), source: requirementSource, latest_result: latestResult.optional(), created_at: z.string(), updated_at: z.string() });
 const requirementPage = page(requirement);
+
+// Mirrors BlindSpotBE app/schemas/identity.py Dashboard. Two groups answering
+// different questions: `requirements` counts coverage (latest result per
+// requirement), `runs` counts executions (each completed run by its worst
+// result). Project-wide, spanning every environment.
+const count = z.number().int();
+const dashboardRequirements = z.object({ total_requirements: count, approved_requirements: count, requirements_tested: count, requirements_passed: count, requirements_failed: count, requirements_inconclusive: count, requirements_untested: count });
+const dashboardRuns = z.object({ total_runs: count, runs_passed: count, runs_failed: count, runs_inconclusive: count });
+const dashboard = z.object({ requirements: dashboardRequirements, runs: dashboardRuns });
 const importResult = z.object({ import_id: uuid, documents: z.array(z.object({ id: uuid, role: z.enum(["brd", "srs", "design_spec"]), filename: z.string(), sha256: z.string() })), requirements: z.array(requirement), warnings: z.array(z.string()).default([]) });
 const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
 
@@ -171,6 +180,9 @@ export const workspaceApi = {
   acceptInvitation: async (invitationId: string) => { await request(`/invitations/${uuid.parse(invitationId)}/accept`, "POST", member, {}); return { error: null }; },
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
   requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
+  // One read for every summary figure. The alternative is a results request
+  // per run, which is unbounded in the number of runs a project has.
+  projectDashboard: (projectId: string, signal?: AbortSignal) => request(`${workspacePath(projectId)}/dashboard`, "GET", dashboard, undefined, signal),
   // Pass a key that is stable across retries of the same document set: BE
   // replays a completed import and never double-inserts drafts for a reused key.
   importRequirements: (projectId: string, documents: FormData, idempotencyKey?: string) => request(`${workspacePath(projectId)}/imports`, "POST", importResult, documents, undefined, 120000, idempotencyKey === undefined ? undefined : idempotencyKeySchema.parse(idempotencyKey)),
@@ -185,4 +197,4 @@ export const workspaceApi = {
   getResult: (projectId: string, environmentId: string, runId: string, resultId: string) => request(`${runsPath(projectId, environmentId, runId)}/results/${uuid.parse(resultId)}`, "GET", result),
   evidenceUrl: (evidenceId: string) => `${baseUrl()}/evidence/${encodeURIComponent(z.string().min(1).parse(evidenceId))}`,
 };
-export type WorkspaceApiTypes = { Environment: z.infer<typeof environment>; Application: z.infer<typeof application>; ImportResult: z.infer<typeof importResult>; Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };
+export type WorkspaceApiTypes = { Dashboard: z.infer<typeof dashboard>; Environment: z.infer<typeof environment>; Application: z.infer<typeof application>; ImportResult: z.infer<typeof importResult>; Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };
