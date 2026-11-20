@@ -104,9 +104,7 @@ test("v2 import modal uploads BRD and SRS and shows reviewable results", async (
   const dialog = page.getByRole("dialog", { name: "Import requirements" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Extract requirements" })).toBeDisabled();
-  await dialog.getByRole("radio", { name: "GitHub" }).check();
-  await expect(dialog.getByText("GitHub imports are not available for this project.")).toBeVisible();
-  await dialog.getByRole("radio", { name: "Document set" }).check();
+  await expect(dialog.getByRole("radio")).toHaveCount(0);
   await dialog.getByLabel("Business Requirements Document (BRD)", { exact: true }).setInputFiles({ name: "BRD.md", mimeType: "text/markdown", buffer: Buffer.from("Customers can complete checkout.") });
   await dialog.getByLabel("Software Requirements Specification (SRS)", { exact: true }).setInputFiles({ name: "SRS.md", mimeType: "text/markdown", buffer: Buffer.from("Show the order confirmation screen.") });
   await expect(dialog.getByRole("button", { name: "Extract requirements" })).toBeEnabled();

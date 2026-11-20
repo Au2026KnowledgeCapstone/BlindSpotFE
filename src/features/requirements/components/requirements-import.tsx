@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { GitBranch, FileUp, LoaderCircle, CheckCircle2, AlertTriangle, ArrowRight, FileText, X } from "lucide-react";
+import { FileUp, LoaderCircle, CheckCircle2, AlertTriangle, ArrowRight, FileText, X } from "lucide-react";
 import { workspaceApi, type WorkspaceApiTypes } from "@/features/workspace/workspace-api";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/shared/ui/Modal";
@@ -16,14 +16,13 @@ function DocumentUploads({ files, busy, onChange }: { files: DocumentSet; busy: 
 }
 export function RequirementsImport({ projectId, projectName, userId, onClose }: { projectId: string; projectName: string; userId: string; onClose: () => void }) {
   const cache = useQueryClient();
-  const [source, setSource] = useState("upload");
   const [files, setFiles] = useState<DocumentSet>({ brd: null, srs: null, design_spec: null });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<WorkspaceApiTypes["ImportResult"] | null>(null);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || source !== "upload") return;
+    if (busy) return;
     const validation = documentValidation(files);
     if (validation) { setError(validation); return; }
     setBusy(true); setError("");
@@ -34,5 +33,5 @@ export function RequirementsImport({ projectId, projectName, userId, onClose }: 
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not import requirements. Please retry."); }
     finally { setBusy(false); }
   }
-  return <Modal title="Import requirements" busy={busy} onClose={onClose}>{result ? <ImportResult result={result} onClose={onClose} /> : <><p className="mb-5 text-sm leading-relaxed text-fg-tertiary">Extract documented expectations for <strong className="font-medium text-fg">{projectName}</strong>. BRD and SRS are required; design specifications are optional. AI output is always saved for review.</p><form onSubmit={(event) => void submit(event)}><fieldset disabled={busy} className="mb-5 grid grid-cols-2 gap-3"><legend className="sr-only">Requirements source</legend>{[{ value: "github", label: "GitHub", icon: GitBranch }, { value: "upload", label: "Document set", icon: FileUp }].map(({ value, label, icon: Icon }) => <label key={value} className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border p-3 text-sm ${source === value ? "border-strong bg-raised font-medium" : "border-border text-fg-tertiary"}`}><input type="radio" name="requirements-source" value={value} checked={source === value} onChange={() => setSource(value)} className="size-3.5 accent-current" /><Icon className="size-4" />{label}</label>)}</fieldset>{source === "upload" ? <DocumentUploads files={files} busy={busy} onChange={(next) => { setFiles(next); setError(""); }} /> : <div className="mb-5 rounded-xl border border-border bg-canvas p-4 text-sm leading-relaxed text-fg-secondary"><GitBranch className="mb-2 size-5" /><p>GitHub imports are not available for this project.</p><p className="mt-2 text-xs text-fg-tertiary">Download BRD.md and SRS.md from your repository and choose Document set to import them.</p></div>}<div className="mt-5 flex items-start gap-2 rounded-lg border border-border bg-canvas p-3 text-xs leading-relaxed text-fg-tertiary"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><p>Documentation is sent to your configured AI provider. Only upload content you are authorized to share. Review source excerpts before approval.</p></div>{error && <p role="alert" className="mt-4 rounded-lg border border-fail-border bg-fail-tint p-3 text-sm text-fail">{error}</p>}{busy && <p role="status" className="mt-4 flex items-center gap-2 text-sm text-fg-secondary"><LoaderCircle className="size-4 shrink-0 animate-spin" />Reading sources and extracting requirements. This may take up to two minutes…</p>}<div className="mt-5 flex justify-end gap-3 border-t border-border pt-5"><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy || source !== "upload" || !files.brd || !files.srs}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}{busy ? "Importing…" : "Extract requirements"}</Button></div></form></>}</Modal>;
+  return <Modal title="Import requirements" busy={busy} onClose={onClose}>{result ? <ImportResult result={result} onClose={onClose} /> : <><p className="mb-5 text-sm leading-relaxed text-fg-tertiary">Extract documented expectations for <strong className="font-medium text-fg">{projectName}</strong>. BRD and SRS are required; design specifications are optional. AI output is always saved for review.</p><form onSubmit={(event) => void submit(event)}><DocumentUploads files={files} busy={busy} onChange={(next) => { setFiles(next); setError(""); }} /><div className="mt-5 flex items-start gap-2 rounded-lg border border-border bg-canvas p-3 text-xs leading-relaxed text-fg-tertiary"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><p>Documentation is sent to your configured AI provider. Only upload content you are authorized to share. Review source excerpts before approval.</p></div>{error && <p role="alert" className="mt-4 rounded-lg border border-fail-border bg-fail-tint p-3 text-sm text-fail">{error}</p>}{busy && <p role="status" className="mt-4 flex items-center gap-2 text-sm text-fg-secondary"><LoaderCircle className="size-4 shrink-0 animate-spin" />Reading sources and extracting requirements. This may take up to two minutes…</p>}<div className="mt-5 flex justify-end gap-3 border-t border-border pt-5"><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy || !files.brd || !files.srs}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}{busy ? "Importing…" : "Extract requirements"}</Button></div></form></>}</Modal>;
 }
