@@ -1,248 +1,57 @@
 "use client";
-
-import React, { useState } from "react";
-import { Check, Clock, FileCheck2, FileText, Plus, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Download, Plus, Search, FileText, FileCheck2, Clock, ShieldCheck, LoaderCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/ui/PageHeader";
-import { EmptyState } from "@/shared/ui/EmptyState";
 import { StatTile } from "@/shared/ui/StatTile";
 import { LoadingScreen } from "@/shared/ui/LoadingScreen";
-import { categoryLabel, priorityLabel, approvalLabel } from "@/shared/lib/labels";
-import { useRequirements, type Requirement } from "@/features/requirements";
+import { categoryLabel, priorityLabel } from "@/shared/lib/labels";
+import { FIELD } from "@/shared/ui/field";
+import { useRequirements, RequirementsImport, RequirementDetails, RequirementEditor, ApprovalBadge, VerdictBadge, type Requirement, type RequirementEditValues } from "@/features/requirements";
+import { filterRequirements } from "./requirement-filters";
 
-const field = "w-full rounded-lg border border-border bg-raised px-3 py-2 text-sm text-fg outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50";
-type CriterionDraft = { id?: string; text: string };
-type RequirementEdit = { title: string; description: string; acceptanceCriteria: CriterionDraft[] };
-
-// eslint-disable-next-line complexity -- Keep one requirement's edit, approval, and error states together.
-function RequirementRow({
-  item,
-  canManage,
-  busy,
-  onApprove,
-  onUpdate,
-}: {
-  item: Requirement;
-  canManage: boolean;
-  busy: boolean;
-  onApprove: (id: string) => void;
-  onUpdate: (id: string, args: RequirementEdit) => Promise<void>;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(item.title);
-  const [description, setDescription] = useState(item.description);
-  const [criteria, setCriteria] = useState<CriterionDraft[]>(item.acceptanceCriteria.map(({ id, text }) => ({ ...(id ? { id } : {}), text })));
-  const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState("");
-  async function save(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!title.trim() || !criteria.length || criteria.some((criterion) => !criterion.text.trim())) return;
-    setSaving(true); setEditError("");
-    try {
-      await onUpdate(item.id, { title: title.trim(), description: description.trim(), acceptanceCriteria: criteria.map((criterion) => ({ ...criterion, text: criterion.text.trim() })) });
-      setEditing(false);
-    } catch (cause) {
-      setEditError(cause instanceof Error ? cause.message : "Could not save requirement. Retry.");
-    } finally { setSaving(false); }
-  }
-  return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-panel p-4">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-fg">{item.title}</p>
-        <p className="mt-1 text-xs text-fg-tertiary">
-          {categoryLabel(item.category)} · {priorityLabel(item.priority)} priority · {approvalLabel(item.approvalStatus)}
-        </p>
-      </div>
-      {canManage && <div className="flex gap-2">
-        <Button size="sm" variant="outline" disabled={busy || saving} onClick={() => setEditing((value) => !value)}>{editing ? "Cancel edit" : "Edit"}</Button>
-        {item.approvalStatus !== "approved" && <Button size="sm" variant="outline" disabled={busy || saving || item.acceptanceCriteria.length === 0 || item.approvalStatus === "needs_clarification"} onClick={() => onApprove(item.id)}>
-          <Check /> {busy ? "Approving…" : "Approve"}
-        </Button>}
-      </div>}
-      {editing && <form className="w-full space-y-3 border-t border-border pt-3" onSubmit={(event) => void save(event)}>
-        <label className="block space-y-1 text-xs text-fg-secondary">Edit title<input className={field} required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} /></label>
-        <label className="block space-y-1 text-xs text-fg-secondary">Edit description<textarea className={field} maxLength={10000} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
-        <div className="space-y-2"><p className="text-xs font-medium">Acceptance criteria</p>
-          {criteria.map((criterion, index) => <div key={criterion.id ?? index} className="flex items-end gap-2">
-            <label className="flex-1 space-y-1 text-xs text-fg-secondary">Criterion {index + 1}<input className={field} required maxLength={2000} value={criterion.text} onChange={(event) => setCriteria(criteria.map((entry, at) => at === index ? { ...entry, text: event.target.value } : entry))} /></label>
-            <Button type="button" variant="outline" size="sm" onClick={() => setCriteria(criteria.filter((_, at) => at !== index))}>Remove</Button>
-          </div>)}
-          <Button type="button" variant="outline" size="sm" onClick={() => setCriteria([...criteria, { text: "" }])}>Add criterion</Button>
-        </div>
-        <Button type="submit" disabled={saving || !title.trim() || !criteria.length || criteria.some((criterion) => !criterion.text.trim())}>{saving ? "Saving…" : "Save requirement"}</Button>
-        {editError && <p role="alert" className="text-xs text-fail">{editError}</p>}
-      </form>}
-    </li>
-  );
+const CATEGORIES = ["functional", "ux", "data", "performance", "security"] as const;
+const PRIORITIES = ["critical", "high", "medium", "low"] as const;
+const TABS = [{ value: "all", label: "All" }, { value: "draft", label: "Draft" }, { value: "approved", label: "Approved" }, { value: "needs_clarification", label: "Needs clarification" }];
+function RequirementMetrics({ items, name }: { items: Requirement[]; name: string }) {
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatTile label="All requirements" value={items.length} icon={FileText} detail={name} featured /><StatTile label="Draft" value={items.filter((item) => item.approvalStatus === "draft").length} icon={Clock} detail="Awaiting your review" /><StatTile label="Approved" value={items.filter((item) => item.approvalStatus === "approved").length} icon={FileCheck2} detail="Ready for validation" /><StatTile label="Requirements tested" value={items.filter((item) => item.latestVerdict).length} icon={ShieldCheck} detail="Browser checks executed" /></div>;
+}
+function RequirementTable({ items, onView }: { items: Requirement[]; onView: (id: string) => void }) {
+  return <div className="relative overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><caption className="sr-only">Requirements, review status and latest browser test outcome</caption><thead><tr className="border-b border-border text-[11px] font-medium uppercase tracking-wider text-fg-tertiary">{["Requirement & ID", "Category", "Priority", "Approval", "Latest result", "Actions"].map((label) => <th key={label} scope="col" className={`px-5 py-5 font-medium first:pl-6 last:pr-6 ${label === "Actions" ? "text-right" : ""}`}>{label === "Actions" ? <span className="sr-only">Actions</span> : label}</th>)}</tr></thead><tbody className="divide-y divide-subtle">{items.map((item) => <tr key={item.id} className="transition-colors hover:bg-canvas/80"><td className="w-[38%] min-w-64 py-5 pl-6 pr-5"><button className="text-left font-medium leading-relaxed underline decoration-border-strong/40 underline-offset-4 hover:decoration-fg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50" onClick={() => onView(item.id)}>{item.title}</button><p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-fg-quaternary">{item.id.slice(0, 8)}</p>{item.source.kind === "imported" && <p className="mt-1 flex items-center gap-1 text-[11px] text-fg-tertiary"><FileText className="size-3 shrink-0" /><span className="max-w-64 truncate">{item.source.documentName || "Imported documentation"}</span></p>}</td><td className="px-5 py-5"><span className="whitespace-nowrap rounded-full bg-raised px-3 py-1.5 text-xs text-fg-secondary">{categoryLabel(item.category)}</span></td><td className="px-5 py-5"><span className="text-xs text-fg-secondary">{priorityLabel(item.priority)}</span></td><td className="px-5 py-5"><ApprovalBadge status={item.approvalStatus} /></td><td className="px-5 py-5"><VerdictBadge verdict={item.latestVerdict} /></td><td className="py-5 pl-5 pr-6"><button aria-label={`View ${item.title}`} onClick={() => onView(item.id)} className="ml-auto flex items-center gap-2 whitespace-nowrap rounded text-xs font-medium text-fg-secondary hover:text-fg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50">View <ArrowRight className="size-3.5" /></button></td></tr>)}</tbody></table></div>;
+}
+function LibraryEmpty({ filtered, canManage, onImport }: { filtered: boolean; canManage: boolean; onImport: () => void }) {
+  return <div className="flex flex-col items-center px-6 py-14 text-center"><span className="mb-4 flex size-14 items-center justify-center rounded-full border border-border bg-canvas"><FileCheck2 className="size-6 text-fg-tertiary" /></span><h3 className="text-lg font-semibold tracking-tight">{filtered ? "No matching requirements" : "Your product expectations belong here"}</h3><p className="mt-2 max-w-sm text-sm leading-relaxed text-fg-tertiary">{filtered ? "Try changing your search or filters." : "Import documentation to extract draft requirements, or add a clear expectation manually."}</p>{!filtered && canManage && <Button className="mt-5" onClick={onImport}><Download className="size-4" />Import requirements</Button>}</div>;
 }
 
-function NewRequirementForm({ onCreate }: { onCreate: (args: { title: string; description: string; acceptanceCriteria: string[] }) => Promise<void> }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [criteriaText, setCriteriaText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const acceptanceCriteria = criteriaText.split("\n").map((text) => text.trim()).filter(Boolean);
-    if (busy || !title.trim() || !acceptanceCriteria.length) return;
-    setBusy(true);
-    setError("");
-    try {
-      await onCreate({ title: title.trim(), description: description.trim(), acceptanceCriteria });
-      setTitle("");
-      setDescription("");
-      setCriteriaText("");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not create requirement. Retry.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form onSubmit={(event) => void submit(event)} className="space-y-3">
-      <label className="min-w-56 flex-1 space-y-1.5 text-xs text-fg-secondary">
-        Title
-        <input className={field} value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={300} placeholder="What should the product do?" />
-      </label>
-      <label className="block space-y-1.5 text-xs text-fg-secondary">Description
-        <textarea className={field} maxLength={10000} value={description} onChange={(event) => setDescription(event.target.value)} />
-      </label>
-      <label className="block space-y-1.5 text-xs text-fg-secondary">Acceptance criteria (one per line)
-        <textarea className={field} required maxLength={20000} value={criteriaText} onChange={(event) => setCriteriaText(event.target.value)} placeholder="An observable outcome" />
-      </label>
-      <Button type="submit" disabled={busy || !title.trim() || !criteriaText.trim()}>
-        <Plus /> {busy ? "Adding…" : "Add requirement"}
-      </Button>
-      {error && <p role="alert" className="w-full text-xs text-fail">{error}</p>}
-    </form>
-  );
-}
-
-function StatsRow({ items, projectName }: { items: Requirement[]; projectName: string | undefined }) {
-  const approved = items.filter((r) => r.approvalStatus === "approved").length;
-  const draft = items.filter((r) => r.approvalStatus === "draft").length;
-  const clarification = items.filter((r) => r.approvalStatus === "needs_clarification").length;
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatTile label="All requirements" value={items.length} icon={FileText} detail={projectName} featured />
-      <StatTile label="Draft" value={draft} icon={Clock} detail="Awaiting review" />
-      <StatTile label="Approved" value={approved} icon={FileCheck2} detail="Ready for validation" />
-      <StatTile label="Needs clarification" value={clarification} icon={ShieldCheck} detail="Blocked on edits" />
-    </div>
-  );
-}
-
-function RequirementsList({
-  items,
-  canManage,
-  approvingId,
-  onApprove,
-  onUpdate,
-}: {
-  items: Requirement[];
-  canManage: boolean;
-  approvingId: string | null;
-  onApprove: (id: string) => void;
-  onUpdate: (id: string, args: RequirementEdit) => Promise<void>;
-}) {
-  if (!items.length) {
-    return (
-      <EmptyState
-        icon={FileCheck2}
-        title="No requirements yet"
-        description={canManage ? "Add the first requirement above." : "Nothing has been documented yet."}
-      />
-    );
-  }
-  return (
-    <ul className="space-y-2">
-      {items.map((item) => (
-        <RequirementRow key={item.id} item={item} canManage={canManage} busy={approvingId === item.id} onApprove={onApprove} onUpdate={onUpdate} />
-      ))}
-    </ul>
-  );
-}
-
-type RequirementsQuery = ReturnType<typeof useRequirements>["data"];
-
-function RequirementsBody({
-  data,
-  unavailable,
-  items,
-  canManage,
-  approvingId,
-  onApprove,
-  onUpdate,
-}: {
-  data: RequirementsQuery;
-  unavailable: boolean;
-  items: Requirement[];
-  canManage: boolean;
-  approvingId: string | null;
-  onApprove: (id: string) => void;
-  onUpdate: (id: string, args: RequirementEdit) => Promise<void>;
-}) {
-  if (data.isPending) return <p role="status" className="text-xs text-fg-tertiary">Loading requirements…</p>;
-  if (unavailable) {
-    return (
-      <EmptyState
-        icon={ShieldCheck}
-        title="Requirements aren't connected yet"
-        description="Requirements storage is not connected to the backend yet. Nothing is shown until it is."
-      />
-    );
-  }
-  if (data.isError) {
-    return (
-      <div role="alert" className="space-y-2 rounded-xl border border-border bg-panel p-4 text-sm">
-        <p>{data.error.message}</p>
-        <Button variant="outline" size="sm" onClick={() => void data.refetch()}>Retry</Button>
-      </div>
-    );
-  }
-  return <RequirementsList items={items} canManage={canManage} approvingId={approvingId} onApprove={onApprove} onUpdate={onUpdate} />;
-}
-
+// eslint-disable-next-line complexity -- Keep project permissions, query states, and modal selection in one scoped page.
 export function RequirementsContent({ projectId }: { projectId: string }) {
-  const { identity, project, data, canManage, unavailable, create, update, approve } = useRequirements(projectId);
-  const [approvingId, setApprovingId] = useState<string | null>(null);
-  const [approvalError, setApprovalError] = useState("");
-
-  async function handleApprove(id: string) {
-    setApprovingId(id);
-    setApprovalError("");
-    try { await approve(id); }
-    catch (cause) { setApprovalError(cause instanceof Error ? cause.message : "Could not approve requirement. Retry."); }
-    finally { setApprovingId(null); }
+  const { identity, project, data, canManage, create, update, approve } = useRequirements(projectId);
+  const [filters, setFilters] = useState({ search: "", category: "all", priority: "all", tab: "all" });
+  const [page, setPage] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Requirement | "new" | null>(null);
+  function filter(key: keyof typeof filters, value: string) { setFilters((current) => ({ ...current, [key]: value })); setPage(0); }
+  async function save(values: RequirementEditValues) {
+    if (editing && editing !== "new") await update(editing.id, values);
+    else await create({ ...values, acceptanceCriteria: values.acceptanceCriteria.map((criterion) => criterion.text) });
   }
-
-  const error = identity.error || project.error;
-  if (error) return <div role="alert" className="space-y-3"><p className="text-sm text-fail">{error.message}</p></div>;
+  const identityError = identity.error || project.error;
+  if (identityError) return <div role="alert" className="rounded-xl border border-fail-border bg-fail-tint p-5 text-sm text-fail">{identityError.message}</div>;
   if (identity.isPending || project.isPending) return <LoadingScreen label="Loading requirements" />;
-
   const items = data.data ?? [];
-  return (
-    <div className="space-y-6">
-      <PageHeader title="Requirements" description="Define what this product should do, then approve before testing." />
-      <StatsRow items={items} projectName={project.data?.name} />
-      {approvalError && <p role="alert" className="text-xs text-fail">{approvalError}</p>}
-      {canManage && (
-        <section className="rounded-2xl border border-border bg-panel p-4">
-          <NewRequirementForm onCreate={create} />
-        </section>
-      )}
-      <RequirementsBody
-        data={data}
-        unavailable={unavailable}
-        items={items}
-        canManage={!!canManage}
-        approvingId={approvingId}
-        onApprove={(id) => void handleApprove(id)}
-        onUpdate={update}
-      />
-    </div>
-  );
+  const visible = filterRequirements(items, filters);
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(visible.length / 5) - 1));
+  const selected = items.find((item) => item.id === selectedId);
+  return <div className="space-y-6">
+    <PageHeader title="Requirements" description="Define what your product should do." actions={canManage && <><Button onClick={() => setImporting(true)}><Download className="size-4" />Import requirements</Button><Button variant="outline" onClick={() => setEditing("new")}><Plus className="size-4" />Add requirement</Button></>} />
+    {data.isSuccess && <RequirementMetrics items={items} name={project.data?.name ?? "Project"} />}
+    <section aria-label="Requirements library" className="overflow-hidden rounded-[20px] border border-border bg-panel shadow-ambient"><div className="px-6 pt-6"><div className="flex flex-wrap items-end gap-4"><label className="relative min-w-44 flex-1"><span className="sr-only">Search requirements</span><Search className="absolute left-4 top-3 size-4 text-fg-tertiary" /><input type="search" className="h-10 w-full rounded-full bg-raised pl-11 pr-4 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50" placeholder="Search requirements or IDs…" value={filters.search} onChange={(event) => filter("search", event.target.value)} /></label><label className="space-y-1.5 text-xs text-fg-tertiary">Category<select className={`${FIELD} block min-w-36 bg-panel text-xs`} value={filters.category} onChange={(event) => filter("category", event.target.value)}><option value="all">All categories</option>{CATEGORIES.map((value) => <option key={value} value={value}>{categoryLabel(value)}</option>)}</select></label><label className="space-y-1.5 text-xs text-fg-tertiary">Priority<select className={`${FIELD} block min-w-32 bg-panel text-xs`} value={filters.priority} onChange={(event) => filter("priority", event.target.value)}><option value="all">All priorities</option>{PRIORITIES.map((value) => <option key={value} value={value}>{priorityLabel(value)}</option>)}</select></label></div><div className="mt-4 flex gap-6 overflow-x-auto border-b border-border" role="group" aria-label="Filter review status">{TABS.map(({ value, label }) => <button key={value} aria-pressed={filters.tab === value} onClick={() => filter("tab", value)} className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-3 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50 ${filters.tab === value ? "border-fg font-semibold text-fg" : "border-transparent text-fg-tertiary"}`}>{label}<span className="rounded bg-raised px-1.5 py-0.5 text-[11px] font-normal">{data.isSuccess ? value === "all" ? items.length : items.filter((item) => item.approvalStatus === value).length : "—"}</span></button>)}</div></div>
+      {data.isPending ? <p role="status" className="flex items-center justify-center gap-2 p-12 text-sm text-fg-tertiary"><LoaderCircle className="size-4 animate-spin" />Loading requirements…</p> : data.isError ? <div role="alert" className="space-y-4 p-10 text-center"><p className="text-sm text-fail">{data.error.message}</p><Button variant="outline" onClick={() => void data.refetch()}><RotateCw className="size-4" />Try again</Button></div> : visible.length ? <RequirementTable items={visible.slice(currentPage * 5, currentPage * 5 + 5)} onView={setSelectedId} /> : <LibraryEmpty filtered={!!items.length} canManage={!!canManage} onImport={() => setImporting(true)} />}
+      {data.isSuccess && !!visible.length && <div className="flex items-center justify-between gap-3 border-t border-border px-6 py-5 text-xs text-fg-tertiary"><span>Showing {currentPage * 5 + 1}–{Math.min((currentPage + 1) * 5, visible.length)} of {visible.length} requirements</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Previous</Button><Button variant="outline" size="sm" disabled={(currentPage + 1) * 5 >= visible.length} onClick={() => setPage(currentPage + 1)}>Next</Button></div></div>}
+    </section>
+    {importing && canManage && <RequirementsImport projectId={projectId} projectName={project.data?.name ?? "this project"} userId={identity.data!.id} onClose={() => setImporting(false)} />}
+    {selected && <RequirementDetails requirement={selected} canManage={!!canManage} onClose={() => setSelectedId(null)} onEdit={() => { setSelectedId(null); setEditing(selected); }} onApprove={approve} />}
+    {editing && canManage && <RequirementEditor key={editing === "new" ? "new" : editing.id} {...(editing !== "new" ? { requirement: editing } : {})} onSave={save} onClose={() => setEditing(null)} />}
+  </div>;
 }

@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-
+import { ProjectInfrastructure } from "@/features/workspace";
 export default async function EnvironmentsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  redirect(`/projects/${projectId}/setup`);
+  return <ProjectInfrastructure projectId={projectId} environmentOnly />;
 }

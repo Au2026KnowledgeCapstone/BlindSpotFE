@@ -51,6 +51,27 @@ backend setup, CSRF/session contracts, refresh behavior, and manual tests.
 
 ## Authentication and current limitations
 
+### Reviewing the results UI locally
+
+With `npm run dev` running, open `http://localhost:3000/dev/results` to review the
+report UI without an account. This development-only page uses synthetic data and
+supports passing, failing, running, and empty scenarios. It does not bypass login
+or access project data, and returns 404 in production.
+
+The dashboard includes project-filtered analysis history. Each run report shows
+an overall verdict, a 0–100 score, result counts, a donut chart, and issue categories.
+One test corresponds to one requirement result; the score is passed / executed,
+including inconclusive results. Unfinished and incomplete runs never receive an
+overall PASS. Execution completion alone does not mean that tests passed.
+
+Use **Share Report** to copy an authenticated project link or download a standalone
+HTML snapshot. The downloaded report can be printed to PDF from a browser. Links
+require project access; downloads do not include session tokens or signed evidence
+URLs. Severity/priority charts and Jira integration need additional backend data
+or integrations and are not currently provided.
+
+### Session behavior
+
 The backend authentication integration uses POST `/auth/login`, GET `/auth/me`,
 POST `/auth/refresh`, and POST `/auth/logout`. Login consumes user information
 and authentication flags, not Supabase session tokens in JSON. Requests include

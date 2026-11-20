@@ -35,17 +35,18 @@ export function useRequirements(projectId: string) {
 
   async function refresh() {
     await cache.invalidateQueries({ queryKey: key(identity.data?.id, projectId) });
+    await cache.invalidateQueries({ queryKey: ["workspace", identity.data?.id, projectId, "overview-requirements"] });
   }
   async function create(args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) {
     await workspaceApi.createRequirement(projectId, args);
     await refresh();
   }
-  async function update(requirementId: string, args: { title: string; description: string; acceptanceCriteria: { id?: string; text: string }[] }) {
+  async function update(requirementId: string, args: { title: string; description: string; category?: string; priority?: string; acceptanceCriteria: { id?: string; text: string }[] }) {
     await workspaceApi.updateRequirement(projectId, requirementId, args);
     await refresh();
   }
-  async function approve(requirementId: string) {
-    await workspaceApi.approveRequirement(projectId, requirementId);
+  async function approve(requirementId: string, approved = true) {
+    await workspaceApi.approveRequirement(projectId, requirementId, approved);
     await refresh();
   }
 

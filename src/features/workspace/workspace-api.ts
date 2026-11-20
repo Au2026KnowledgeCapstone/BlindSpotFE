@@ -32,6 +32,16 @@ const requirementSource = z.object({ kind: z.enum(["manual", "imported"]).defaul
 const latestResult = z.object({ run_id: uuid, verdict: z.enum(["pass", "fail", "inconclusive"]), completed_at: z.string() }).nullable();
 const requirement = z.object({ id: uuid, project_id: uuid, title: z.string(), description: z.string(), category: requirementCategory, priority: requirementPriority, approval_status: approvalStatus, acceptance_criteria: z.array(acceptanceCriterion), source: requirementSource, latest_result: latestResult.optional(), created_at: z.string(), updated_at: z.string() });
 const requirementPage = page(requirement);
+
+// Mirrors BlindSpotBE app/schemas/identity.py Dashboard. Two groups answering
+// different questions: `requirements` counts coverage (latest result per
+// requirement), `runs` counts executions (each completed run by its worst
+// result). Project-wide, spanning every environment.
+const count = z.number().int();
+const dashboardRequirements = z.object({ total_requirements: count, approved_requirements: count, requirements_tested: count, requirements_passed: count, requirements_failed: count, requirements_inconclusive: count, requirements_untested: count });
+const dashboardRuns = z.object({ total_runs: count, runs_passed: count, runs_failed: count, runs_inconclusive: count });
+const dashboard = z.object({ requirements: dashboardRequirements, runs: dashboardRuns });
+const importResult = z.object({ import_id: uuid, documents: z.array(z.object({ id: uuid, role: z.enum(["brd", "srs", "design_spec"]), filename: z.string(), sha256: z.string() })), requirements: z.array(requirement), warnings: z.array(z.string()).default([]) });
 const requirementsPath = (projectId: string, rid?: string) => `${workspacePath(projectId)}/requirements${rid ? `/${uuid.parse(rid)}` : ""}`;
 
 // Mirrors BlindSpotBE docs/openapi.json Run/Result/CriterionAssessment/Evidence/Action.
@@ -93,18 +103,31 @@ function baseUrl() {
   return origin;
 }
 
+// A retried write must reuse its caller's key so BE replays the original
+// instead of doing the work twice. BE allows 1 to 128 nonblank characters.
+const idempotencyKeySchema = z.string().trim().min(1).max(128);
+
+// FormData must set its own Content-Type so the browser appends the boundary.
+function writeHeaders(body: unknown, idempotencyKey?: string) {
+  return {
+    ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+    "X-CSRF-Protection": "1",
+    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+  };
+}
+
 // eslint-disable-next-line complexity -- Keep fetch deadline, cancellation, response validation and cleanup atomic.
-async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema: z.ZodType<T>, body?: unknown, signal?: AbortSignal): Promise<T> {
+async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema: z.ZodType<T>, body?: unknown, signal?: AbortSignal, timeoutMs = 15000, idempotencyKey?: string): Promise<T> {
   const base = baseUrl();
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
   if (signal?.aborted) abort();
   else signal?.addEventListener("abort", abort, { once: true });
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${base}${path}`, {
       method, credentials: "include", cache: "no-store", signal: controller.signal,
-      ...(method !== "GET" ? { headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify(body ?? {}) } : {}),
+      ...(method !== "GET" ? { headers: writeHeaders(body, idempotencyKey), body: body instanceof FormData ? body : JSON.stringify(body ?? {}) } : {}),
     });
     if (!response.ok) throw await responseError(response, controller.signal);
     const raw = await withAbort(response.json(), controller.signal);
@@ -142,8 +165,9 @@ export const workspaceApi = {
   listEnvironments: (projectId: string) => collection(`${workspacePath(projectId)}/environments`, environmentPage.shape.items.element),
   createApplication: (projectId: string, name: string) => request(`${workspacePath(projectId)}/applications`, "POST", applicationReply, { name: nameSchema.parse(name) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId) })),
   createEnvironment: (projectId: string, args: EnvironmentInput) => request(`${workspacePath(projectId)}/environments`, "POST", environmentReply, { application_id: uuid.parse(args.application_id), name: nameSchema.parse(args.name), kind: environmentKind.parse(args.kind), base_url: urlSchema.parse(args.base_url), ...(args.credential_reference ? { credential_reference: credentialReference.parse(args.credential_reference) } : {}), ...(args.credentials ? { credentials: args.credentials } : {}) }).then((result) => ({ ...result, project_id: result.project_id ?? uuid.parse(projectId), application_id: result.application_id ?? uuid.parse(args.application_id) })),
+  updateEnvironment: (projectId: string, environmentId: string, changes: { name?: string; kind?: string; base_url?: string; credentials?: LoginCredentials | null }) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}`, "PATCH", environmentReply, changes),
   updateEnvironmentCredentials: (projectId: string, environmentId: string, credentials: LoginCredentials) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}`, "PATCH", environmentReply, { credentials }),
-  verifyEnvironment: (projectId: string, environmentId: string) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}/verify`, "POST", z.object({ status: z.string() }), {}),
+  verifyEnvironment: (projectId: string, environmentId: string) => request(`${workspacePath(projectId)}/environments/${uuid.parse(environmentId)}/verify`, "POST", z.object({ status: z.string() }), {}, undefined, 120000),
   runEventsUrl: (projectId: string, environmentId: string, runId: string) => `${baseUrl()}${runsPath(projectId, environmentId, runId)}/events`,
   projects: () => collection("/projects", projectPage.shape.items.element),
   project: (projectId: string) => request(`/projects/${uuid.parse(projectId)}`, "GET", project),
@@ -156,8 +180,14 @@ export const workspaceApi = {
   acceptInvitation: async (invitationId: string) => { await request(`/invitations/${uuid.parse(invitationId)}/accept`, "POST", member, {}); return { error: null }; },
   markNotificationRead: async (notificationId: string) => { await request(`/notifications/${uuid.parse(notificationId)}`, "PATCH", z.unknown(), { read: true }); return { error: null }; },
   requirements: (projectId: string) => collection(requirementsPath(projectId), requirementPage.shape.items.element),
+  // One read for every summary figure. The alternative is a results request
+  // per run, which is unbounded in the number of runs a project has.
+  projectDashboard: (projectId: string, signal?: AbortSignal) => request(`${workspacePath(projectId)}/dashboard`, "GET", dashboard, undefined, signal),
+  // Pass a key that is stable across retries of the same document set: BE
+  // replays a completed import and never double-inserts drafts for a reused key.
+  importRequirements: (projectId: string, documents: FormData, idempotencyKey?: string) => request(`${workspacePath(projectId)}/imports`, "POST", importResult, documents, undefined, 120000, idempotencyKey === undefined ? undefined : idempotencyKeySchema.parse(idempotencyKey)),
   createRequirement: (projectId: string, args: { title: string; description?: string; category?: string; priority?: string; acceptanceCriteria?: string[] }) => request(requirementsPath(projectId), "POST", requirement, { title: args.title, description: args.description ?? "", category: args.category ?? "functional", priority: args.priority ?? "medium", acceptance_criteria: (args.acceptanceCriteria ?? []).map((text, position) => ({ text, position })) }),
-  updateRequirement: (projectId: string, requirementId: string, args: { title: string; description: string; acceptanceCriteria: { id?: string; text: string }[] }) => request(requirementsPath(projectId, requirementId), "PATCH", requirement, { title: args.title, description: args.description, acceptance_criteria: args.acceptanceCriteria.map((criterion, position) => ({ ...criterion, position })) }),
+  updateRequirement: (projectId: string, requirementId: string, args: { title: string; description: string; category?: string; priority?: string; acceptanceCriteria: { id?: string; text: string }[] }) => request(requirementsPath(projectId, requirementId), "PATCH", requirement, { title: args.title, description: args.description, ...(args.category ? { category: args.category } : {}), ...(args.priority ? { priority: args.priority } : {}), acceptance_criteria: args.acceptanceCriteria.map((criterion, position) => ({ ...criterion, position })) }),
   approveRequirement: (projectId: string, requirementId: string, approved = true) => request(`${requirementsPath(projectId, requirementId)}/approval`, "POST", requirement, { approved }),
   createRun: (projectId: string, environmentId: string, requirementIdList: string[]) => request(runsPath(projectId, environmentId), "POST", run, { requirement_ids: requirementIds.parse(requirementIdList) }),
   listRuns: (projectId: string, environmentId: string) => collection(runsPath(projectId, environmentId), run),
@@ -167,4 +197,4 @@ export const workspaceApi = {
   getResult: (projectId: string, environmentId: string, runId: string, resultId: string) => request(`${runsPath(projectId, environmentId, runId)}/results/${uuid.parse(resultId)}`, "GET", result),
   evidenceUrl: (evidenceId: string) => `${baseUrl()}/evidence/${encodeURIComponent(z.string().min(1).parse(evidenceId))}`,
 };
-export type WorkspaceApiTypes = { Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };
+export type WorkspaceApiTypes = { Dashboard: z.infer<typeof dashboard>; Environment: z.infer<typeof environment>; Application: z.infer<typeof application>; ImportResult: z.infer<typeof importResult>; Project: z.infer<typeof project>; Member: z.infer<typeof member>; Invitation: z.infer<typeof invitation>; Notice: z.infer<typeof notice>; Requirement: z.infer<typeof requirement>; Run: z.infer<typeof run>; Result: z.infer<typeof result>; CriterionAssessment: z.infer<typeof criterionAssessment>; Evidence: z.infer<typeof evidence>; ResultAction: z.infer<typeof resultAction> };

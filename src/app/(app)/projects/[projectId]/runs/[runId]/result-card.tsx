@@ -44,14 +44,6 @@ function ActionRow({ action }: { action: ResultAction }) {
 function EvidenceRow({ item }: { item: Evidence }) {
   let href: string | undefined;
   try { href = workspaceApi.evidenceUrl(item.id); } catch { href = undefined; }
-  if (item.type === "screenshot" && href) {
-    return (
-      <li className="space-y-1">
-        <img src={href} alt="Captured screenshot" crossOrigin="use-credentials" loading="lazy" className="max-h-64 w-full rounded border border-border object-contain" />
-        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline">View full size <ExternalLink className="size-3" /></a>
-      </li>
-    );
-  }
   return (
     <li>
       <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline">
@@ -63,17 +55,18 @@ function EvidenceRow({ item }: { item: Evidence }) {
 
 export function ResultCard({ result }: { result: Result }) {
   const nonPass = result.verdict !== "pass";
+  const visibleEvidence = result.evidence.filter((item) => item.type !== "screenshot");
   return (
-    <section className="space-y-4 rounded-2xl border border-border bg-panel p-4">
+    <section className={`space-y-5 rounded-2xl border bg-panel p-5 sm:p-6 ${result.verdict === "fail" ? "border-fail-border" : "border-border"}`}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
-          <h3 className="text-sm font-semibold text-fg">{result.requirementTitle}</h3>
+          <h3 className="text-base font-semibold text-fg">{result.requirementTitle}</h3>
           {nonPass && <p className="text-xs text-fg-tertiary">{classificationLabel(result.classification)}</p>}
         </div>
         <VerdictBadge verdict={result.verdict} />
       </header>
 
-      <p className="text-xs leading-relaxed text-fg-secondary"><span className="font-medium text-fg-tertiary">Observed: </span>{result.observedBehavior}</p>
+      <p className="text-sm leading-relaxed text-fg-secondary"><span className="font-medium text-fg-tertiary">Observed: </span>{result.observedBehavior}</p>
 
       {result.criterionAssessments.length > 0 && (
         <div className="space-y-2">
@@ -89,10 +82,10 @@ export function ResultCard({ result }: { result: Result }) {
         </div>
       )}
 
-      {result.evidence.length > 0 && (
+      {visibleEvidence.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold uppercase tracking-wide text-fg-tertiary">Evidence</h4>
-          <ul className="grid gap-3 sm:grid-cols-2">{result.evidence.map((item) => <EvidenceRow key={item.id} item={item} />)}</ul>
+          <ul className="grid gap-3 sm:grid-cols-2">{visibleEvidence.map((item) => <EvidenceRow key={item.id} item={item} />)}</ul>
         </div>
       )}
     </section>

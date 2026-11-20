@@ -26,7 +26,7 @@ function baseUrl() {
     throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
   }
   const localDevelopment = url.protocol === "http:" && url.hostname === "localhost";
-  if (url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
+  if ([url.username, url.password, url.search, url.hash].some(Boolean) || url.pathname !== "/" ||
       (url.protocol !== "https:" && !localDevelopment)) {
     throw new AuthRequestError(0, "The authentication backend URL is invalid. Use localhost for development.");
   }

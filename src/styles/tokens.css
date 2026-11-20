@@ -1,151 +1,61 @@
 /* src/styles/tokens.css */
-:root,
-:root[data-theme="dark"] {
-  /* 3.1 Surfaces, text, borders */
-  --bs-bg-canvas: #08090a;
-  --bs-bg-panel: #0f1011;
-  --bs-bg-raised: #141516;
-  --bs-bg-overlay: #191a1b;
-  --bs-bg-inset: #050506;
-  --bs-bg-hover: #ffffff0a;
-  --bs-bg-selected: #ffffff12;
+/* Single light theme. BlindSpot has no dark mode: there is no [data-theme]
+   variant, so nothing can switch the palette at runtime. */
+:root {
+  /* Stitch light palette: cool canvas, white cards, and blue interactions. */
+  --bs-bg-canvas: #f7f8fb;
+  --bs-bg-panel: #ffffff;
+  --bs-bg-raised: #f2f4f6;
+  --bs-bg-overlay: #ffffff;
+  --bs-bg-inset: #eceef0;
+  --bs-bg-hover: #0f172a08;
+  --bs-bg-selected: #2563eb12;
 
-  /* Theme-invariant dark surface for a single "featured" tile (e.g. the
-     primary stat on the overview dashboard). Stays dark in both themes
-     rather than flipping with --bs-bg-canvas, so it reads as emphasis. */
-  --bs-bg-contrast: #2b2c2f;
+  --bs-bg-contrast: #1f1f21;
   --bs-text-on-contrast: #ffffff;
 
-  --bs-text-primary: #f7f8f8;
-  --bs-text-secondary: #c9ced6;
-  --bs-text-tertiary: #8a8f98;
-  --bs-text-quaternary: #62666d;
-
-  --bs-border-subtle: #ffffff0d;
-  --bs-border-default: #ffffff17;
-  --bs-border-strong: #ffffff26;
-  --bs-focus-ring: #7c93ff;
-
-  /* 3.5 Elevation. Depth is tonal first; these two are the whole shadow
-     vocabulary. "ambient" is the resting lift on raised cards, "overlay"
-     belongs only to portalled surfaces that leave the document flow. */
-  --bs-shadow-ambient: 0 1px 2px rgb(0 0 0 / 0.28), 0 4px 12px rgb(0 0 0 / 0.16);
-  --bs-shadow-overlay: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-
-  /* 3.2 Accent: Signal Blue */
-  --bs-accent: #7c93ff;
-  --bs-accent-solid: #3d5afe;
-  --bs-accent-solid-hover: #5470ff;
-  --bs-accent-tint: #3d5afe1f;
-  /* P8: added so StatusBadge "running" has a real accent border token
-     instead of falling back to an inline literal. */
-  --bs-accent-border: #7c93ff52;
-
-  /* 3.3 Status */
-  --bs-pass: #4cc38a;
-  --bs-pass-tint: #4cc38a1f;
-  --bs-pass-border: #4cc38a52;
-
-  --bs-healed: #f2b84b;
-  --bs-healed-tint: #f2b84b1f;
-  --bs-healed-border: #f2b84b52;
-
-  --bs-fail: #ff6b6b;
-  --bs-fail-tint: #ff6b6b1f;
-  --bs-fail-border: #ff6b6b52;
-
-  --bs-warn: #f2b84b;
-  --bs-warn-tint: #f2b84b1f;
-  --bs-warn-border: #f2b84b52;
-
-  --bs-neutral: #9aa0aa;
-  --bs-neutral-tint: #9aa0aa1f;
-  --bs-neutral-border: #9aa0aa52;
-
-  /* 3.4 Inference (AI output only) */
-  --bs-infer: #b49cff;
-  --bs-infer-tint: #b49cff14;
-  --bs-infer-border: #b49cff33;
-
-  /* Tailwind & shadcn CSS variable mappings */
-  --background: var(--bs-bg-canvas);
-  --foreground: var(--bs-text-primary);
-  --card: var(--bs-bg-raised);
-  --card-foreground: var(--bs-text-primary);
-  --popover: var(--bs-bg-overlay);
-  --popover-foreground: var(--bs-text-primary);
-  --primary: var(--bs-accent-solid);
-  --primary-foreground: #ffffff;
-  --secondary: var(--bs-bg-raised);
-  --secondary-foreground: var(--bs-text-primary);
-  --muted: var(--bs-bg-panel);
-  --muted-foreground: var(--bs-text-tertiary);
-  --accent: var(--bs-bg-hover);
-  --accent-foreground: var(--bs-text-primary);
-  --destructive: var(--bs-fail);
-  --destructive-foreground: #ffffff;
-  --border: var(--bs-border-default);
-  --input: var(--bs-border-default);
-  --ring: var(--bs-focus-ring);
-  --radius: 6px;
-}
-
-:root[data-theme="light"] {
-  /* Soft neutral surfaces reduce glare while preserving distinct layers. */
-  --bs-bg-canvas: #eef0ec;
-  --bs-bg-panel: #f6f7f3;
-  --bs-bg-raised: #e7ebe5;
-  --bs-bg-overlay: #f8f9f6;
-  --bs-bg-inset: #e3e7e1;
-  --bs-bg-hover: #34483b0a;
-  --bs-bg-selected: #4658a810;
-
-  --bs-bg-contrast: #2b2c2f;
-  --bs-text-on-contrast: #ffffff;
-
-  --bs-text-primary: #303932;
-  --bs-text-secondary: #525d55;
-  --bs-text-tertiary: #5f6a62;
-  --bs-text-quaternary: #737d75;
+  --bs-text-primary: #101828;
+  --bs-text-secondary: #434655;
+  --bs-text-tertiary: #596579;
+  --bs-text-quaternary: #687386;
 
   /* Quiet dividers; stronger boundaries and focus rings retain contrast. */
-  --bs-border-subtle: #34483b12;
-  --bs-border-default: #34483b21;
-  --bs-border-strong: #34483ba3;
-  --bs-focus-ring: #4658a8;
+  --bs-border-subtle: #e8ecf1;
+  --bs-border-default: #e6e8ee;
+  --bs-border-strong: #64748bff;
+  --bs-focus-ring: #2563eb;
 
-  /* 3.5 Elevation. Tinted from the sage neutral rather than pure black, and
-     much softer — on a light canvas the same opacities read as dirt. */
-  --bs-shadow-ambient: 0 1px 2px rgb(52 72 59 / 0.08), 0 4px 12px rgb(52 72 59 / 0.06);
+  /* Soft neutral elevation keeps white cards distinct from the canvas. */
+  --bs-shadow-ambient: 0 1px 2px rgb(30 35 50 / 0.03), 0 4px 12px rgb(30 35 50 / 0.025);
   --bs-shadow-overlay: 0 10px 15px -3px rgb(52 72 59 / 0.12), 0 4px 6px -4px rgb(52 72 59 / 0.1);
 
   /* Muted blue and status hues remain readable on their tinted surfaces. */
-  --bs-accent: #4658a8;
-  --bs-accent-solid: #4658a8;
-  --bs-accent-solid-hover: #3b4b92;
-  --bs-accent-tint: #4658a814;
-  --bs-accent-border: #4658a833;
+  --bs-accent: #1d4ed8;
+  --bs-accent-solid: #101828;
+  --bs-accent-solid-hover: #242d3d;
+  --bs-accent-tint: #2563eb14;
+  --bs-accent-border: #2563eb33;
 
   /* 3.3 Status */
-  --bs-pass: #246440;
-  --bs-pass-tint: #24644014;
-  --bs-pass-border: #24644033;
+  --bs-pass: #046c4e;
+  --bs-pass-tint: #046c4e14;
+  --bs-pass-border: #046c4e33;
 
-  --bs-healed: #79551c;
-  --bs-healed-tint: #79551c14;
-  --bs-healed-border: #79551c33;
+  --bs-healed: #92400e;
+  --bs-healed-tint: #92400e14;
+  --bs-healed-border: #92400e33;
 
-  --bs-fail: #a53632;
-  --bs-fail-tint: #a5363214;
-  --bs-fail-border: #a5363233;
+  --bs-fail: #b91c1c;
+  --bs-fail-tint: #b91c1c14;
+  --bs-fail-border: #b91c1c33;
 
-  --bs-warn: #79551c;
-  --bs-warn-tint: #79551c14;
-  --bs-warn-border: #79551c33;
+  --bs-warn: #92400e;
+  --bs-warn-tint: #92400e14;
+  --bs-warn-border: #92400e33;
 
-  --bs-neutral: #505a54;
-  --bs-neutral-tint: #505a5414;
-  --bs-neutral-border: #505a5433;
+  --bs-neutral: #505f76;
+  --bs-neutral-tint: #505f7614;
+  --bs-neutral-border: #505f7633;
 
   /* Inference retains its own violet tint and visible boundary. */
   --bs-infer: #655091;
@@ -172,4 +82,6 @@
   --border: var(--bs-border-default);
   --input: var(--bs-border-default);
   --ring: var(--bs-focus-ring);
+
+  --radius: 6px;
 }

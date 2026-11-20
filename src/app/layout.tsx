@@ -25,25 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem('theme');
-                if (theme === 'light' || theme === 'dark') {
-                  document.documentElement.setAttribute('data-theme', theme);
-                } else {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                }
-              } catch (e) {
-                document.documentElement.setAttribute('data-theme', 'light');
-              }
-            `,
-          }}
-        />
-      </head>
+    <html lang="en">
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-canvas text-fg min-h-screen`}
       >

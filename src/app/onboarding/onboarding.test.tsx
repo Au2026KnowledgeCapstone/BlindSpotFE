@@ -33,7 +33,7 @@ describe("project onboarding", () => {
     expect(screen.getByRole("button", { name: "Creating…" })).toBeDisabled();
     expect(mocks.createProject).toHaveBeenCalledWith({ name: "My project" });
     await act(async () => pending.resolve(project("d7787aee-aef2-4d5d-b29c-96aafdf59e0d")));
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/projects/d7787aee-aef2-4d5d-b29c-96aafdf59e0d"));
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/projects/d7787aee-aef2-4d5d-b29c-96aafdf59e0d/setup"));
   });
 
   it("shows an error and stays usable when creation fails", async () => {

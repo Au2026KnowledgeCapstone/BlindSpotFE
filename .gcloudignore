@@ -1,0 +1,10 @@
+.gcloudignore
+.git/
+node_modules/
+.next/
+.env
+.env.*
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/

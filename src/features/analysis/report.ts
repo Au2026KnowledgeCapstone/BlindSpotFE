@@ -1,0 +1,15 @@
+import type { Result, Run } from "./types";
+import { summarizeResults } from "./result-summary";
+
+export function reportUrl(origin: string, run: Run) {
+  return `${origin}/projects/${encodeURIComponent(run.projectId)}/runs/${encodeURIComponent(run.id)}?environmentId=${encodeURIComponent(run.environmentId)}`;
+}
+
+const escape = (value: unknown) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+
+/** Self-contained document: no scripts, remote resources, session tokens or signed evidence links. */
+export function buildReport(run: Run, results: Result[]) {
+  const summary = summarizeResults(run, results);
+  const cards = results.map((result) => `<section><h2>${escape(result.requirementTitle)} <small>${escape(result.verdict.toUpperCase())}</small></h2><p>${escape(result.observedBehavior)}</p><p>Category: ${escape(result.classification.replaceAll("_", " "))}</p><ul>${result.criterionAssessments.map((criterion) => `<li><strong>${escape(criterion.criterionText)} — ${escape(criterion.verdict)}</strong><p>${escape(criterion.rationale)}</p></li>`).join("")}</ul></section>`).join("");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BlindSpot · Run ${run.runNumber}</title><style>body{font:16px/1.6 system-ui,sans-serif;color:hsl(220 20% 15%);max-width:900px;margin:auto;padding:40px}header{border-bottom:3px solid;padding-bottom:24px}h1{font-size:42px;line-height:1.2}h2{font-size:20px}small{font-size:14px}section{border:1px solid hsl(220 15% 85%);border-radius:12px;margin:20px 0;padding:24px;break-inside:avoid}dl{display:flex;flex-wrap:wrap;gap:32px}dd{margin:0;font-size:28px;font-weight:700}dt,footer{color:hsl(220 10% 40%)}p{overflow-wrap:anywhere}@media print{body{padding:0}section{box-shadow:none}}</style></head><body><header><p>BLINDSPOT / TEST REPORT</p><h1>${summary.outcome}</h1><p>Run #${run.runNumber} · Execution: ${escape(run.status)} · Queued: ${escape(run.queuedAt)}</p><p>Project: ${escape(run.projectId)}<br>Environment: ${escape(run.environmentId)}</p><dl>${[["Score / 100", summary.score ?? "—"], ["Executed", summary.executed], ["Passed", summary.passed], ["Failed", summary.failed], ["Inconclusive", summary.inconclusive], ["Without result", summary.pending]].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("")}</dl><p>Score = passed ÷ executed × 100, including inconclusive results. One test represents one requirement.${summary.active ? " Provisional report: testing is still underway." : ""}</p>${run.error ? `<p>Execution error: ${escape(run.error)}</p>` : ""}</header>${cards || "<p>No test results available.</p>"}<footer>Generated ${escape(new Date().toISOString())}. This downloaded snapshot may contain private project information. Evidence remains in the authenticated application. Use your browser’s Print → Save as PDF to create a PDF.</footer></body></html>`;
+}

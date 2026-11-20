@@ -29,19 +29,31 @@ describe("ProjectMembers access and account isolation", () => {
     const key = ["workspace", ids.a, ids.project, "invitations"];
     client.setQueryData(key, []);
     const invalidate = vi.spyOn(client, "invalidateQueries");
-    await screen.findByRole("heading", { name: "Members" });
-    fireEvent.change(screen.getByLabelText("Verified email"), { target: { value: "person@example.test" } });
+    await screen.findByRole("heading", { name: "Team & Collaboration" });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "person@example.test" } });
     fireEvent.click(screen.getByRole("button", { name: "Invite" }));
     await screen.findByText("Pending invitation created.");
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: key }));
   });
 
+  it("shows member names and an email fallback instead of a raw ID", async () => {
+    vi.mocked(workspaceApi.members).mockResolvedValueOnce([
+      { user_id: ids.a, display_name: "  ", role: "owner" },
+      { user_id: ids.b, display_name: "Jamie Taylor", role: "member" },
+    ]);
+    renderMembers();
+    expect(await screen.findByText("Jamie Taylor")).toBeInTheDocument();
+    expect(screen.getByText(`${ids.a}@example.test`)).toBeInTheDocument();
+    expect(screen.getByText("Name")).toBeInTheDocument();
+    expect(screen.queryByText(ids.b)).not.toBeInTheDocument();
+  });
+
   it("does not fetch manager-only invitations or show write controls to members", async () => {
     mocks.role = "member";
     renderMembers();
-    await screen.findByRole("heading", { name: "Members" });
+    await screen.findByRole("heading", { name: "Team & Collaboration" });
     expect(workspaceApi.invitations).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText("Verified email")).toBeNull();
+    expect(screen.queryByLabelText("Email")).toBeNull();
   });
 
   it("shows a project lookup error instead of an indefinite loading state", async () => {

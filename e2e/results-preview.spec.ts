@@ -1,0 +1,53 @@
+import { test, expect } from "@playwright/test";
+
+test("report summary, filtering, sharing and download", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/dev/results");
+  await expect(page.getByRole("heading", { name: "FAIL", exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: /Test distribution/ })).toHaveCount(0);
+  await page.screenshot({ path: "/tmp/blindspot-results-desktop.png" });
+  await expect(page.getByRole("combobox", { name: "Result", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Checkout completes successfully" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Users can sign in with a verified email" })).toBeVisible();
+  await page.getByRole("button", { name: "Share Report", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Share report" });
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel("Report link", { exact: true })).toHaveValue(/environmentId=preview-environment$/);
+  await dialog.getByRole("button", { name: "Copy link" }).click();
+  await expect(dialog.getByRole("status")).toHaveText("Link copied. Teammates need access to this project.");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("environmentId=preview-environment");
+  const downloadEvent = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: "Download report" }).click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe("blindspot-run-24-report.html");
+  await download.saveAs("/tmp/blindspot-preview-report.html");
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole("combobox", { name: "Scenario" }).selectOption("pass");
+  await expect(page.getByRole("heading", { name: "PASS", exact: true })).toBeVisible();
+  await page.getByRole("combobox", { name: "Scenario" }).selectOption("running");
+  await expect(page.getByRole("heading", { name: "IN PROGRESS", exact: true })).toBeVisible();
+  await page.getByRole("combobox", { name: "Scenario" }).selectOption("empty");
+  await expect(page.getByRole("heading", { name: "INCOMPLETE", exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("run history filters, pagination and mobile layout", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/dev/results");
+  await page.screenshot({ path: "/tmp/blindspot-results-mobile.png", fullPage: true });
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2")).toBeVisible();
+  await page.getByLabel("Search runs", { exact: true }).fill("#23");
+  await expect(page.getByRole("link", { name: /Requirement 1.*Run #23/ })).toBeVisible();
+  await page.getByRole("combobox", { name: "Test outcome", exact: true }).selectOption("PASS");
+  await expect(page.getByText("No analyses match your filters.")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "Share Report", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.screenshot({ path: "/tmp/blindspot-sharing-mobile.png" });
+  expect(await page.getByRole("dialog").evaluate((element) => element.getBoundingClientRect().width <= window.innerWidth)).toBe(true);
+});
