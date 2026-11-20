@@ -44,6 +44,17 @@ function ActionRow({ action }: { action: ResultAction }) {
 function EvidenceRow({ item }: { item: Evidence }) {
   let href: string | undefined;
   try { href = workspaceApi.evidenceUrl(item.id); } catch { href = undefined; }
+  // A screenshot is the evidence a reviewer actually reads; a link to one is
+  // not. BE answers /evidence/{id} with a 302 to a signed URL, and the browser
+  // must carry the session cookie through that redirect to fetch the bytes.
+  if (item.type === "screenshot" && href) {
+    return (
+      <li className="space-y-1">
+        <img src={href} alt="Captured screenshot" crossOrigin="use-credentials" loading="lazy" className="max-h-64 w-full rounded border border-border object-contain" />
+        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline">View full size <ExternalLink className="size-3" /></a>
+      </li>
+    );
+  }
   return (
     <li>
       <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline">
@@ -55,7 +66,6 @@ function EvidenceRow({ item }: { item: Evidence }) {
 
 export function ResultCard({ result }: { result: Result }) {
   const nonPass = result.verdict !== "pass";
-  const visibleEvidence = result.evidence.filter((item) => item.type !== "screenshot");
   return (
     <section className={`space-y-5 rounded-2xl border bg-panel p-5 sm:p-6 ${result.verdict === "fail" ? "border-fail-border" : "border-border"}`}>
       <header className="flex flex-wrap items-start justify-between gap-2">
@@ -82,10 +92,10 @@ export function ResultCard({ result }: { result: Result }) {
         </div>
       )}
 
-      {visibleEvidence.length > 0 && (
+      {result.evidence.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold uppercase tracking-wide text-fg-tertiary">Evidence</h4>
-          <ul className="grid gap-3 sm:grid-cols-2">{visibleEvidence.map((item) => <EvidenceRow key={item.id} item={item} />)}</ul>
+          <ul className="grid gap-3 sm:grid-cols-2">{result.evidence.map((item) => <EvidenceRow key={item.id} item={item} />)}</ul>
         </div>
       )}
     </section>
