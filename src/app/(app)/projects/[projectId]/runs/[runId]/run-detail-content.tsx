@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRunDetail, type Run, type Result } from "@/features/analysis";
 import { useRunEvents } from "@/features/analysis";
 import { workspaceApi } from "@/features/workspace";
+import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { LoadingScreen } from "@/shared/ui/LoadingScreen";
@@ -76,8 +77,15 @@ export function RunDetailContent({ projectId, runId, environmentId }: { projectI
       <Link href={`/projects/${projectId}/runs`} className="inline-flex items-center text-sm text-accent hover:underline">← All test runs</Link>
       <PageHeader title="Testing report" actions={!results.isPending && !results.isError ? <ShareReport run={run.data} results={results.data ?? []} /> : undefined} />
       {!results.isPending && !results.isError && <ResultsSummary run={run.data} results={results.data ?? []} />}
-      {active && <Button variant="outline" size="sm" disabled={cancelling || requestPending || run.data.cancelRequested} onClick={() => void cancel()}>{cancelling ? "Cancelling…" : requestPending || run.data.cancelRequested ? "Cancellation requested" : "Cancel run"}</Button>}
-      {active && <p role="status" className="text-xs text-fg-tertiary">{streamState === "live" ? "Live run updates connected" : streamState === "reconnecting" ? "Reconnecting run updates…" : streamState === "connecting" ? "Connecting run updates…" : "Live updates unavailable"}</p>}
+      {active && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-border bg-accent-tint p-4">
+          <StatusBadge status={run.data.status === "running" ? "running" : "queued"} />
+          <p role="status" className="min-w-0 flex-1 text-xs text-fg-secondary">
+            Run #{run.data.runNumber} · {streamState === "live" ? "Live updates connected" : streamState === "reconnecting" ? "Reconnecting live updates…" : streamState === "connecting" ? "Connecting live updates…" : "Live updates unavailable — this page still refreshes"}
+          </p>
+          <Button variant="outline" size="sm" disabled={cancelling || requestPending || run.data.cancelRequested} onClick={() => void cancel()}>{cancelling ? "Cancelling…" : requestPending || run.data.cancelRequested ? "Cancellation requested" : "Cancel run"}</Button>
+        </div>
+      )}
       {cancelError && <p role="alert" className="text-xs text-fail">{cancelError}</p>}
       <ResultsSection results={results} runStatus={run.data.status} />
     </div>

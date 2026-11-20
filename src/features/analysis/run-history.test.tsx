@@ -99,6 +99,54 @@ describe("run outcome request budget", () => {
     await waitFor(() => expect(screen.getByText("—")).toBeVisible());
   });
 
+  it("shows an unfinished run as queued or running, never as a verdict", async () => {
+    const started = [{ ...runs[0]!, status: "queued" as const }, { ...runs[1]!, status: "running" as const }, runs[2]!];
+    renderWith(<RunHistory runs={started} />);
+    await waitFor(() => expect(screen.getAllByLabelText("QUEUED").length).toBeGreaterThan(0));
+    expect(screen.getAllByLabelText("RUNNING").length).toBeGreaterThan(0);
+    // The old behaviour: a run started seconds ago read as a finished, judged run.
+    expect(screen.queryAllByLabelText("INCONCLUSIVE")).toHaveLength(0);
+  });
+
+  it("says runs are in progress so starting a check is visibly acknowledged", async () => {
+    const started = [{ ...runs[0]!, status: "queued" as const }, { ...runs[1]!, status: "running" as const }, runs[2]!];
+    const { rerender } = renderWith(<RunHistory runs={started} />);
+    await waitFor(() => expect(screen.getByText(/2 runs are in progress/)).toBeVisible());
+    rerender(<QueryClientProvider client={new QueryClient()}><RunHistory runs={[runs[2]!]} /></QueryClientProvider>);
+    await waitFor(() => expect(screen.queryByText(/in progress/)).toBeNull());
+  });
+
+  it("filters to in-progress runs across every run, reading no results to do it", async () => {
+    const mixed = runs.map((run, index) => (index === 3 ? { ...run, status: "queued" as const } : index === 120 ? { ...run, status: "running" as const } : run));
+    renderWith(<RunHistory runs={mixed} />);
+    await waitFor(() => expect(listResults()).toHaveBeenCalled());
+    listResults().mockClear();
+    fireEvent.change(screen.getByLabelText("Test outcome"), { target: { value: "IN_PROGRESS" } });
+    await waitFor(() => expect(screen.getByText("2 matching runs")).toBeVisible());
+    // Execution state comes off the run, so this needs no per-run request —
+    // which also lets it search past the 50-run verdict window (run 120).
+    expect(listResults()).not.toHaveBeenCalled();
+    expect(screen.queryByText(new RegExp(`Outcome filters cover the ${RUN_OUTCOME_LIMIT} most recent runs`))).toBeNull();
+    expect(screen.getAllByLabelText("QUEUED")).toHaveLength(2);
+    expect(screen.getAllByLabelText("RUNNING")).toHaveLength(2);
+  });
+
+  it("still windows a verdict filter, which genuinely needs results", async () => {
+    renderWith(<RunHistory runs={runs} />);
+    await waitFor(() => expect(listResults()).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText("Test outcome"), { target: { value: "PASS" } });
+    await waitFor(() => expect(screen.getByText(new RegExp(`Outcome filters cover the ${RUN_OUTCOME_LIMIT} most recent runs`))).toBeVisible());
+    expect(listResults().mock.calls.length).toBeLessThanOrEqual(RUN_OUTCOME_LIMIT);
+  });
+
+  it("distinguishes a cancelled run and an errored run from an ambiguous verdict", async () => {
+    const ended = [{ ...runs[0]!, status: "cancelled" as const }, { ...runs[1]!, status: "failed" as const }];
+    renderWith(<RunHistory runs={ended} />);
+    await waitFor(() => expect(screen.getAllByLabelText("CANCELLED").length).toBeGreaterThan(0));
+    expect(screen.getAllByLabelText("ERROR").length).toBeGreaterThan(0);
+    expect(screen.queryAllByLabelText("INCONCLUSIVE")).toHaveLength(0);
+  });
+
   it("never reads results for a run that has not completed", async () => {
     const queued = runs.slice(0, 4).map((run, index) => (index % 2 ? { ...run, status: "queued" as const } : run));
     renderWith(<RunHistory runs={queued} />);
