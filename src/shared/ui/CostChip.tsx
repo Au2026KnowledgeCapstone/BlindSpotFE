@@ -3,7 +3,7 @@ import React from "react";
 export interface CostChipProps {
   durationSeconds: number;
   actionsCount: number;
-  estimatedCostUsd: number;
+  estimatedCostUsd: number | undefined;
   mode?: "Replay" | "Agentic";
   className?: string;
 }
@@ -23,7 +23,7 @@ export const CostChip: React.FC<CostChipProps> = ({
       <span>·</span>
       <span>{actionsCount} actions</span>
       <span>·</span>
-      <span>~${estimatedCostUsd.toFixed(2)}</span>
+      <span>{estimatedCostUsd === undefined ? "cost pending" : `~$${estimatedCostUsd.toFixed(2)}`}</span>
       <span>·</span>
       <span className="font-sans font-medium text-fg-secondary">{mode}</span>
     </div>

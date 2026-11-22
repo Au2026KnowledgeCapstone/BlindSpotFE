@@ -1,87 +1,20 @@
-
 import type { ReactNode } from "react";
-import { ArrowRight, CircleAlert } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import { BlindSpotMark } from "@/shared/ui/BlindSpotMark";
 
-interface AuthShellProps {
-  children: ReactNode;
-}
-
-function DemoFinding() {
-  return (
-    <figure className="overflow-hidden rounded-xl border border-border bg-canvas">
-      <figcaption className="flex items-center justify-between gap-4 border-b border-border px-5 py-3 text-xs">
-        <span className="font-medium text-fg-secondary">Demo finding</span>
-        <span className="text-fg-tertiary">Checkout / Total consistency</span>
-      </figcaption>
-      <div className="space-y-5 p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <CircleAlert aria-hidden="true" className="size-4 shrink-0 text-fail" />
-          Checkout total changed
-        </div>
-        <dl className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <dt className="text-xs text-fg-secondary">Expected total</dt>
-            <dd className="font-mono text-2xl font-medium tabular-nums">$278</dd>
-          </div>
-          <div className="space-y-1 border-l border-border pl-4">
-            <dt className="text-xs text-fg-secondary">Observed total</dt>
-            <dd className="font-mono text-2xl font-medium tabular-nums text-fail">$249</dd>
-          </div>
-        </dl>
-        <p className="border-t border-border pt-4 text-sm leading-relaxed text-fg-secondary">
-          <span className="font-medium text-fg">Evidence:</span> The $29
-          protection plan appears on the order but is missing from the total.
-        </p>
-      </div>
-    </figure>
-  );
-}
-
-function ProductIntroduction() {
-  return (
-    <section className="flex flex-col justify-center gap-8 border-b border-border bg-panel px-8 py-14 lg:border-b-0 lg:border-r lg:px-16">
-      <div className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-        <BlindSpotMark size={28} />
-        <span>BlindSpot</span>
-      </div>
-      <div className="max-w-lg space-y-6">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Your app changed.<br />Did its behavior?
-          </h1>
-          <p className="leading-relaxed text-fg-secondary">
-            Discover user flows, capture a baseline, and replay checks against
-            your next build—with evidence for every finding.
-          </p>
-        </div>
-        <ol aria-label="Testing workflow" className="flex flex-wrap items-center gap-3 text-xs font-medium text-fg-secondary">
-          <li>Discover</li>
-          <li className="flex items-center gap-3"><ArrowRight aria-hidden="true" className="size-3 text-fg-tertiary" />Baseline</li>
-          <li className="flex items-center gap-3"><ArrowRight aria-hidden="true" className="size-3 text-fg-tertiary" />Replay</li>
-        </ol>
-        <DemoFinding />
-        <p className="text-xs leading-relaxed text-fg-tertiary">
-          Observed evidence. Labelled AI interpretation. Clear coverage gaps.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-export function AuthShell({ children }: AuthShellProps) {
-  return (
-    <main className="grid min-h-screen bg-canvas text-fg lg:grid-cols-2">
-
-      <ProductIntroduction />
-
-      {/* Right panel: Login or Signup form */}
-      <section className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          {children}
-        </div>
+export function AuthShell({ children }: { children: ReactNode }) {
+  return <div className="flex min-h-screen flex-col bg-canvas text-fg">
+    <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-7">
+      <Link href="/login" className="flex items-center gap-2 rounded-lg text-lg font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus-ring/50"><BlindSpotMark size={30} /><span>BlindSpot</span></Link>
+      <span className="flex items-center gap-2 text-xs text-fg-tertiary"><ShieldCheck className="size-4" />Secure workspace</span>
+    </header>
+    <main className="flex flex-1 items-center justify-center px-5 py-12">
+      <section className="w-full max-w-[460px] rounded-2xl border border-subtle bg-panel p-7 shadow-ambient sm:p-10">
+        <div className="mb-6 flex justify-center"><BlindSpotMark size={36} /></div>
+        {children}
       </section>
-
     </main>
-  );
+    <footer className="px-6 pb-7 text-center text-xs text-fg-tertiary">BlindSpot · Browser testing with evidence for every finding.</footer>
+  </div>;
 }

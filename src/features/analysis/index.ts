@@ -19,3 +19,6 @@ export { useRuns } from "./api/use-runs";
 export { useRunDetail } from "./api/use-run-detail";
 export { useProjectRuns } from "./api/use-project-runs";
 export { useRunEvents } from "./api/use-run-events";
+export { ResultsSummary } from "./results-summary";
+export { ShareReport } from "./share-report";
+export { RunHistory } from "./run-history";

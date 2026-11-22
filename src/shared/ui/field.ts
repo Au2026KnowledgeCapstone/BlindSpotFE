@@ -16,13 +16,13 @@ const FIELD_BASE =
   "disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Standard density: 14px text in an 8px-radius field. Auth and settings forms. */
-export const FIELD = `${FIELD_BASE} rounded-lg px-3 py-2 text-sm`;
+export const FIELD = `${FIELD_BASE} rounded-full px-4 py-2 text-sm`;
 
 /** Packed density: 12px text in a 6px-radius field. In-app flow and env editors. */
 export const FIELD_DENSE = `${FIELD_BASE} rounded-md px-2.5 py-1.5 text-xs`;
 
 /** Multi-line variant of the standard field. */
-export const FIELD_TEXTAREA = `${FIELD} resize-y`;
+export const FIELD_TEXTAREA = `${FIELD_BASE} rounded-xl px-4 py-3 text-sm resize-y`;
 
 /** Checkboxes keep the native control but take the system's border and ring. */
 export const FIELD_CHECKBOX =

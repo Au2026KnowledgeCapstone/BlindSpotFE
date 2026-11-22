@@ -3,7 +3,7 @@ import { LoginForm } from "@/features/auth";
 export default function LoginPage() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h2 className="text-2xl font-semibold text-fg">
           Welcome back
         </h2>

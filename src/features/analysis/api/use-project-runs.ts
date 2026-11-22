@@ -10,6 +10,7 @@ export function useProjectRuns(projectId: string, userId: string | undefined, en
     queryKey: ["workspace", userId, projectId, "project-runs"],
     enabled: enabled && !!userId,
     retry: false,
+    refetchInterval: (query) => query.state.data?.some((run) => run.status === "queued" || run.status === "running") ? 5000 : false,
     queryFn: async () => {
       const environments = await workspaceApi.listEnvironments(projectId);
       const groups = await Promise.all(environments.map((environment) =>

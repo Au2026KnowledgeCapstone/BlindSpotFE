@@ -43,11 +43,19 @@ const APPROVAL_LABELS: Record<string, string> = {
   approved: "Approved",
 };
 
-/** "Could not find the element" and "criteria violated" are different things, and a PM needs to see which. */
+/** A engine problem and "criteria violated" are different things, and a PM needs to see which.
+ *
+ * `locator_failure` is not "the element was missing": the engine only ever maps
+ * `invalid_action_contract` and `action_result_unverified` onto it, so it means
+ * the step could not be validated against the page -- either it never compiled
+ * against the observed control, or it ran and its result could not be confirmed.
+ * A genuine failure to find a control falls through to `execution_error`
+ * instead. The old "Could not find the element" sent people looking at the page
+ * for a control that had in fact been found. */
 const CLASSIFICATION_LABELS: Record<string, string> = {
   criteria_satisfied: "Criteria satisfied",
   criteria_violated: "Criteria violated",
-  locator_failure: "Could not find the element",
+  locator_failure: "Step could not be verified",
   environment_failure: "Environment failure",
   execution_error: "Execution error",
 };

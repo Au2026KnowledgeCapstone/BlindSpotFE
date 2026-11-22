@@ -108,7 +108,7 @@ export default function OnboardingPage() {
   try {
    const created = await timeout(workspaceApi.createProject({ name }));
    if (!mounted.current || current !== generation.current) return;
-   router.replace(`/projects/${encodeURIComponent(created.id)}`);
+   router.replace(`/projects/${encodeURIComponent(created.id)}/setup`);
   } catch {
    if (mounted.current && current === generation.current) setError("Setup failed. Check permissions or connection; your request is safe to retry.");
   } finally {

@@ -44,6 +44,9 @@ function ActionRow({ action }: { action: ResultAction }) {
 function EvidenceRow({ item }: { item: Evidence }) {
   let href: string | undefined;
   try { href = workspaceApi.evidenceUrl(item.id); } catch { href = undefined; }
+  // A screenshot is the evidence a reviewer actually reads; a link to one is
+  // not. BE answers /evidence/{id} with a 302 to a signed URL, and the browser
+  // must carry the session cookie through that redirect to fetch the bytes.
   if (item.type === "screenshot" && href) {
     return (
       <li className="space-y-1">
@@ -64,16 +67,16 @@ function EvidenceRow({ item }: { item: Evidence }) {
 export function ResultCard({ result }: { result: Result }) {
   const nonPass = result.verdict !== "pass";
   return (
-    <section className="space-y-4 rounded-2xl border border-border bg-panel p-4">
+    <section className={`space-y-5 rounded-2xl border bg-panel p-5 sm:p-6 ${result.verdict === "fail" ? "border-fail-border" : "border-border"}`}>
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
-          <h3 className="text-sm font-semibold text-fg">{result.requirementTitle}</h3>
+          <h3 className="text-base font-semibold text-fg">{result.requirementTitle}</h3>
           {nonPass && <p className="text-xs text-fg-tertiary">{classificationLabel(result.classification)}</p>}
         </div>
         <VerdictBadge verdict={result.verdict} />
       </header>
 
-      <p className="text-xs leading-relaxed text-fg-secondary"><span className="font-medium text-fg-tertiary">Observed: </span>{result.observedBehavior}</p>
+      <p className="text-sm leading-relaxed text-fg-secondary"><span className="font-medium text-fg-tertiary">Observed: </span>{result.observedBehavior}</p>
 
       {result.criterionAssessments.length > 0 && (
         <div className="space-y-2">

@@ -5,6 +5,7 @@ import { AppShell } from "../app-shell";
 const mocks = vi.hoisted(() => ({ pathname: "/projects/11111111-1111-4111-8111-111111111111", params: { projectId: "11111111-1111-4111-8111-111111111111" } }));
 vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname, useParams: () => mocks.params }));
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => <a href={href} {...props}>{children}</a> }));
+vi.mock("@/features/workspace/use-dashboard", () => ({ useDashboard: () => ({ projects: { data: [] } }) }));
 vi.mock("@/features/auth", () => ({ AccountMenu: () => <div /> }));
 vi.mock("@/features/workspace/notifications-bell", () => ({ NotificationsBell: () => <div /> }));
 vi.mock("../header-context", () => ({ HeaderContext: ({ projectId }: { projectId: string }) => <div>{projectId}</div> }));
@@ -14,6 +15,8 @@ afterEach(() => { cleanup(); });
 describe("AppShell project navigation", () => {
   it("uses the route project ID when the parent layout provides an empty ID", () => {
     render(<AppShell projectId=""><div>Project page</div></AppShell>);
+    expect(screen.queryByRole("link", { name: "Account settings" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Environments" })).not.toBeInTheDocument();
     for (const [section, label] of [["", "Overview"], ["/requirements", "Requirements"], ["/runs", "Runs"], ["/setup", "Project setup"], ["/members", "Members"]] as const) {
       expect(screen.getByRole("link", { name: label })).toHaveAttribute("href", `/projects/${mocks.params.projectId}${section}`);
     }

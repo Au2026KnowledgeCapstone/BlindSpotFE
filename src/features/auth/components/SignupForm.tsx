@@ -80,7 +80,7 @@ export function SignupForm() {
           placeholder="you@example.com"
           {...register("email")}
           aria-invalid={!!errors.email}
-          className={FIELD}
+          className={`${FIELD} h-11 rounded-full px-4`}
         />
 
         {errors.email && (
@@ -106,7 +106,7 @@ export function SignupForm() {
           placeholder="Create a password"
           {...register("password")}
           aria-invalid={!!errors.password}
-          className={FIELD}
+          className={`${FIELD} h-11 rounded-full px-4`}
         />
 
         <p className="text-xs text-fg-secondary">
@@ -137,7 +137,7 @@ export function SignupForm() {
           placeholder="Confirm your password"
           {...register("confirmPassword")}
           aria-invalid={!!errors.confirmPassword}
-          className={FIELD}
+          className={`${FIELD} h-11 rounded-full px-4`}
         />
 
         {errors.confirmPassword && (

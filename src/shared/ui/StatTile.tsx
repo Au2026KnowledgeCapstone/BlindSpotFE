@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 
 export interface StatTileProps {
   label: string;
-  value: number;
+  value: number | string;
   icon: LucideIcon;
   /** Small caption under the value. Ignored if `children` is given. */
   detail?: string | undefined;
@@ -20,7 +20,7 @@ export interface StatTileProps {
 export function StatTile({ label, value, icon: Icon, detail, featured, children }: StatTileProps) {
   return (
     <section
-      className={`rounded-2xl border p-5 ${
+      className={`flex min-h-40 flex-col rounded-[20px] border p-6 shadow-ambient ${
         featured ? "border-strong bg-contrast text-on-contrast" : "border-border bg-panel text-fg"
       }`}
     >
@@ -28,11 +28,11 @@ export function StatTile({ label, value, icon: Icon, detail, featured, children 
         <span className={featured ? "text-on-contrast/70" : "text-fg-tertiary"}>{label}</span>
         <Icon className={`size-4 ${featured ? "text-on-contrast/70" : "text-fg-tertiary"}`} />
       </div>
-      <strong className="mt-4 block text-4xl font-medium tracking-tight tabular-nums">
+      <strong className="mt-8 mb-2 block text-4xl font-medium tracking-tight tabular-nums">
         {value}
       </strong>
       {children ?? (
-        <small className={`text-[10px] ${featured ? "text-on-contrast/70" : "text-fg-tertiary"}`}>
+        <small className={`mt-auto text-xs ${featured ? "text-on-contrast/70" : "text-fg-tertiary"}`}>
           {detail}
         </small>
       )}
