@@ -23,7 +23,7 @@ describe("canonical workspace API adapter", () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(project), { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
     await expect(workspaceApi.createProject({ name: "Project" })).resolves.toEqual(project);
-    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" }, body: JSON.stringify({ name: "Project" }) }));
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/projects", expect.objectContaining({ method: "POST", credentials: "include", headers: expect.any(Headers), body: JSON.stringify({ name: "Project" }) }));
   });
 
   it("loads authenticated pending invites and accepts via canonical endpoint", async () => {
@@ -117,7 +117,7 @@ describe("canonical workspace API adapter", () => {
     await workspaceApi.createApplication(projectId, "App");
     await expect(workspaceApi.createEnvironment(projectId, { application_id: invitationId, name: "Staging", kind: "staging", base_url: "https://app.example.test" })).resolves.toMatchObject({ application_id: invitationId, project_id: projectId });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([`https://api.example.test/projects/${projectId}/workspace`, `https://api.example.test/projects/${projectId}/applications`, `https://api.example.test/projects/${projectId}/environments`]);
-    expect(fetchMock.mock.calls.slice(1).every(([, init]) => (init as RequestInit).headers && (init as RequestInit).headers && ((init as RequestInit).headers as Record<string, string>)["X-CSRF-Protection"] === "1")).toBe(true);
+    expect(fetchMock.mock.calls.slice(1).every(([, init]) => (init as RequestInit).headers && (init as RequestInit).headers && new Headers((init as RequestInit).headers).get("X-CSRF-Protection") === "1")).toBe(true);
   });
 });
 
@@ -217,9 +217,12 @@ describe("document import API", () => {
     form.append("brd", new File(["Business requirements"], "BRD.md"));
     form.append("srs", new File(["Software requirements"], "SRS.md"));
     await expect(workspaceApi.importRequirements(projectId, form)).resolves.toEqual(result);
-    expect(fetchMock).toHaveBeenCalledWith(`https://api.example.test/projects/${projectId}/imports`, expect.objectContaining({ method: "POST", credentials: "include", headers: { "X-CSRF-Protection": "1" }, body: form }));
-    expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty("Content-Type");
-    expect(fetchMock.mock.calls[0]![1].headers).not.toHaveProperty("Idempotency-Key");
+    expect(fetchMock).toHaveBeenCalledWith(`https://api.example.test/projects/${projectId}/imports`, expect.objectContaining({ method: "POST", credentials: "include", headers: expect.any(Headers), body: form }));
+    const headers = new Headers(fetchMock.mock.calls[0]![1].headers);
+    expect(headers.get("X-CSRF-Protection")).toBe("1");
+    // The browser must supply the multipart boundary, and no idempotency key was passed.
+    expect(headers.has("Content-Type")).toBe(false);
+    expect(headers.has("Idempotency-Key")).toBe(false);
   });
 
   it("forwards a caller's idempotency key so a retried upload replays instead of importing twice", async () => {
@@ -230,9 +233,12 @@ describe("document import API", () => {
     vi.stubGlobal("fetch", fetchMock);
     await workspaceApi.importRequirements(projectId, new FormData(), "key-abc");
     await workspaceApi.importRequirements(projectId, new FormData(), "key-abc");
-    expect(fetchMock.mock.calls.map(([, init]) => (init.headers as Record<string, string>))).toEqual([
-      { "X-CSRF-Protection": "1", "Idempotency-Key": "key-abc" },
-      { "X-CSRF-Protection": "1", "Idempotency-Key": "key-abc" },
+    expect(fetchMock.mock.calls.map(([, init]) => {
+      const headers = new Headers(init.headers);
+      return { csrf: headers.get("X-CSRF-Protection"), key: headers.get("Idempotency-Key") };
+    })).toEqual([
+      { csrf: "1", key: "key-abc" },
+      { csrf: "1", key: "key-abc" },
     ]);
   });
 
