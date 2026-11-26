@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -10,15 +10,55 @@ import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginFormValues } from "../schemas";
 import { AuthRequestError } from "../services/backend-auth";
 import { authService } from "../services/auth-service";
-import { workspaceApi } from "@/features/workspace/workspace-api";
+import { WorkspaceApiError, workspaceApi } from "@/features/workspace";
 import { FIELD } from "@/shared/ui/field";
 
-export function LoginForm() {
+function workspaceFailure(error: unknown) {
+  if (error instanceof WorkspaceApiError && error.status === 401) return "Your workspace session could not be verified. Retry or sign in again.";
+  if (error instanceof WorkspaceApiError && error.status === 403) return "Your account could not access its workspaces. Retry or sign in with another account.";
+  return "Could not load your workspaces. Check your connection and retry.";
+}
+
+function WorkspaceContinuation({ error, loading, onContinue, onSignIn }: {
+  error: string;
+  loading: boolean;
+  onContinue: () => void;
+  onSignIn: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {error && <p role="alert" className="text-sm text-fail">{error}</p>}
+      <Button className="h-11 w-full" disabled={loading} onClick={onContinue}>
+        {loading ? "Loading workspace…" : error ? "Retry workspace lookup" : "Continue to workspace"}
+      </Button>
+      <div className="flex flex-wrap justify-between gap-2 text-sm font-medium text-accent">
+        <button type="button" disabled={loading} className="hover:underline" onClick={onSignIn}>Sign in again</button>
+        <Link href="/resend-confirmation" className="hover:underline">Resend confirmation email</Link>
+      </div>
+    </div>
+  );
+}
+
+export function LoginForm({ checkExistingSession = false }: { checkExistingSession?: boolean }) {
   const router = useRouter();
   const [authError, setAuthError] = useState("");
+  const [checking, setChecking] = useState(checkExistingSession);
+  const [signedIn, setSignedIn] = useState(false);
+  const [loadingWorkspace, setLoadingWorkspace] = useState(false);
+
+  useEffect(() => {
+    if (!checkExistingSession) return;
+    let active = true;
+    void authService.getUser().then((user) => {
+      if (active) setSignedIn(Boolean(user));
+    }).catch(() => {
+      if (active) setAuthError("Could not verify an existing session. You can sign in below.");
+    }).finally(() => { if (active) setChecking(false); });
+    return () => { active = false; };
+  }, [checkExistingSession]);
 
   const {
-    register,
+    register, reset,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
@@ -29,27 +69,44 @@ export function LoginForm() {
     },
   });
 
+  async function openWorkspace() {
+    setLoadingWorkspace(true);
+    setAuthError("");
+    try {
+      const projects = await workspaceApi.projects();
+      router.replace(projects.length > 0 ? "/dashboard" : "/onboarding");
+      router.refresh();
+    } catch (error) {
+      setAuthError(workspaceFailure(error));
+    } finally {
+      setLoadingWorkspace(false);
+    }
+  }
+
   const onSubmit = async (values: LoginFormValues) => {
     setAuthError("");
-
     try {
-      const { authenticated, user } = await authService.signIn(values);
-
-      if (authenticated && user) {
-        if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
-        const hasProjects = await workspaceApi.projects().then((projects) => projects.length > 0).catch(() => false);
-        router.replace(hasProjects ? "/dashboard" : "/onboarding");
-        router.refresh();
-      } else {
-        setAuthError(
-          "Unable to establish a session. Please try again."
-        );
-      }
+      await authService.signIn(values);
     } catch (error) {
       setAuthError(error instanceof AuthRequestError ? error.message :
         "Unable to sign in. Please try again.");
+      return;
     }
+    reset();
+    if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
+    setSignedIn(true);
+    await openWorkspace();
   };
+
+  if (checking) return <p role="status" className="text-sm text-fg-secondary">Checking your session…</p>;
+  if (signedIn) return (
+    <WorkspaceContinuation error={authError} loading={loadingWorkspace} onContinue={() => void openWorkspace()}
+      onSignIn={() => {
+        setSignedIn(false);
+        setAuthError("");
+      }}
+    />
+  );
 
   return (
     <form
@@ -109,13 +166,15 @@ export function LoginForm() {
         )}
       </div>
 
-      {/* Forgot password link */}
-      <div className="text-right">
+      <div className="flex flex-wrap justify-end gap-x-4 gap-y-2">
         <Link
           href="/forgot-password"
           className="text-sm font-medium text-accent hover:underline"
         >
           Forgot password?
+        </Link>
+        <Link href="/resend-confirmation" className="text-sm font-medium text-accent hover:underline">
+          Resend confirmation email
         </Link>
       </div>
 

@@ -21,7 +21,7 @@ export function LogoutButton() {
       router.replace("/login");
       router.refresh();
     } catch {
-      setError("Unable to log out. Please try again.");
+      setError("Unable to log out. Your session may still be active. Please try again.");
       setLoading(false);
     }
   };

@@ -107,13 +107,20 @@ describe("backend cookie auth integration", () => {
   });
   it("does not loop when refresh fails or the retried me remains unauthorized", async () => {
     const { backendAuth } = await import("./backend-auth");
-    fetchMock.mockImplementation(async () => json({}, 401));
+    fetchMock.mockResolvedValueOnce(json({}, 401))
+      .mockResolvedValueOnce(json({ error: { code: "session_invalid" } }, 401));
     expect(await backendAuth.getUser()).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json(RESULT)).mockResolvedValueOnce(json({}, 401));
-    expect(await backendAuth.getUser()).toBeNull();
+    await expect(backendAuth.getUser()).rejects.toMatchObject({ status: 503 });
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+  it("treats a generic refresh 401 as temporarily unavailable", async () => {
+    fetchMock.mockImplementation(async () => json({}, 401));
+    const { backendAuth } = await import("./backend-auth");
+    await expect(backendAuth.getUser()).rejects.toMatchObject({ status: 503 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
   it("does not turn outages into login redirects or refresh on non-401 responses", async () => {
     fetchMock.mockResolvedValue(json({}, 503));
@@ -121,12 +128,15 @@ describe("backend cookie auth integration", () => {
     await expect(backendAuth.getUser()).rejects.toMatchObject({ status: 503 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
-  it("fails closed without Web Locks instead of racing cross-tab refresh", async () => {
+  it("preserves uncertain sessions without Web Locks and recognizes a missing session", async () => {
     Object.defineProperty(navigator, "locks", { configurable: true, value: undefined });
     fetchMock.mockResolvedValue(json({}, 401));
     const { backendAuth } = await import("./backend-auth");
-    expect(await backendAuth.getUser()).toBeNull();
+    await expect(backendAuth.getUser()).rejects.toMatchObject({ status: 503, message: expect.stringContaining("cannot safely renew") });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    fetchMock.mockResolvedValue(json({ error: { code: "session_missing" } }, 401));
+    expect(await backendAuth.getUser()).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
   it("queues logout behind refresh so an in-flight refresh cannot restore a logged-out session", async () => {
     fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json(RESULT))
@@ -174,7 +184,7 @@ describe("backend cookie auth integration", () => {
     expect(await authService.signUp({ ...credentials, confirmPassword: credentials.password }))
       .toEqual({ user: null, authenticated: false, confirmation_required: true });
     await authService.requestPasswordReset(USER.email);
-    await authService.updatePassword("Synthetic-new-pass-2!");
+    await authService.updatePassword("Synthetic-new-pass-2!", USER.id);
     expect(fetchMock.mock.calls.map(([url]) => String(url).split("/auth/")[1])).toEqual([
       "signup", "password/reset-request", "password/update",
     ]);
@@ -226,7 +236,8 @@ describe("login, reload guard and logout UI", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
   it("redirects an expired session and does not mount application children", async () => {
-    fetchMock.mockImplementation(async () => json({}, 401));
+    fetchMock.mockResolvedValueOnce(json({}, 401))
+      .mockResolvedValueOnce(json({ error: { code: "session_invalid" } }, 401));
     const { RequireSession } = await import("../components/RequireSession");
     render(<RequireSession><div>Authenticated content</div></RequireSession>);
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/login"));
@@ -234,11 +245,25 @@ describe("login, reload guard and logout UI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
   it("retains a verification error during outages instead of redirecting to login", async () => {
-    fetchMock.mockResolvedValue(json({}, 503));
+    fetchMock.mockResolvedValueOnce(json({}, 503)).mockResolvedValueOnce(json(USER));
     const { RequireSession } = await import("../components/RequireSession");
     render(<RequireSession><div>Authenticated content</div></RequireSession>);
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to verify");
+    expect(screen.queryByText("Authenticated content")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry session check" }));
+    expect(await screen.findByText("Authenticated content")).toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
+  });
+  it("keeps protected content closed without redirecting when renewal cannot be coordinated", async () => {
+    Object.defineProperty(navigator, "locks", { configurable: true, value: undefined });
+    fetchMock.mockResolvedValue(json({}, 401));
+    const { RequireSession } = await import("../components/RequireSession");
+    render(<RequireSession><div>Authenticated content</div></RequireSession>);
+    expect(await screen.findByRole("alert")).toHaveTextContent("cannot safely renew");
+    expect(screen.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/login");
+    expect(screen.queryByText("Authenticated content")).not.toBeInTheDocument();
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it("logs out using backend cookies and returns to the existing login URL", async () => {
     fetchMock.mockResolvedValue(json({ message: "Signed out of this session" }));
@@ -250,5 +275,21 @@ describe("login, reload guard and logout UI", () => {
       credentials: "include", method: "POST", body: "{}",
       headers: { "Content-Type": "application/json", "X-CSRF-Protection": "1" },
     }));
+  });
+  it("does not announce logout or redirect when the backend cannot be reached", async () => {
+    const changed = vi.fn();
+    window.addEventListener("blindspot:auth-changed", changed);
+    try {
+      fetchMock.mockRejectedValue(new TypeError("offline"));
+      const { LogoutButton } = await import("../components/logout-button");
+      render(<LogoutButton />);
+      fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("Your session may still be active");
+      expect(mocks.replace).not.toHaveBeenCalled();
+      expect(changed).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Log out" })).toBeEnabled();
+    } finally {
+      window.removeEventListener("blindspot:auth-changed", changed);
+    }
   });
 });

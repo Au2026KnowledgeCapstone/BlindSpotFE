@@ -7,12 +7,37 @@ const resultSchema = z.object({
   authenticated: z.boolean(),
   confirmation_required: z.boolean(),
 });
+const authenticatedResultSchema = z.object({
+  user: userSchema, authenticated: z.literal(true), confirmation_required: z.literal(false),
+});
+const signupResultSchema = z.discriminatedUnion("authenticated", [
+  authenticatedResultSchema,
+  z.object({ user: z.null(), authenticated: z.literal(false), confirmation_required: z.literal(true) }),
+]);
+const messageSchema = z.object({ message: z.string() });
 export type BackendUser = z.infer<typeof userSchema>;
 
 export class AuthRequestError extends Error {
-  constructor(public readonly status: number, message: string) {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly code?: "session_missing" | "session_invalid" | "renewal_unsupported",
+  ) {
     super(message);
     this.name = "AuthRequestError";
+  }
+}
+
+const sessionErrorSchema = z.object({ error: z.object({ code: z.enum(["session_missing", "session_invalid"]) }) });
+
+async function sessionErrorCode(response: Response, path: string) {
+  if (response.status !== 401 || (path !== "me" && path !== "refresh")) return undefined;
+  const expected = path === "me" ? "session_missing" : "session_invalid";
+  try {
+    const parsed = sessionErrorSchema.safeParse(await response.json());
+    return parsed.success && parsed.data.error.code === expected ? expected : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -33,15 +58,32 @@ function baseUrl() {
   return url.origin;
 }
 
+function emailRequestFailure(status: number, path: string) {
+  if (path !== "signup" && path !== "confirmation/resend") return undefined;
+  if (status === 400 || status === 422) return path === "signup"
+    ? "Check your email address and password requirements, then try again."
+    : "Check your email address and try again.";
+  if (status >= 500) return "The authentication service is unavailable. Please try again later.";
+}
+
 function failureMessage(status: number, path: string) {
   if (status === 401) return path === "login"
     ? "Unable to sign in. Check your email, password, and email verification."
     : "Your session is missing or expired. Sign in or request a new recovery link.";
   if (status === 400 && path === "password/update")
     return "Unable to update your password. Check the password requirements or request a fresh recovery link.";
+  if (status === 422 && path === "password/reset-request") return "Check your email address and try again.";
   if (status === 429) return "Too many authentication attempts. Please try again later.";
   if (status === 403) return "Authentication request rejected. Check your frontend origin configuration.";
-  return "The authentication service could not complete this request. Please try again.";
+  return emailRequestFailure(status, path) ?? "The authentication service could not complete this request. Please try again.";
+}
+
+async function rejectedRequest(response: Response, path: string, method: string, url: string) {
+  if (process.env.NODE_ENV !== "production") {
+    console.error("[auth] Request rejected", { method, url, status: response.status });
+  }
+  // Recognize explicit session decisions from the backend's public error envelope.
+  return new AuthRequestError(response.status, failureMessage(response.status, path), await sessionErrorCode(response, path));
 }
 
 async function request(path: string, method: "GET" | "POST", body?: unknown) {
@@ -72,13 +114,7 @@ async function request(path: string, method: "GET" | "POST", body?: unknown) {
     }
     throw new AuthRequestError(0, "Unable to reach the authentication service. Please try again.");
   }
-  if (!response.ok) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[auth] Request rejected", { method, url, status: response.status });
-    }
-    // Do not expose or log raw upstream error bodies.
-    throw new AuthRequestError(response.status, failureMessage(response.status, path));
-  }
+  if (!response.ok) throw await rejectedRequest(response, path, method, url);
   try {
     return await response.json() as unknown;
   } catch {
@@ -94,14 +130,26 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 
 // Login, logout and identity/refresh share a lock, including across same-origin tabs.
-// The fallback serializes this tab only; automatic refresh is disabled without
-// Web Locks rather than risking cross-tab reuse of a rotating refresh token.
+// The fallback serializes this tab only. A recoverable session becomes
+// temporarily unavailable without Web Locks to avoid concurrent token rotation.
 function hasWebLocks() {
   return typeof navigator !== "undefined" && Boolean(navigator.locks);
 }
 
-function unauthorized(error: unknown) {
+function unauthorized(error: unknown): error is AuthRequestError {
   return error instanceof AuthRequestError && error.status === 401;
+}
+
+async function renewSession(): Promise<BackendUser | null> {
+  try {
+    return parse(authenticatedResultSchema, await request("refresh", "POST")).user;
+  } catch (error) {
+    if (unauthorized(error)) {
+      if (error.code === "session_invalid") return null;
+      throw new AuthRequestError(503, "The authentication service could not confirm your session. Please retry.");
+    }
+    throw error;
+  }
 }
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -132,9 +180,14 @@ let lookup: Promise<BackendUser | null> | undefined;
 export const backendAuth = {
   async signUp({ email, password }: SignupFormValues) {
     const result = await withSessionLock(async () =>
-      parse(resultSchema, await request("signup", "POST", { email, password })));
+      parse(signupResultSchema, await request("signup", "POST", { email, password })));
     if (result.authenticated) announceSessionChange();
     return result;
+  },
+
+  async resendConfirmation(email: string) {
+    return withSessionLock(async () =>
+      parse(messageSchema, await request("confirmation/resend", "POST", { email })));
   },
 
   async getRecoveryUser(): Promise<BackendUser | null> {
@@ -142,15 +195,7 @@ export const backendAuth = {
       try {
         return parse(userSchema, await request("recovery", "GET"));
       } catch (error) {
-        if (error instanceof AuthRequestError && error.status === 403) return null;
-        if (!unauthorized(error)) throw error;
-      }
-      if (!hasWebLocks()) return null;
-      try {
-        parse(resultSchema, await request("refresh", "POST"));
-        return parse(userSchema, await request("recovery", "GET"));
-      } catch (error) {
-        if (error instanceof AuthRequestError && [401, 403].includes(error.status)) return null;
+        if (unauthorized(error)) return null;
         throw error;
       }
     });
@@ -160,10 +205,10 @@ export const backendAuth = {
     return parse(z.object({ message: z.string() }), await request("password/reset-request", "POST", { email }));
   },
 
-  async updatePassword(password: string) {
+  async updatePassword(password: string, userId: string) {
     try {
       return await withSessionLock(async () => parse(z.object({ message: z.string() }),
-        await request("password/update", "POST", { password })));
+        await request("password/update", "POST", { password, user_id: userId })));
     } finally { announceSessionChange(); }
   },
 
@@ -189,29 +234,31 @@ export const backendAuth = {
         return parse(userSchema, await request("me", "GET"));
       } catch (error) {
         if (!unauthorized(error)) throw error;
+        if (error.code === "session_missing") return null;
       }
-      if (!hasWebLocks()) return null;
+      if (!hasWebLocks()) {
+        throw new AuthRequestError(503, "This browser cannot safely renew your session.", "renewal_unsupported");
+      }
+      const renewed = await renewSession();
+      if (!renewed) return null;
+      // Verify cookie delivery. A successful refresh followed by a 401 can
+      // indicate browser cookie blocking rather than an invalid session.
       try {
-        const result = parse(resultSchema, await request("refresh", "POST"));
-        if (!result.authenticated || !result.user) return null;
-        // One retry only; never recursively call getUser after refresh.
-        return parse(userSchema, await request("me", "GET"));
+        const user = parse(userSchema, await request("me", "GET"));
+        if (user.id !== renewed.id) throw new AuthRequestError(503, "Your session changed during verification. Please retry.");
+        return user;
       } catch (error) {
-        if (unauthorized(error)) return null;
-        throw error;
+        if (!unauthorized(error)) throw error;
+        throw new AuthRequestError(503, "The browser could not verify the renewed session. Check your cookie settings and retry.");
       }
     }).finally(() => { lookup = undefined; });
     return lookup;
   },
 
   async signOut() {
-    try {
-      await withSessionLock(async () => {
-        parse(z.object({ message: z.string() }), await request("logout", "POST"));
-      });
-    } finally {
-      // Backend clears local cookies even if remote revocation reports an outage.
-      announceSessionChange();
-    }
+    await withSessionLock(async () => {
+      parse(z.object({ message: z.string() }), await request("logout", "POST"));
+    });
+    announceSessionChange();
   },
 };

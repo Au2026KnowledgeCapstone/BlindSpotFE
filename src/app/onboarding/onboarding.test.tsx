@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingPage from "./page";
 
 const mocks = vi.hoisted(() => ({ getUser: vi.fn(), createProject: vi.fn(), replace: vi.fn() }));
-vi.mock("@/features/auth/services/backend-auth", () => ({ backendAuth: { getUser: mocks.getUser } }));
+vi.mock("@/features/auth/services/backend-auth", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/features/auth/services/backend-auth")>(),
+  backendAuth: { getUser: mocks.getUser },
+}));
 vi.mock("@/features/workspace/workspace-api", () => ({ workspaceApi: { createProject: mocks.createProject } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 
@@ -22,6 +25,17 @@ describe("project onboarding", () => {
     render(<OnboardingPage />);
     expect(await screen.findByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("button", { name: /demo/i })).not.toBeInTheDocument();
+  });
+
+  it("offers verification retry during an outage without showing signed-out or protected content", async () => {
+    mocks.getUser.mockRejectedValueOnce(new Error("network"));
+    render(<OnboardingPage />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not verify your session");
+    expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Project name")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry session check" }));
+    expect(await screen.findByLabelText("Project name")).toBeInTheDocument();
+    expect(mocks.replace).not.toHaveBeenCalled();
   });
 
   it("creates a project and navigates to it", async () => {

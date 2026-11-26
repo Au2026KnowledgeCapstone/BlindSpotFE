@@ -3,32 +3,50 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { authService } from "@/features/auth";
+import { AuthRequestError, authService } from "@/features/auth";
 import { FIELD } from "@/shared/ui/field";
 import { Button } from "@/components/ui/button";
 import { LoadingMark } from "@/shared/ui/LoadingMark";
+
+const invalidLink = "Invalid or expired reset link. Please request a new one.";
+
+function callbackError(outcome: string | null) {
+  if (outcome === "expired") return "This reset link has expired. Please request a new one.";
+  if (outcome === "invalid") return invalidLink;
+  if (outcome === "failed") return "We could not complete this reset link. Please request a new one.";
+}
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
+  const [recoveryUserId, setRecoveryUserId] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const [verificationUnavailable, setVerificationUnavailable] = useState(false);
 
   useEffect(() => {
     let active = true;
+    const failure = callbackError(new URLSearchParams(window.location.search).get("recovery"));
+    if (failure) {
+      setError(failure);
+      setChecking(false);
+      return;
+    }
     authService.getRecoveryUser().then((user) => {
       if (!active) return;
-      setAuthorized(Boolean(user));
-      if (!user) setError("Invalid or expired reset link. Please request a new one.");
+      setRecoveryUserId(user?.id ?? null);
+      if (!user) setError(invalidLink);
     }).catch(() => {
-      if (active) setError("Unable to verify your session. Please reload to try again.");
+      if (!active) return;
+      setVerificationUnavailable(true);
+      setError("Unable to verify your reset link. Please try again.");
     }).finally(() => { if (active) setChecking(false); });
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -46,7 +64,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (!authorized) {
+    if (!recoveryUserId) {
       setError("Please open a valid password reset link.");
       return;
     }
@@ -54,10 +72,19 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const result = await authService.updatePassword(password);
+      const result = await authService.updatePassword(password, recoveryUserId);
+      setPassword("");
+      setConfirmPassword("");
       setSuccessMessage(result.message);
       setSuccess(true);
     } catch (err) {
+      if (err instanceof AuthRequestError && err.status === 401) {
+        setRecoveryUserId(null);
+        setPassword("");
+        setConfirmPassword("");
+        setError(invalidLink);
+        return;
+      }
       setError(
         err instanceof Error
           ? err.message
@@ -99,11 +126,16 @@ export default function ResetPasswordPage() {
               Back to Login
             </Link>
           </div>
-        ) : !authorized ? (
+        ) : !recoveryUserId ? (
           <div className="space-y-4">
             <p role="alert" className="text-fail">
               {error}
             </p>
+            {verificationUnavailable && <Button variant="outline" onClick={() => {
+              setVerificationUnavailable(false);
+              setChecking(true);
+              setAttempt((value) => value + 1);
+            }}>Retry verification</Button>}
 
             <Link
               href="/forgot-password"

@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { signupSchema, type SignupFormValues } from "../schemas";
 import { authService } from "../services/auth-service";
+import { AuthRequestError } from "../services/backend-auth";
 import { FIELD } from "@/shared/ui/field";
 
 export function SignupForm() {
@@ -39,22 +40,17 @@ export function SignupForm() {
     setSuccessMessage("");
 
     try {
-      const { authenticated, confirmation_required } = await authService.signUp(values);
+      const { authenticated } = await authService.signUp(values);
 
-      if (authenticated && !confirmation_required) {
+      if (authenticated) {
         if (typeof window !== "undefined") window.sessionStorage.removeItem("blindspot-onboarding-request");
         router.replace("/onboarding");
         router.refresh();
         return;
-      } else {
-        setSuccessMessage(
-          "Signup request submitted! Check your email to confirm your account."
-        );
       }
-    } catch {
-      setAuthError(
-        "Unable to create your account. Please try again."
-      );
+      setSuccessMessage("If confirmation is still needed, check your email for a link. Open it in this browser.");
+    } catch (error) {
+      setAuthError(error instanceof AuthRequestError ? error.message : "Unable to create your account. Please try again.");
     }
   };
 
@@ -181,6 +177,10 @@ export function SignupForm() {
           Sign in
         </Link>
       </p>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm font-medium text-accent">
+        <Link href="/forgot-password" className="hover:underline">Forgot password?</Link>
+        <Link href="/resend-confirmation" className="hover:underline">Resend confirmation email</Link>
+      </div>
     </form>
   );
 }

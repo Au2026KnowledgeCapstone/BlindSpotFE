@@ -116,6 +116,17 @@ function writeHeaders(body: unknown, idempotencyKey?: string) {
   };
 }
 
+async function recoverForRead(signal: AbortSignal) {
+  signal.throwIfAborted();
+  try {
+    // A cancelled read stops waiting without cancelling recovery shared by other requests.
+    return await withAbort(backendAuth.getUser(), signal);
+  } catch {
+    signal.throwIfAborted();
+    throw new WorkspaceApiError(503, "session_unavailable", "Unable to verify your session. Retry.");
+  }
+}
+
 // eslint-disable-next-line complexity -- Keep fetch deadline, cancellation, response validation and cleanup atomic.
 async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema: z.ZodType<T>, body?: unknown, signal?: AbortSignal, timeoutMs = 15000, idempotencyKey?: string): Promise<T> {
   const base = baseUrl();
@@ -125,10 +136,19 @@ async function request<T>(path: string, method: "GET" | "POST" | "PATCH", schema
   else signal?.addEventListener("abort", abort, { once: true });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${base}${path}`, {
+    const options: RequestInit = {
       method, credentials: "include", cache: "no-store", signal: controller.signal,
       ...(method !== "GET" ? { headers: writeHeaders(body, idempotencyKey), body: body instanceof FormData ? body : JSON.stringify(body ?? {}) } : {}),
-    });
+    };
+    const url = `${base}${path}`;
+    let response = await fetch(url, options);
+    if (method === "GET" && response.status === 401 && await recoverForRead(controller.signal)) {
+      controller.signal.throwIfAborted();
+      response = await fetch(url, options);
+      if (response.status === 401) {
+        throw new WorkspaceApiError(401, "workspace_unauthorized", "Your session was verified, but the workspace request was rejected. Retry.");
+      }
+    }
     if (!response.ok) throw await responseError(response, controller.signal);
     const raw = await withAbort(response.json(), controller.signal);
     try { return schema.parse(raw); }

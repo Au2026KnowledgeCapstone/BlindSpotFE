@@ -6,10 +6,80 @@ const userId = "11111111-1111-4111-8111-111111111111";
 const invitationId = "22222222-2222-4222-8222-222222222222";
 const project = { id: projectId, name: "Project", description: "", owner_id: userId, role: "owner", organization_id: null, created_at: "2026-01-01T00:00:00Z" };
 const page = (items: unknown[]) => ({ items, next_cursor: null });
+const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
+
+function mockSessionRequests() {
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
+  vi.stubGlobal("navigator", { locks: { request: (_name: string, action: () => Promise<unknown>) => action() } });
+  const fetchMock = vi.fn<typeof fetch>();
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("canonical workspace API adapter", () => {
+  it("shares recovery across concurrent expired reads and retries each request once", async () => {
+    const fetchMock = mockSessionRequests();
+    const user = { id: userId, email: "user@example.test" };
+    let refreshed = false;
+    fetchMock.mockImplementation(async (url) => {
+      const path = new URL(String(url)).pathname;
+      if (path === "/auth/refresh") {
+        refreshed = true;
+        return json({ user, authenticated: true, confirmation_required: false });
+      }
+      if (path === "/auth/me") return refreshed ? json(user) : json({}, 401);
+      return refreshed ? json(page([project])) : json({}, 401);
+    });
+    await expect(Promise.all([workspaceApi.projects(), workspaceApi.projects()])).resolves.toEqual([[project], [project]]);
+    expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([
+      "/projects", "/projects", "/auth/me", "/auth/refresh", "/auth/me", "/projects", "/projects",
+    ]);
+    expect(fetchMock.mock.calls[5]?.[1]).toBe(fetchMock.mock.calls[0]?.[1]);
+    expect(fetchMock.mock.calls[6]?.[1]).toBe(fetchMock.mock.calls[1]?.[1]);
+  });
+
+  it.each([401, 503])("does not replay reads after an unsuccessful refresh (%s)", async (status) => {
+    const fetchMock = mockSessionRequests();
+    const error = status === 401 ? { error: { code: "session_invalid" } } : {};
+    fetchMock.mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json({}, 401)).mockResolvedValueOnce(json(error, status));
+    await expect(workspaceApi.projects()).rejects.toMatchObject({ status });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops after a second workspace 401 and never automatically replays writes", async () => {
+    const fetchMock = mockSessionRequests();
+    fetchMock.mockResolvedValueOnce(json({}, 401))
+      .mockResolvedValueOnce(json({ id: userId, email: null }))
+      .mockResolvedValueOnce(json({}, 401))
+      .mockResolvedValueOnce(json({}, 401));
+    await expect(workspaceApi.projects()).rejects.toMatchObject({ status: 401, code: "workspace_unauthorized" });
+    await expect(workspaceApi.createProject({ name: "Project" })).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock.mock.calls.map(([url, options]) => [new URL(String(url)).pathname, options?.method])).toEqual([
+      ["/projects", "GET"], ["/auth/me", "GET"], ["/projects", "GET"], ["/projects", "POST"],
+    ]);
+  });
+
+  it("does not replay a cancelled read after shared session recovery", async () => {
+    const fetchMock = mockSessionRequests();
+    let resolveIdentity!: (response: Response) => void;
+    let recoveryStarted!: () => void;
+    const started = new Promise<void>((resolve) => { recoveryStarted = resolve; });
+    fetchMock.mockResolvedValueOnce(json({}, 401)).mockImplementationOnce(() => {
+      recoveryStarted();
+      return new Promise((resolve) => { resolveIdentity = resolve; });
+    });
+    const controller = new AbortController();
+    const read = workspaceApi.projectWorkspace(projectId, controller.signal);
+    const result = expect(read).rejects.toMatchObject({ status: 0 });
+    await started;
+    controller.abort();
+    await result;
+    resolveIdentity(json({ id: userId, email: null }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
   it("uses no-prefix project collections with session cookies", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.test");
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(page([project])), { status: 200 }));
