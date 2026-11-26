@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { backendAuth } from "@/features/auth";
+import { AuthRequestError, backendAuth } from "@/features/auth";
 import { workspaceApi } from "@/features/workspace/workspace-api";
 import { Button } from "@/components/ui/button";
 import { FIELD } from "@/shared/ui/field";
@@ -23,13 +23,12 @@ function WorkspaceLoadingCard({ onRetry }: { onRetry: () => void }) {
  );
 }
 
-function WorkspaceSignedOutCard({ error }: { error: string }) {
+function WorkspaceSignedOutCard() {
  return (
   <main className="mx-auto flex min-h-screen max-w-xl items-center p-8">
    <div className="w-full space-y-4 rounded-lg border border-subtle bg-panel p-8 text-center shadow-ambient">
     <h1 className="text-lg font-semibold text-fg">Sign in to continue</h1>
     <p className="text-sm text-fg-secondary">Create an account and confirm your email first, if requested.</p>
-    {error && <p role="alert" className="text-sm text-fail">{error}</p>}
     <Link href="/login" className="inline-block text-sm font-medium text-accent hover:underline">Sign in</Link>
    </div>
   </main>
@@ -64,7 +63,8 @@ function WorkspaceSetupForm({ projectName, error, busy, onProjectNameChange, onS
 
 export default function OnboardingPage() {
  const router = useRouter();
- const [state, setState] = useState<"loading" | "ready" | "signedout">("loading");
+ const [state, setState] = useState<"verifying" | "authenticated" | "unauthenticated" | "unavailable">("verifying");
+ const [renewalUnsupported, setRenewalUnsupported] = useState(false);
  const [projectName, setProjectName] = useState("");
  const [error, setError] = useState("");
  const [busy, setBusy] = useState(false);
@@ -73,16 +73,16 @@ export default function OnboardingPage() {
 
  async function loadAccount() {
   const current = ++generation.current;
-  setState("loading");
+  setState("verifying");
   setError("");
   try {
    const user = await timeout(backendAuth.getUser());
    if (!mounted.current || current !== generation.current) return;
-   setState(user ? "ready" : "signedout");
-  } catch {
+   setState(user ? "authenticated" : "unauthenticated");
+  } catch (cause) {
    if (mounted.current && current === generation.current) {
-    setError("Could not load your account. Check the connection and retry.");
-    setState("signedout");
+    setRenewalUnsupported(cause instanceof AuthRequestError && cause.code === "renewal_unsupported");
+    setState("unavailable");
    }
   }
  }
@@ -116,8 +116,19 @@ export default function OnboardingPage() {
   }
  }
 
- if (state === "loading") return <WorkspaceLoadingCard onRetry={() => void loadAccount()} />;
- if (state === "signedout") return <WorkspaceSignedOutCard error={error} />;
+ if (state === "verifying") return <WorkspaceLoadingCard onRetry={() => void loadAccount()} />;
+ if (state === "unauthenticated") return <WorkspaceSignedOutCard />;
+ if (state === "unavailable") return (
+  <main className="flex min-h-screen items-center justify-center p-8">
+   <div className="space-y-4 rounded-lg border border-subtle bg-panel p-8 text-center shadow-ambient">
+    <p role="alert" className="text-sm text-fail">{renewalUnsupported
+      ? "This browser cannot safely renew your session."
+      : "Could not verify your session. Check the connection and retry."}</p>
+    <Button variant="outline" onClick={() => void loadAccount()}>Retry session check</Button>
+    {renewalUnsupported && <Link href="/login" className="ml-4 text-sm text-accent hover:underline">Sign in again</Link>}
+   </div>
+  </main>
+ );
 
  return (
   <WorkspaceSetupForm

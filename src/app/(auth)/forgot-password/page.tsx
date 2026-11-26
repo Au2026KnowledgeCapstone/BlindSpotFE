@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      await authService.requestPasswordReset(email);
+      await authService.requestPasswordReset(email.trim());
       setSuccess(true);
     } catch (err) {
       setError(
@@ -41,10 +41,9 @@ export default function ForgotPasswordPage() {
         </h1>
 
         {success ? (
-          <p className="text-green-600">
-            If an account exists for this email,
-            a password reset link will be sent.
-            Please check your inbox.
+          <p role="status" className="text-green-600">
+            If this address is eligible for password reset, check your email for a link.
+            Open it in this browser.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
